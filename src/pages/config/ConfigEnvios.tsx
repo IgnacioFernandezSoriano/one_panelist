@@ -79,14 +79,14 @@ export default function ConfigEnvios() {
     <AppLayout>
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Shipments Configuration</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Allocation Plan Configuration</h1>
           <p className="text-muted-foreground">
             Manage shipment records in the system (showing last 100)
           </p>
         </div>
 
         <ConfigDataTable
-          title="Shipments"
+          title="Allocation Plans"
           data={data}
           columns={columns}
           onDelete={handleDelete}

@@ -21,6 +21,7 @@ import {
   Workflow,
   FileText
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
 
 interface AppLayoutProps {
@@ -66,24 +67,28 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const mainMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Users, label: "Panelists", path: "/panelistas" },
-    { icon: Send, label: "Shipments", path: "/envios" },
+    { icon: Send, label: "Allocation Plan", path: "/envios" },
     { icon: AlertCircle, label: "Issues", path: "/incidencias" },
     { icon: MapPin, label: "Nodes", path: "/nodos" },
-    { icon: Database, label: "Data Import", path: "/import" },
   ];
 
-  const configMenuItems = [
+  // Solution Parameters section
+  const solutionParametersItems = [
     { icon: Building2, label: "Clients", path: "/configuracion/clientes" },
-    { icon: MapPin, label: "Regions", path: "/configuracion/regiones" },
-    { icon: MapPin, label: "Cities", path: "/configuracion/ciudades" },
-    { icon: MapPin, label: "Nodes", path: "/configuracion/nodos" },
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
-    { icon: MessageSquare, label: "Templates", path: "/configuracion/plantillas" },
-    { icon: Users, label: "Panelists", path: "/configuracion/panelistas" },
-    { icon: Send, label: "Shipments", path: "/configuracion/envios" },
     { icon: Workflow, label: "Workflows", path: "/configuracion/workflows" },
     { icon: AlertCircle, label: "Issues", path: "/configuracion/incidencias" },
   ];
+
+  // Measurement Topology section
+  const measurementTopologyItems = [
+    { icon: MapPin, label: "Regions", path: "/configuracion/regiones" },
+    { icon: MapPin, label: "Cities", path: "/configuracion/ciudades" },
+    { icon: MapPin, label: "Nodes", path: "/configuracion/nodos" },
+  ];
+
+  // Data Import at the end
+  const dataImportItem = { icon: Database, label: "Data Import", path: "/import" };
 
   if (!user) return null;
 
@@ -136,7 +141,13 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
               )}
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-1 space-y-1">
-              {configMenuItems.map((item) => {
+              {/* Solution Parameters Section */}
+              <div className="pl-10 pr-3 py-2">
+                <p className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                  Solution Parameters
+                </p>
+              </div>
+              {solutionParametersItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
                   <Link
@@ -153,6 +164,53 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
                   </Link>
                 );
               })}
+
+              {/* Separator */}
+              <div className="px-10 py-2">
+                <Separator className="bg-sidebar-border" />
+              </div>
+
+              {/* Measurement Topology Section */}
+              <div className="pl-10 pr-3 py-2">
+                <p className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                  Measurement Topology
+                </p>
+              </div>
+              {measurementTopologyItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+
+              {/* Separator */}
+              <div className="px-10 py-2">
+                <Separator className="bg-sidebar-border" />
+              </div>
+
+              {/* Data Import */}
+              <Link
+                to={dataImportItem.path}
+                className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg transition-colors ${
+                  location.pathname === dataImportItem.path
+                    ? "bg-primary text-primary-foreground"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent"
+                }`}
+              >
+                <dataImportItem.icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{dataImportItem.label}</span>
+              </Link>
             </CollapsibleContent>
           </Collapsible>
         </nav>

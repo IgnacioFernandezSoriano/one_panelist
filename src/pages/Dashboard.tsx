@@ -65,7 +65,7 @@ export default function Dashboard() {
       bgColor: "bg-primary/10",
     },
     {
-      title: "Total Shipments",
+      title: "Total Allocation Plans",
       value: stats.totalEnvios,
       subtitle: `${stats.enviosPendientes} pending`,
       icon: Send,
@@ -73,7 +73,7 @@ export default function Dashboard() {
       bgColor: "bg-accent/10",
     },
     {
-      title: "Received Shipments",
+      title: "Received Allocations",
       value: stats.enviosRecibidos,
       subtitle: "Successfully completed",
       icon: CheckCircle,
@@ -124,7 +124,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           <Card>
             <CardHeader>
-              <CardTitle>Shipments by Status</CardTitle>
+              <CardTitle>Allocation Plans by Status</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

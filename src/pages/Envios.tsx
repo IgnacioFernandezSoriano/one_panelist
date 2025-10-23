@@ -71,7 +71,7 @@ export default function Envios() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Shipments</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Allocation Plan</h1>
             <p className="text-muted-foreground">
               Manage shipping plans and tracking
             </p>
@@ -96,11 +96,11 @@ export default function Envios() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading shipments...</p>
+            <p className="text-muted-foreground">Loading allocation plans...</p>
           </div>
         ) : filteredEnvios.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No shipments found</p>
+            <p className="text-muted-foreground">No allocation plans found</p>
           </Card>
         ) : (
           <div className="grid gap-4">

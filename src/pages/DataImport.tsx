@@ -164,7 +164,7 @@ export default function DataImport() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-primary">6.</span>
-                <span>Shipments</span>
+                <span>Allocation Plans</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-primary">7.</span>
@@ -185,7 +185,7 @@ export default function DataImport() {
             <TabsTrigger value="usuarios">3. Users</TabsTrigger>
             <TabsTrigger value="plantillas">4. Templates</TabsTrigger>
             <TabsTrigger value="panelistas">5. Panelists</TabsTrigger>
-            <TabsTrigger value="envios">6. Shipments</TabsTrigger>
+            <TabsTrigger value="envios">6. Allocation Plans</TabsTrigger>
             <TabsTrigger value="workflows">7. Workflows</TabsTrigger>
             <TabsTrigger value="incidencias">8. Issues</TabsTrigger>
           </TabsList>
@@ -261,7 +261,7 @@ export default function DataImport() {
             <TabsContent value="envios">
               <CSVImporter
                 tableName="envios"
-                tableLabel="Shipments"
+                tableLabel="Allocation Plans"
                 expectedColumns={[
                   "codigo",
                   "cliente_id",

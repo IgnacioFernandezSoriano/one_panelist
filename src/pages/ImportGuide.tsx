@@ -13,7 +13,7 @@ export default function ImportGuide() {
         "2. Nodes (nodos)",
         "3. Users (usuarios)",
         "4. Panelists (panelistas)",
-        "5. Shipments (envios)",
+        "5. Allocation Plans (envios)",
         "6. Issues (incidencias)",
         "7. Message Templates (plantillas_mensajes)",
         "8. Workflow Configuration (configuracion_workflows)",
@@ -116,7 +116,7 @@ export default function ImportGuide() {
               <div className="border-l-4 border-accent pl-4">
                 <h4 className="font-semibold mb-1">Nodes</h4>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Origin and destination points for shipments
+                  Origin and destination points for allocation plans
                 </p>
                 <p className="text-xs font-mono text-muted-foreground">
                   codigo, nombre, ciudad, pais, tipo, estado
@@ -124,7 +124,7 @@ export default function ImportGuide() {
               </div>
 
               <div className="border-l-4 border-success pl-4">
-                <h4 className="font-semibold mb-1">Shipments</h4>
+                <h4 className="font-semibold mb-1">Allocation Plans</h4>
                 <p className="text-sm text-muted-foreground mb-2">
                   Postal shipment tracking and management
                 </p>
