@@ -305,6 +305,24 @@ export default function Topology() {
                 <CollapsibleContent>
                   <CardContent className="pt-0">
                     <div className="ml-8 space-y-3">
+                      {/* Quick navigation to regions */}
+                      <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                        <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
+                          Regions ({getRegionsByCliente(cliente.id).length})
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {getRegionsByCliente(cliente.id).map((region) => (
+                            <button
+                              key={region.id}
+                              onClick={() => toggleItem(`region-${region.id}`, 'region')}
+                              className="text-xs px-2 py-1 rounded bg-background hover:bg-primary/10 border border-border transition-colors"
+                            >
+                              {region.nombre}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {getRegionsByCliente(cliente.id).map((region) => (
                         <Card key={region.id} className="bg-muted/30">
                           <Collapsible open={openItems[`region-${region.id}`]} onOpenChange={() => toggleItem(`region-${region.id}`, 'region')}>
@@ -342,6 +360,24 @@ export default function Topology() {
                             <CollapsibleContent>
                               <CardContent className="pt-0">
                                 <div className="ml-8 space-y-2">
+                                  {/* Quick navigation to cities */}
+                                  <div className="mb-3 p-2 bg-muted/30 rounded">
+                                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
+                                      Cities ({getCiudadesByRegion(region.id).length})
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {getCiudadesByRegion(region.id).map((ciudad) => (
+                                        <button
+                                          key={ciudad.id}
+                                          onClick={() => toggleItem(`ciudad-${ciudad.id}`, 'ciudad')}
+                                          className="text-xs px-2 py-1 rounded bg-background hover:bg-primary/10 border border-border transition-colors"
+                                        >
+                                          {ciudad.nombre}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+
                                   {getCiudadesByRegion(region.id).map((ciudad) => (
                                     <Card key={ciudad.id} className="bg-background">
                                       <Collapsible open={openItems[`ciudad-${ciudad.id}`]} onOpenChange={() => toggleItem(`ciudad-${ciudad.id}`, 'ciudad')}>
@@ -379,6 +415,23 @@ export default function Topology() {
                                         <CollapsibleContent>
                                           <CardContent className="pt-0">
                                             <div className="ml-8 space-y-2">
+                                              {/* Quick navigation to nodes */}
+                                              <div className="mb-2 p-2 bg-muted/20 rounded">
+                                                <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">
+                                                  Nodes ({getNodosByCiudad(ciudad.id).length})
+                                                </p>
+                                                <div className="flex flex-wrap gap-1">
+                                                  {getNodosByCiudad(ciudad.id).map((nodo) => (
+                                                    <span
+                                                      key={nodo.codigo}
+                                                      className="text-xs px-2 py-1 rounded bg-background border border-border"
+                                                    >
+                                                      {nodo.codigo}
+                                                    </span>
+                                                  ))}
+                                                </div>
+                                              </div>
+
                                               {getNodosByCiudad(ciudad.id).map((nodo) => {
                                                 const panelista = getPanelistaById(nodo.panelista_id);
                                                 return (
