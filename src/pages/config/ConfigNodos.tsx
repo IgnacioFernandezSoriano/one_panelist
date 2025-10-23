@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { NodoForm } from "@/components/config/forms/NodoForm";
+import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
+import { Pencil } from "lucide-react";
 
 export default function ConfigNodos() {
   const [data, setData] = useState([]);
@@ -14,6 +17,7 @@ export default function ConfigNodos() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [panelistaDialogOpen, setPanelistaDialogOpen] = useState(false);
+  const [editPanelistaDialogOpen, setEditPanelistaDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedPanelista, setSelectedPanelista] = useState<any>(null);
   const { toast } = useToast();
@@ -278,7 +282,21 @@ export default function ConfigNodos() {
         <Dialog open={panelistaDialogOpen} onOpenChange={setPanelistaDialogOpen}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Panelist Information</DialogTitle>
+              <DialogTitle className="flex items-center justify-between">
+                Panelist Information
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    setPanelistaDialogOpen(false);
+                    setEditPanelistaDialogOpen(true);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Button>
+              </DialogTitle>
             </DialogHeader>
             {selectedPanelista && (
               <div className="space-y-4">
@@ -326,6 +344,26 @@ export default function ConfigNodos() {
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={editPanelistaDialogOpen} onOpenChange={setEditPanelistaDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Panelist</DialogTitle>
+            </DialogHeader>
+            <PanelistaForm
+              initialData={selectedPanelista}
+              onSuccess={() => {
+                setEditPanelistaDialogOpen(false);
+                setSelectedPanelista(null);
+                loadData();
+                toast({ title: "Panelist updated successfully" });
+              }}
+              onCancel={() => {
+                setEditPanelistaDialogOpen(false);
+              }}
+            />
           </DialogContent>
         </Dialog>
       </div>
