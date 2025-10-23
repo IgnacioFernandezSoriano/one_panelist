@@ -81,7 +81,7 @@ export default function Envios() {
           </div>
           <Button className="gap-2" onClick={() => navigate("/envios/nuevo")}>
             <Plus className="w-4 h-4" />
-            Nuevo Allocation Plan
+            Allocation Event
           </Button>
         </div>
 
