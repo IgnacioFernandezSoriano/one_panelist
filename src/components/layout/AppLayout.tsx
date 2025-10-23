@@ -19,7 +19,8 @@ import {
   UserCog,
   MessageSquare,
   Workflow,
-  FileText
+  FileText,
+  GitBranch
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -70,6 +71,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     { icon: Send, label: "Allocation Plan", path: "/envios" },
     { icon: AlertCircle, label: "Issues", path: "/incidencias" },
     { icon: MapPin, label: "Nodes", path: "/nodos" },
+    { icon: GitBranch, label: "Topology", path: "/topology" },
   ];
 
   // Solution Parameters section

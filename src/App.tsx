@@ -10,6 +10,7 @@ import Panelistas from "./pages/Panelistas";
 import Envios from "./pages/Envios";
 import Incidencias from "./pages/Incidencias";
 import Nodos from "./pages/Nodos";
+import Topology from "./pages/Topology";
 import DataImport from "./pages/DataImport";
 import ImportGuide from "./pages/ImportGuide";
 import NotFound from "./pages/NotFound";
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="/envios" element={<Envios />} />
             <Route path="/incidencias" element={<Incidencias />} />
             <Route path="/nodos" element={<Nodos />} />
+            <Route path="/topology" element={<Topology />} />
             <Route path="/import" element={<DataImport />} />
             <Route path="/import-guide" element={<ImportGuide />} />
             <Route path="/configuracion/clientes" element={<ConfigClientes />} />
