@@ -17,6 +17,7 @@ interface Panelista {
   email: string | null;
   idioma: string;
   plataforma_preferida: string;
+  dias_comunicacion: string;
   estado: string;
   nodo_asignado: string | null;
 }
@@ -135,6 +136,10 @@ export default function Panelistas() {
                       <div>
                         <span className="text-muted-foreground">Platform:</span>
                         <p className="font-medium capitalize">{panelista.plataforma_preferida}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Communication Days:</span>
+                        <p className="font-medium capitalize">{panelista.dias_comunicacion?.replace('_', ' ')}</p>
                       </div>
                     </div>
                   </div>

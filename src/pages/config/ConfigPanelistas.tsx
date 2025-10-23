@@ -61,6 +61,7 @@ export default function ConfigPanelistas() {
     { key: "email", label: "Email" },
     { key: "telefono", label: "Phone" },
     { key: "nodo_asignado", label: "Node" },
+    { key: "dias_comunicacion", label: "Communication Days" },
     { key: "estado", label: "Status" },
   ];
 
@@ -70,10 +71,10 @@ export default function ConfigPanelistas() {
       "nombre_completo", "email", "telefono", "direccion_calle", "direccion_ciudad",
       "direccion_codigo_postal", "direccion_pais", "nodo_asignado", "idioma",
       "zona_horaria", "horario_inicio", "horario_fin", "plataforma_preferida",
-      "gestor_asignado_id", "estado"
+      "dias_comunicacion", "gestor_asignado_id", "estado"
     ],
     exampleData: [
-      ["Ana López", "ana@example.com", "+34600000000", "Calle Mayor 1", "Madrid", "28001", "España", "MAD", "es", "Europe/Madrid", "09:00:00", "18:00:00", "whatsapp", "1", "activo"],
+      ["Ana López", "ana@example.com", "+34600000000", "Calle Mayor 1", "Madrid", "28001", "España", "MAD", "es", "Europe/Madrid", "09:00:00", "18:00:00", "whatsapp", "ambos", "1", "activo"],
     ],
   };
 

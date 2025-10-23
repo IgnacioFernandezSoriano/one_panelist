@@ -454,6 +454,7 @@ export type Database = {
       panelistas: {
         Row: {
           ciudad_id: number | null
+          dias_comunicacion: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
           direccion_codigo_postal: string
@@ -475,6 +476,7 @@ export type Database = {
         }
         Insert: {
           ciudad_id?: number | null
+          dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
           direccion_codigo_postal: string
@@ -496,6 +498,7 @@ export type Database = {
         }
         Update: {
           ciudad_id?: number | null
+          dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle?: string
           direccion_ciudad?: string
           direccion_codigo_postal?: string
@@ -667,6 +670,7 @@ export type Database = {
     }
     Enums: {
       app_role: "gestor" | "coordinador" | "administrador"
+      dias_comunicacion: "dias_laborables" | "fines_semana" | "ambos"
       estado_envio:
         | "PENDIENTE"
         | "NOTIFICADO"
@@ -811,6 +815,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["gestor", "coordinador", "administrador"],
+      dias_comunicacion: ["dias_laborables", "fines_semana", "ambos"],
       estado_envio: [
         "PENDIENTE",
         "NOTIFICADO",

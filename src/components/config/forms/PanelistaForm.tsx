@@ -43,6 +43,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     horario_inicio: initialData?.horario_inicio || "09:00:00",
     horario_fin: initialData?.horario_fin || "18:00:00",
     plataforma_preferida: initialData?.plataforma_preferida || "whatsapp",
+    dias_comunicacion: initialData?.dias_comunicacion || "ambos",
     gestor_asignado_id: initialData?.gestor_asignado_id?.toString() || "",
     estado: initialData?.estado || "activo",
   });
@@ -375,6 +376,20 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
               <SelectItem value="whatsapp">WhatsApp</SelectItem>
               <SelectItem value="telegram">Telegram</SelectItem>
               <SelectItem value="email">Email</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="dias_comunicacion">Communication Days *</Label>
+          <Select value={formData.dias_comunicacion} onValueChange={(value) => setFormData({ ...formData, dias_comunicacion: value })}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="dias_laborables">Weekdays</SelectItem>
+              <SelectItem value="fines_semana">Weekends</SelectItem>
+              <SelectItem value="ambos">Both</SelectItem>
             </SelectContent>
           </Select>
         </div>
