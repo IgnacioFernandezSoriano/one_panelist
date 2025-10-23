@@ -48,11 +48,11 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: Users, label: "Panelistas", path: "/panelistas" },
-    { icon: Send, label: "Envíos", path: "/envios" },
-    { icon: AlertCircle, label: "Incidencias", path: "/incidencias" },
-    { icon: MapPin, label: "Nodos", path: "/nodos" },
-    { icon: Settings, label: "Configuración", path: "/configuracion" },
+    { icon: Users, label: "Panelists", path: "/panelistas" },
+    { icon: Send, label: "Shipments", path: "/envios" },
+    { icon: AlertCircle, label: "Issues", path: "/incidencias" },
+    { icon: MapPin, label: "Nodes", path: "/nodos" },
+    { icon: Settings, label: "Configuration", path: "/configuracion" },
   ];
 
   if (!user) return null;
@@ -97,7 +97,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <p className="font-medium text-sidebar-foreground">{user.email}</p>
-              <p className="text-xs text-sidebar-foreground/60">Administrador</p>
+              <p className="text-xs text-sidebar-foreground/60">Administrator</p>
             </div>
             <Button
               variant="ghost"

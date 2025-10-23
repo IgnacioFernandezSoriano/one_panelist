@@ -37,7 +37,7 @@ export default function Nodos() {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar los nodos",
+        description: "Could not load nodes",
         variant: "destructive",
       });
     } finally {
@@ -63,24 +63,24 @@ export default function Nodos() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Nodos</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Nodes</h1>
             <p className="text-muted-foreground">
-              Gestiona los puntos de origen y destino de envíos
+              Manage shipping origin and destination points
             </p>
           </div>
           <Button className="gap-2">
             <Plus className="w-4 h-4" />
-            Nuevo Nodo
+            New Node
           </Button>
         </div>
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Cargando nodos...</p>
+            <p className="text-muted-foreground">Loading nodes...</p>
           </div>
         ) : nodos.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No se encontraron nodos</p>
+            <p className="text-muted-foreground">No nodes found</p>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

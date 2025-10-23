@@ -8,7 +8,7 @@ import { Plus, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 interface Envio {
   id: number;
@@ -42,7 +42,7 @@ export default function Envios() {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar los envíos",
+        description: "Could not load shipments",
         variant: "destructive",
       });
     } finally {
@@ -71,14 +71,14 @@ export default function Envios() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Envíos</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Shipments</h1>
             <p className="text-muted-foreground">
-              Gestiona los planes de envío y seguimiento
+              Manage shipping plans and tracking
             </p>
           </div>
           <Button className="gap-2">
             <Plus className="w-4 h-4" />
-            Nuevo Envío
+            New Shipment
           </Button>
         </div>
 
@@ -86,7 +86,7 @@ export default function Envios() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Buscar por código o tipo de producto..."
+              placeholder="Search by code or product type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -96,11 +96,11 @@ export default function Envios() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Cargando envíos...</p>
+            <p className="text-muted-foreground">Loading shipments...</p>
           </div>
         ) : filteredEnvios.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No se encontraron envíos</p>
+            <p className="text-muted-foreground">No shipments found</p>
           </Card>
         ) : (
           <div className="grid gap-4">
@@ -122,27 +122,27 @@ export default function Envios() {
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Tipo:</span>
+                        <span className="text-muted-foreground">Type:</span>
                         <p className="font-medium capitalize">{envio.tipo_producto}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Origen:</span>
+                        <span className="text-muted-foreground">Origin:</span>
                         <p className="font-medium">{envio.nodo_origen}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Destino:</span>
+                        <span className="text-muted-foreground">Destination:</span>
                         <p className="font-medium">{envio.nodo_destino}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Fecha programada:</span>
+                        <span className="text-muted-foreground">Scheduled date:</span>
                         <p className="font-medium">
-                          {format(new Date(envio.fecha_programada), "dd MMM yyyy", { locale: es })}
+                          {format(new Date(envio.fecha_programada), "dd MMM yyyy", { locale: enUS })}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  <Button variant="outline">Ver Detalles</Button>
+                  <Button variant="outline">View Details</Button>
                 </div>
               </Card>
             ))}

@@ -43,7 +43,7 @@ export default function Panelistas() {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar los panelistas",
+        description: "Could not load panelists",
         variant: "destructive",
       });
     } finally {
@@ -71,14 +71,14 @@ export default function Panelistas() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Panelistas</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Panelists</h1>
             <p className="text-muted-foreground">
-              Gestiona los panelistas participantes en los estudios
+              Manage panelists participating in the studies
             </p>
           </div>
           <Button className="gap-2">
             <Plus className="w-4 h-4" />
-            Nuevo Panelista
+            New Panelist
           </Button>
         </div>
 
@@ -86,7 +86,7 @@ export default function Panelistas() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Buscar por nombre, teléfono o ciudad..."
+              placeholder="Search by name, phone or city..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -96,11 +96,11 @@ export default function Panelistas() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Cargando panelistas...</p>
+            <p className="text-muted-foreground">Loading panelists...</p>
           </div>
         ) : filteredPanelistas.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No se encontraron panelistas</p>
+            <p className="text-muted-foreground">No panelists found</p>
           </Card>
         ) : (
           <div className="grid gap-4">
@@ -119,21 +119,21 @@ export default function Panelistas() {
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Ubicación:</span>
+                        <span className="text-muted-foreground">Location:</span>
                         <p className="font-medium">
                           {panelista.direccion_ciudad}, {panelista.direccion_pais}
                         </p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Teléfono:</span>
+                        <span className="text-muted-foreground">Phone:</span>
                         <p className="font-medium">{panelista.telefono}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Idioma:</span>
+                        <span className="text-muted-foreground">Language:</span>
                         <p className="font-medium">{panelista.idioma}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Plataforma:</span>
+                        <span className="text-muted-foreground">Platform:</span>
                         <p className="font-medium capitalize">{panelista.plataforma_preferida}</p>
                       </div>
                     </div>

@@ -8,7 +8,7 @@ import { Plus, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 
 interface Incidencia {
   id: number;
@@ -42,7 +42,7 @@ export default function Incidencias() {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "No se pudieron cargar las incidencias",
+        description: "Could not load issues",
         variant: "destructive",
       });
     } finally {
@@ -80,14 +80,14 @@ export default function Incidencias() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Incidencias</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Issues</h1>
             <p className="text-muted-foreground">
-              Gestiona las incidencias y problemas reportados
+              Manage reported issues and problems
             </p>
           </div>
           <Button className="gap-2">
             <Plus className="w-4 h-4" />
-            Nueva Incidencia
+            New Issue
           </Button>
         </div>
 
@@ -95,7 +95,7 @@ export default function Incidencias() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Buscar por descripción o tipo..."
+              placeholder="Search by description or type..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -105,11 +105,11 @@ export default function Incidencias() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Cargando incidencias...</p>
+            <p className="text-muted-foreground">Loading issues...</p>
           </div>
         ) : filteredIncidencias.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No se encontraron incidencias</p>
+            <p className="text-muted-foreground">No issues found</p>
           </Card>
         ) : (
           <div className="grid gap-4">
@@ -138,19 +138,19 @@ export default function Incidencias() {
 
                     <div className="flex gap-6 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Origen:</span>
+                        <span className="text-muted-foreground">Source:</span>
                         <span className="ml-2 font-medium capitalize">{incidencia.origen}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Creada:</span>
+                        <span className="text-muted-foreground">Created:</span>
                         <span className="ml-2 font-medium">
-                          {format(new Date(incidencia.fecha_creacion), "dd MMM yyyy HH:mm", { locale: es })}
+                          {format(new Date(incidencia.fecha_creacion), "dd MMM yyyy HH:mm", { locale: enUS })}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <Button variant="outline">Ver Detalles</Button>
+                  <Button variant="outline">View Details</Button>
                 </div>
               </Card>
             ))}

@@ -20,7 +20,7 @@ export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             ONE Postal Quality
           </h1>
           <p className="text-lg text-white/90">
-            Sistema integral de gestión de calidad postal
+            Comprehensive postal quality management system
           </p>
         </div>
       </div>

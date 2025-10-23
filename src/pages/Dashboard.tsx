@@ -57,33 +57,33 @@ export default function Dashboard() {
 
   const statCards = [
     {
-      title: "Total Panelistas",
+      title: "Total Panelists",
       value: stats.totalPanelistas,
-      subtitle: `${stats.panelistasActivos} activos`,
+      subtitle: `${stats.panelistasActivos} active`,
       icon: Users,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
-      title: "Total Envíos",
+      title: "Total Shipments",
       value: stats.totalEnvios,
-      subtitle: `${stats.enviosPendientes} pendientes`,
+      subtitle: `${stats.enviosPendientes} pending`,
       icon: Send,
       color: "text-accent",
       bgColor: "bg-accent/10",
     },
     {
-      title: "Envíos Recibidos",
+      title: "Received Shipments",
       value: stats.enviosRecibidos,
-      subtitle: "Completados exitosamente",
+      subtitle: "Successfully completed",
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10",
     },
     {
-      title: "Incidencias",
+      title: "Issues",
       value: stats.totalIncidencias,
-      subtitle: `${stats.incidenciasAbiertas} abiertas`,
+      subtitle: `${stats.incidenciasAbiertas} open`,
       icon: AlertCircle,
       color: "text-warning",
       bgColor: "bg-warning/10",
@@ -96,7 +96,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
           <p className="text-muted-foreground">
-            Vista general del sistema de gestión de calidad postal
+            Overview of the postal quality management system
           </p>
         </div>
 
@@ -124,21 +124,21 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           <Card>
             <CardHeader>
-              <CardTitle>Envíos por Estado</CardTitle>
+              <CardTitle>Shipments by Status</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-warning" />
-                    <span className="font-medium">Pendientes</span>
+                    <span className="font-medium">Pending</span>
                   </div>
                   <span className="text-2xl font-bold text-warning">{stats.enviosPendientes}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-5 h-5 text-success" />
-                    <span className="font-medium">Recibidos</span>
+                    <span className="font-medium">Received</span>
                   </div>
                   <span className="text-2xl font-bold text-success">{stats.enviosRecibidos}</span>
                 </div>
@@ -148,14 +148,14 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Incidencias Recientes</CardTitle>
+              <CardTitle>Recent Issues</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-5 h-5 text-warning" />
-                    <span className="font-medium">Abiertas</span>
+                    <span className="font-medium">Open</span>
                   </div>
                   <span className="text-2xl font-bold text-warning">{stats.incidenciasAbiertas}</span>
                 </div>

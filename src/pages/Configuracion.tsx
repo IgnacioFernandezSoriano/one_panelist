@@ -7,26 +7,26 @@ export default function Configuracion() {
     {
       icon: Workflow,
       title: "Workflows",
-      description: "Configuración de flujos de trabajo y tiempos",
-      count: "3 configuraciones",
+      description: "Workflow and timing configuration",
+      count: "3 configurations",
     },
     {
       icon: MessageSquare,
-      title: "Plantillas de Mensajes",
-      description: "Gestiona las plantillas de notificaciones",
-      count: "12 plantillas",
+      title: "Message Templates",
+      description: "Manage notification templates",
+      count: "12 templates",
     },
     {
       icon: Users2,
-      title: "Usuarios y Gestores",
-      description: "Administra los usuarios del sistema",
-      count: "8 usuarios",
+      title: "Users and Managers",
+      description: "Administer system users",
+      count: "8 users",
     },
     {
       icon: Settings2,
-      title: "Configuración General",
-      description: "Parámetros generales del sistema",
-      count: "Configurar",
+      title: "General Settings",
+      description: "General system parameters",
+      count: "Configure",
     },
   ];
 
@@ -34,9 +34,9 @@ export default function Configuracion() {
     <AppLayout>
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Configuración</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Configuration</h1>
           <p className="text-muted-foreground">
-            Gestiona la configuración del sistema
+            Manage system configuration
           </p>
         </div>
 

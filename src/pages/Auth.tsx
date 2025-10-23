@@ -31,8 +31,8 @@ export default function Auth() {
         if (error) throw error;
 
         toast({
-          title: "¡Bienvenido!",
-          description: "Has iniciado sesión correctamente",
+          title: "Welcome!",
+          description: "You have successfully signed in",
         });
         navigate("/dashboard");
       } else {
@@ -50,8 +50,8 @@ export default function Auth() {
         if (error) throw error;
 
         toast({
-          title: "¡Cuenta creada!",
-          description: "Tu cuenta ha sido creada exitosamente",
+          title: "Account created!",
+          description: "Your account has been created successfully",
         });
         navigate("/dashboard");
       }
@@ -68,21 +68,21 @@ export default function Auth() {
 
   return (
     <AuthLayout
-      title={isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
+      title={isLogin ? "Sign In" : "Create Account"}
       subtitle={
         isLogin
-          ? "Accede a tu cuenta para gestionar el sistema"
-          : "Crea una cuenta para comenzar"
+          ? "Access your account to manage the system"
+          : "Create an account to get started"
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {!isLogin && (
           <div className="space-y-2">
-            <Label htmlFor="nombre">Nombre Completo</Label>
+            <Label htmlFor="nombre">Full Name</Label>
             <Input
               id="nombre"
               type="text"
-              placeholder="Juan Pérez"
+              placeholder="John Doe"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               required
@@ -92,11 +92,11 @@ export default function Auth() {
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="email">Correo Electrónico</Label>
+          <Label htmlFor="email">Email Address</Label>
           <Input
             id="email"
             type="email"
-            placeholder="correo@ejemplo.com"
+            placeholder="email@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -105,7 +105,7 @@ export default function Auth() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="password">Contraseña</Label>
+          <Label htmlFor="password">Password</Label>
           <Input
             id="password"
             type="password"
@@ -120,7 +120,7 @@ export default function Auth() {
 
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
+          {isLogin ? "Sign In" : "Create Account"}
         </Button>
 
         <div className="text-center text-sm">
@@ -136,8 +136,8 @@ export default function Auth() {
             disabled={loading}
           >
             {isLogin
-              ? "¿No tienes cuenta? Regístrate"
-              : "¿Ya tienes cuenta? Inicia sesión"}
+              ? "Don't have an account? Sign up"
+              : "Already have an account? Sign in"}
           </button>
         </div>
       </form>
