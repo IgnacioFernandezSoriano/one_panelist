@@ -13,15 +13,23 @@ import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
 interface Panelista {
   id: number;
   nombre_completo: string;
-  direccion_ciudad: string;
-  direccion_pais: string;
-  telefono: string;
   email: string | null;
+  telefono: string;
+  direccion_calle: string;
+  direccion_ciudad: string;
+  direccion_codigo_postal: string;
+  direccion_pais: string;
+  nodo_asignado: string | null;
   idioma: string;
   plataforma_preferida: string;
+  zona_horaria: string;
   dias_comunicacion: string;
+  horario_inicio: string;
+  horario_fin: string;
+  gestor_asignado_id: number | null;
   estado: string;
-  nodo_asignado: string | null;
+  fecha_alta: string;
+  ciudad_id: number | null;
 }
 
 export default function Panelistas() {
@@ -149,28 +157,62 @@ export default function Panelistas() {
                       {getEstadoBadge(panelista.estado)}
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Location:</span>
-                        <p className="font-medium">
-                          {panelista.direccion_ciudad}, {panelista.direccion_pais}
-                        </p>
+                        <span className="text-muted-foreground">ID:</span>
+                        <p className="font-medium">{panelista.id}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Email:</span>
+                        <p className="font-medium">{panelista.email || "N/A"}</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Phone:</span>
                         <p className="font-medium">{panelista.telefono}</p>
                       </div>
                       <div>
+                        <span className="text-muted-foreground">Address:</span>
+                        <p className="font-medium">{panelista.direccion_calle}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">City:</span>
+                        <p className="font-medium">{panelista.direccion_ciudad}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Postal Code:</span>
+                        <p className="font-medium">{panelista.direccion_codigo_postal}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Country:</span>
+                        <p className="font-medium">{panelista.direccion_pais}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Assigned Node:</span>
+                        <p className="font-medium">{panelista.nodo_asignado || "Not assigned"}</p>
+                      </div>
+                      <div>
                         <span className="text-muted-foreground">Language:</span>
                         <p className="font-medium">{panelista.idioma}</p>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Platform:</span>
+                        <span className="text-muted-foreground">Preferred Platform:</span>
                         <p className="font-medium capitalize">{panelista.plataforma_preferida}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Time Zone:</span>
+                        <p className="font-medium">{panelista.zona_horaria}</p>
                       </div>
                       <div>
                         <span className="text-muted-foreground">Communication Days:</span>
                         <p className="font-medium capitalize">{panelista.dias_comunicacion?.replace('_', ' ')}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Schedule:</span>
+                        <p className="font-medium">{panelista.horario_inicio} - {panelista.horario_fin}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Registration Date:</span>
+                        <p className="font-medium">{new Date(panelista.fecha_alta).toLocaleDateString()}</p>
                       </div>
                     </div>
                   </div>
