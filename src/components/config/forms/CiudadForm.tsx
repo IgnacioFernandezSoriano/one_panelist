@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +30,9 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
   const [clienteOpen, setClienteOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [paisOpen, setPaisOpen] = useState(false);
+  const [createRegionOpen, setCreateRegionOpen] = useState(false);
+  const [newRegionName, setNewRegionName] = useState("");
+  const [newRegionPais, setNewRegionPais] = useState("");
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
@@ -89,6 +93,45 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
     if (!error && data) {
       const uniquePaises = Array.from(new Set(data.map(c => c.pais).filter(p => p)));
       setPaises(uniquePaises);
+    }
+  };
+
+  const handleCreateRegion = async () => {
+    if (!formData.cliente_id || !newRegionName.trim() || !newRegionPais.trim()) {
+      toast({
+        title: "Error",
+        description: "Please fill all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const codigo = await generateUniqueCode("regiones");
+    const { data, error } = await supabase
+      .from("regiones")
+      .insert([{
+        cliente_id: parseInt(formData.cliente_id),
+        codigo,
+        nombre: newRegionName.trim(),
+        pais: newRegionPais.trim(),
+        estado: "activo",
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      toast({
+        title: "Error creating region",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Region created successfully" });
+      await loadRegiones(parseInt(formData.cliente_id));
+      setFormData({ ...formData, region_id: data.id.toString() });
+      setCreateRegionOpen(false);
+      setNewRegionName("");
+      setNewRegionPais("");
     }
   };
 
@@ -240,7 +283,24 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
                   onValueChange={setRegionSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>No region found.</CommandEmpty>
+                  <CommandEmpty>
+                    <div className="p-2">
+                      <p className="text-sm text-muted-foreground mb-2">No region found.</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setNewRegionName(regionSearch);
+                          setCreateRegionOpen(true);
+                          setRegionOpen(false);
+                        }}
+                        disabled={!formData.cliente_id}
+                      >
+                        Create new region
+                      </Button>
+                    </div>
+                  </CommandEmpty>
                   <CommandGroup>
                     {regiones
                       .filter(r => 
@@ -437,6 +497,48 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
           {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update City" : "Create City")}
         </Button>
       </div>
+
+      <Dialog open={createRegionOpen} onOpenChange={setCreateRegionOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Region</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input
+                value={newRegionName}
+                onChange={(e) => setNewRegionName(e.target.value)}
+                placeholder="Region name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Country *</Label>
+              <Input
+                value={newRegionPais}
+                onChange={(e) => setNewRegionPais(e.target.value)}
+                placeholder="Country"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setCreateRegionOpen(false);
+                  setNewRegionName("");
+                  setNewRegionPais("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleCreateRegion}>
+                Create Region
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </form>
   );
 }
