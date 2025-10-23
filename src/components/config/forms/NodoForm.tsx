@@ -21,9 +21,11 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
   const [clientes, setClientes] = useState<any[]>([]);
   const [regiones, setRegiones] = useState<any[]>([]);
   const [ciudades, setCiudades] = useState<any[]>([]);
+  const [panelistas, setPanelistas] = useState<any[]>([]);
   const [clienteOpen, setClienteOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [ciudadOpen, setCiudadOpen] = useState(false);
+  const [panelistaOpen, setPanelistaOpen] = useState(false);
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
@@ -31,6 +33,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
     cliente_id: initialData?.cliente_id?.toString() || "",
     region_id: initialData?.region_id?.toString() || "",
     ciudad_id: initialData?.ciudad_id?.toString() || "",
+    panelista_id: initialData?.panelista_id?.toString() || "",
     pais: initialData?.pais || "",
     ciudad: initialData?.ciudad || "",
     estado: initialData?.estado || "activo",
@@ -38,6 +41,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
 
   useEffect(() => {
     loadClientes();
+    loadPanelistas();
   }, []);
 
   useEffect(() => {
@@ -96,6 +100,18 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
     }
   };
 
+  const loadPanelistas = async () => {
+    const { data, error } = await supabase
+      .from("panelistas")
+      .select("id, nombre_completo")
+      .eq("estado", "activo")
+      .order("nombre_completo", { ascending: true });
+
+    if (!error && data) {
+      setPanelistas(data);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -117,6 +133,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
         .update({
           region_id: parseInt(formData.region_id),
           ciudad_id: parseInt(formData.ciudad_id),
+          panelista_id: formData.panelista_id ? parseInt(formData.panelista_id) : null,
           pais: formData.pais,
           ciudad: formData.ciudad,
           estado: formData.estado,
@@ -170,6 +187,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
         codigo,
         region_id: parseInt(formData.region_id),
         ciudad_id: parseInt(formData.ciudad_id),
+        panelista_id: formData.panelista_id ? parseInt(formData.panelista_id) : null,
         pais: formData.pais,
         ciudad: formData.ciudad,
         estado: formData.estado,
@@ -275,6 +293,68 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
                         )}
                       />
                       {cliente.nombre}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Panelist (Optional)</Label>
+        <Popover open={panelistaOpen} onOpenChange={setPanelistaOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={panelistaOpen}
+              className="w-full justify-between"
+            >
+              {formData.panelista_id 
+                ? panelistas.find(p => p.id === parseInt(formData.panelista_id))?.nombre_completo
+                : "Select panelist..."}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Command>
+              <CommandInput placeholder="Search panelist..." />
+              <CommandList>
+                <CommandEmpty>No panelist found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem
+                    value=""
+                    onSelect={() => {
+                      setFormData({ ...formData, panelista_id: "" });
+                      setPanelistaOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        !formData.panelista_id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    (None)
+                  </CommandItem>
+                  {panelistas.map((panelista) => (
+                    <CommandItem
+                      key={panelista.id}
+                      value={panelista.nombre_completo}
+                      onSelect={() => {
+                        setFormData({ ...formData, panelista_id: panelista.id.toString() });
+                        setPanelistaOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          formData.panelista_id === panelista.id.toString() ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {panelista.nombre_completo}
                     </CommandItem>
                   ))}
                 </CommandGroup>

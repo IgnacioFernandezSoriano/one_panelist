@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 interface ConfigDataTableProps {
   title: string;
   data: any[];
-  columns: { key: string; label: string }[];
+  columns: { key: string; label: string; render?: (item: any) => React.ReactNode }[];
   onEdit?: (item: any) => void;
   onDelete?: (item: any) => void;
   onDuplicate?: (item: any) => void;
@@ -99,7 +99,7 @@ export function ConfigDataTable({
                     <TableRow key={item.id || index}>
                       {columns.map((col) => (
                         <TableCell key={col.key}>
-                          {item[col.key]?.toString() || "-"}
+                          {col.render ? col.render(item) : (item[col.key]?.toString() || "-")}
                         </TableCell>
                       ))}
                       <TableCell className="text-right">

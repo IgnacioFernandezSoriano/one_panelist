@@ -13,7 +13,9 @@ export default function ConfigNodos() {
   const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [panelistaDialogOpen, setPanelistaDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedPanelista, setSelectedPanelista] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -24,7 +26,10 @@ export default function ConfigNodos() {
     setIsLoading(true);
     const { data: nodos, error } = await supabase
       .from("nodos")
-      .select("*")
+      .select(`
+        *,
+        panelistas:panelista_id (id, nombre_completo)
+      `)
       .order("codigo", { ascending: true });
 
     if (error) {
@@ -34,7 +39,11 @@ export default function ConfigNodos() {
         variant: "destructive",
       });
     } else {
-      setData(nodos || []);
+      const formattedData = nodos?.map(n => ({
+        ...n,
+        panelista_nombre: n.panelistas?.nombre_completo
+      })) || [];
+      setData(formattedData);
     }
     setIsLoading(false);
   };
@@ -148,6 +157,32 @@ export default function ConfigNodos() {
     { key: "codigo", label: "Code" },
     { key: "ciudad", label: "City" },
     { key: "pais", label: "Country" },
+    { 
+      key: "panelista_nombre", 
+      label: "Panelist",
+      render: (item: any) => {
+        if (!item.panelista_nombre) return "-";
+        return (
+          <button
+            onClick={async () => {
+              const { data: panelistaData } = await supabase
+                .from("panelistas")
+                .select("*")
+                .eq("id", item.panelista_id)
+                .single();
+              
+              if (panelistaData) {
+                setSelectedPanelista(panelistaData);
+                setPanelistaDialogOpen(true);
+              }
+            }}
+            className="text-primary hover:underline"
+          >
+            {item.panelista_nombre}
+          </button>
+        );
+      }
+    },
     { key: "estado", label: "Status" },
   ];
 
@@ -237,6 +272,60 @@ export default function ConfigNodos() {
                 setSelectedItem(null);
               }}
             />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={panelistaDialogOpen} onOpenChange={setPanelistaDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Panelist Information</DialogTitle>
+            </DialogHeader>
+            {selectedPanelista && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Full Name</p>
+                    <p className="text-foreground">{selectedPanelista.nombre_completo}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Email</p>
+                    <p className="text-foreground">{selectedPanelista.email || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                    <p className="text-foreground">{selectedPanelista.telefono}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Preferred Platform</p>
+                    <p className="text-foreground">{selectedPanelista.plataforma_preferida}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Language</p>
+                    <p className="text-foreground">{selectedPanelista.idioma}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Status</p>
+                    <p className="text-foreground">{selectedPanelista.estado}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Address</p>
+                  <p className="text-foreground">
+                    {selectedPanelista.direccion_calle}, {selectedPanelista.direccion_ciudad}, {selectedPanelista.direccion_codigo_postal}, {selectedPanelista.direccion_pais}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Schedule</p>
+                    <p className="text-foreground">{selectedPanelista.horario_inicio} - {selectedPanelista.horario_fin}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Time Zone</p>
+                    <p className="text-foreground">{selectedPanelista.zona_horaria}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

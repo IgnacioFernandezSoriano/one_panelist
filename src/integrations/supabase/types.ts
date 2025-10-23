@@ -406,6 +406,7 @@ export type Database = {
           codigo: string
           estado: string
           pais: string
+          panelista_id: number | null
           region_id: number | null
         }
         Insert: {
@@ -414,6 +415,7 @@ export type Database = {
           codigo: string
           estado?: string
           pais: string
+          panelista_id?: number | null
           region_id?: number | null
         }
         Update: {
@@ -422,6 +424,7 @@ export type Database = {
           codigo?: string
           estado?: string
           pais?: string
+          panelista_id?: number | null
           region_id?: number | null
         }
         Relationships: [
@@ -430,6 +433,13 @@ export type Database = {
             columns: ["ciudad_id"]
             isOneToOne: false
             referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_nodos_panelista"
+            columns: ["panelista_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas"
             referencedColumns: ["id"]
           },
           {
