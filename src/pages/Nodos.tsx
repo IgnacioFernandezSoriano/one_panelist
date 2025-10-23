@@ -9,10 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Nodo {
   codigo: string;
-  nombre: string;
   ciudad: string;
   pais: string;
-  tipo: string;
   estado: string;
 }
 
@@ -49,14 +47,6 @@ export default function Nodos() {
     return estado === "activo" ? "default" : "secondary";
   };
 
-  const getTipoBadge = (tipo: string) => {
-    const colors: Record<string, string> = {
-      urbano: "bg-accent text-accent-foreground",
-      rural: "bg-success text-success-foreground",
-      centro_logistico: "bg-primary text-primary-foreground",
-    };
-    return colors[tipo] || "bg-muted";
-  };
 
   return (
     <AppLayout>
@@ -101,16 +91,9 @@ export default function Nodos() {
                 </div>
 
                 <div className="space-y-2">
-                  <div>
-                    <h4 className="font-medium text-foreground">{nodo.nombre}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {nodo.ciudad}, {nodo.pais}
-                    </p>
-                  </div>
-
-                  <Badge className={getTipoBadge(nodo.tipo)}>
-                    {nodo.tipo.replace(/_/g, " ")}
-                  </Badge>
+                  <p className="text-sm text-muted-foreground">
+                    {nodo.ciudad}, {nodo.pais}
+                  </p>
                 </div>
               </Card>
             ))}

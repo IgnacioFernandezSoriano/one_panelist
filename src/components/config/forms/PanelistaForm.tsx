@@ -18,7 +18,7 @@ interface PanelistaFormProps {
 
 export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [nodos, setNodos] = useState<Array<{ codigo: string; nombre: string }>>([]);
+  const [nodos, setNodos] = useState<Array<{ codigo: string }>>([]);
   const [gestores, setGestores] = useState<Array<{ id: number; nombre_completo: string }>>([]);
   const [paises, setPaises] = useState<string[]>([]);
   const [nodoSearch, setNodoSearch] = useState("");
@@ -56,9 +56,9 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   const loadNodos = async () => {
     const { data, error } = await supabase
       .from("nodos")
-      .select("codigo, nombre")
+      .select("codigo")
       .eq("estado", "activo")
-      .order("nombre", { ascending: true });
+      .order("codigo", { ascending: true });
 
     if (!error && data) {
       setNodos(data);
@@ -168,7 +168,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
                 className="w-full justify-between"
               >
                 {formData.nodo_asignado 
-                  ? nodos.find(n => n.codigo === formData.nodo_asignado)?.nombre || formData.nodo_asignado
+                  ? formData.nodo_asignado
                   : "Select node..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
@@ -185,7 +185,6 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
                   <CommandGroup>
                     {nodos
                       .filter(n => 
-                        n.nombre.toLowerCase().includes(nodoSearch.toLowerCase()) ||
                         n.codigo.toLowerCase().includes(nodoSearch.toLowerCase())
                       )
                       .map((nodo) => (
@@ -204,7 +203,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
                               formData.nodo_asignado === nodo.codigo ? "opacity-100" : "opacity-0"
                             )}
                           />
-                          {nodo.nombre} ({nodo.codigo})
+                          {nodo.codigo}
                         </CommandItem>
                       ))}
                   </CommandGroup>

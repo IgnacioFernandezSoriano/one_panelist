@@ -405,27 +405,24 @@ export type Database = {
           ciudad_id: number | null
           codigo: string
           estado: string
-          nombre: string
           pais: string
-          tipo: string
+          region_id: number | null
         }
         Insert: {
           ciudad: string
           ciudad_id?: number | null
           codigo: string
           estado?: string
-          nombre: string
           pais: string
-          tipo: string
+          region_id?: number | null
         }
         Update: {
           ciudad?: string
           ciudad_id?: number | null
           codigo?: string
           estado?: string
-          nombre?: string
           pais?: string
-          tipo?: string
+          region_id?: number | null
         }
         Relationships: [
           {
@@ -433,6 +430,13 @@ export type Database = {
             columns: ["ciudad_id"]
             isOneToOne: false
             referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_nodos_region"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regiones"
             referencedColumns: ["id"]
           },
         ]

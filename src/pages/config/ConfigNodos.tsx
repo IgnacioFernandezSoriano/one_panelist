@@ -57,8 +57,6 @@ export default function ConfigNodos() {
 
   const columns = [
     { key: "codigo", label: "Code" },
-    { key: "nombre", label: "Name" },
-    { key: "tipo", label: "Type" },
     { key: "ciudad", label: "City" },
     { key: "pais", label: "Country" },
     { key: "estado", label: "Status" },
@@ -66,10 +64,10 @@ export default function ConfigNodos() {
 
   const csvConfig = {
     tableName: "nodos",
-    expectedColumns: ["codigo", "nombre", "tipo", "ciudad", "pais", "estado"],
+    expectedColumns: ["codigo", "region_id", "ciudad_id", "ciudad", "pais", "estado"],
     exampleData: [
-      ["MAD", "Madrid Centro", "urbano", "Madrid", "España", "activo"],
-      ["BCN", "Barcelona Norte", "urbano", "Barcelona", "España", "activo"],
+      ["ESP-01-001-0001", "1", "1", "Madrid", "España", "activo"],
+      ["ESP-02-002-0001", "2", "2", "Barcelona", "España", "activo"],
     ],
   };
 
