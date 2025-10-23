@@ -216,7 +216,25 @@ export function RegionForm({ onSuccess, onCancel, initialData }: RegionFormProps
                 onValueChange={setPaisSearch}
               />
               <CommandList>
-                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandEmpty>
+                  <div className="p-2">
+                    <p className="text-sm text-muted-foreground mb-2">No country found.</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (paisSearch.trim()) {
+                          setFormData({ ...formData, pais: paisSearch.trim() });
+                          setPaisOpen(false);
+                          setPaisSearch("");
+                        }
+                      }}
+                    >
+                      Add "{paisSearch}"
+                    </Button>
+                  </div>
+                </CommandEmpty>
                 <CommandGroup>
                   {paises
                     .filter(p => p.toLowerCase().includes(paisSearch.toLowerCase()))
