@@ -1,7 +1,8 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CSVImporter } from "@/components/import/CSVImporter";
-import { Database, BookOpen } from "lucide-react";
+import { Database, BookOpen, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function DataImport() {
@@ -114,65 +115,82 @@ export default function DataImport() {
             <Database className="w-8 h-8 text-primary" />
             <h1 className="text-3xl font-bold text-foreground">Data Import</h1>
           </div>
-          <p className="text-muted-foreground">
-            Import data in bulk using CSV files. Download templates to see the expected format.
+          <p className="text-muted-foreground mb-4">
+            Import data in bulk using CSV files in the correct order. Follow the numbered sequence (1-8) to avoid foreign key errors.
           </p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => window.location.href = "/import-guide"}
-          >
-            <BookOpen className="w-4 h-4 mr-2" />
-            View Complete Import Guide
-          </Button>
+          
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = "/import-guide"}
+            >
+              <BookOpen className="w-4 h-4 mr-2" />
+              View Complete Import Guide
+            </Button>
+          </div>
         </div>
 
-        <Tabs defaultValue="panelistas" className="w-full">
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-primary" />
+              Import Order Recommendation
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-3">
+              To prevent foreign key constraint errors, import data in this sequence:
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">1.</span>
+                <span>Clients</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">2.</span>
+                <span>Nodes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">3.</span>
+                <span>Users</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">4.</span>
+                <span>Templates</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">5.</span>
+                <span>Panelists</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">6.</span>
+                <span>Shipments</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">7.</span>
+                <span>Workflows</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">8.</span>
+                <span>Issues</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Tabs defaultValue="clientes" className="w-full">
           <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
-            <TabsTrigger value="panelistas">Panelists</TabsTrigger>
-            <TabsTrigger value="nodos">Nodes</TabsTrigger>
-            <TabsTrigger value="clientes">Clients</TabsTrigger>
-            <TabsTrigger value="envios">Shipments</TabsTrigger>
-            <TabsTrigger value="incidencias">Issues</TabsTrigger>
-            <TabsTrigger value="usuarios">Users</TabsTrigger>
-            <TabsTrigger value="plantillas">Templates</TabsTrigger>
-            <TabsTrigger value="workflows">Workflows</TabsTrigger>
+            <TabsTrigger value="clientes">1. Clients</TabsTrigger>
+            <TabsTrigger value="nodos">2. Nodes</TabsTrigger>
+            <TabsTrigger value="usuarios">3. Users</TabsTrigger>
+            <TabsTrigger value="plantillas">4. Templates</TabsTrigger>
+            <TabsTrigger value="panelistas">5. Panelists</TabsTrigger>
+            <TabsTrigger value="envios">6. Shipments</TabsTrigger>
+            <TabsTrigger value="workflows">7. Workflows</TabsTrigger>
+            <TabsTrigger value="incidencias">8. Issues</TabsTrigger>
           </TabsList>
 
           <div className="mt-6">
-            <TabsContent value="panelistas">
-              <CSVImporter
-                tableName="panelistas"
-                tableLabel="Panelists"
-                expectedColumns={[
-                  "nombre_completo",
-                  "direccion_calle",
-                  "direccion_ciudad",
-                  "direccion_codigo_postal",
-                  "direccion_pais",
-                  "telefono",
-                  "email",
-                  "idioma",
-                  "plataforma_preferida",
-                  "zona_horaria",
-                  "horario_inicio",
-                  "horario_fin",
-                  "nodo_asignado",
-                  "estado",
-                ]}
-                exampleData={panelistasTemplate}
-              />
-            </TabsContent>
-
-            <TabsContent value="nodos">
-              <CSVImporter
-                tableName="nodos"
-                tableLabel="Nodes"
-                expectedColumns={["codigo", "nombre", "ciudad", "pais", "tipo", "estado"]}
-                exampleData={nodosTemplate}
-              />
-            </TabsContent>
-
             <TabsContent value="clientes">
               <CSVImporter
                 tableName="clientes"
@@ -182,41 +200,12 @@ export default function DataImport() {
               />
             </TabsContent>
 
-            <TabsContent value="envios">
+            <TabsContent value="nodos">
               <CSVImporter
-                tableName="envios"
-                tableLabel="Shipments"
-                expectedColumns={[
-                  "codigo",
-                  "cliente_id",
-                  "nodo_origen",
-                  "nodo_destino",
-                  "panelista_origen_id",
-                  "panelista_destino_id",
-                  "fecha_programada",
-                  "fecha_limite",
-                  "tipo_producto",
-                  "estado",
-                  "motivo_creacion",
-                ]}
-                exampleData={enviosTemplate}
-              />
-            </TabsContent>
-
-            <TabsContent value="incidencias">
-              <CSVImporter
-                tableName="incidencias"
-                tableLabel="Issues"
-                expectedColumns={[
-                  "tipo",
-                  "panelista_id",
-                  "envio_id",
-                  "descripcion",
-                  "origen",
-                  "prioridad",
-                  "estado",
-                ]}
-                exampleData={incidenciasTemplate}
+                tableName="nodos"
+                tableLabel="Nodes"
+                expectedColumns={["codigo", "nombre", "ciudad", "pais", "tipo", "estado"]}
+                exampleData={nodosTemplate}
               />
             </TabsContent>
 
@@ -245,6 +234,51 @@ export default function DataImport() {
               />
             </TabsContent>
 
+            <TabsContent value="panelistas">
+              <CSVImporter
+                tableName="panelistas"
+                tableLabel="Panelists"
+                expectedColumns={[
+                  "nombre_completo",
+                  "direccion_calle",
+                  "direccion_ciudad",
+                  "direccion_codigo_postal",
+                  "direccion_pais",
+                  "telefono",
+                  "email",
+                  "idioma",
+                  "plataforma_preferida",
+                  "zona_horaria",
+                  "horario_inicio",
+                  "horario_fin",
+                  "nodo_asignado",
+                  "estado",
+                ]}
+                exampleData={panelistasTemplate}
+              />
+            </TabsContent>
+
+            <TabsContent value="envios">
+              <CSVImporter
+                tableName="envios"
+                tableLabel="Shipments"
+                expectedColumns={[
+                  "codigo",
+                  "cliente_id",
+                  "nodo_origen",
+                  "nodo_destino",
+                  "panelista_origen_id",
+                  "panelista_destino_id",
+                  "fecha_programada",
+                  "fecha_limite",
+                  "tipo_producto",
+                  "estado",
+                  "motivo_creacion",
+                ]}
+                exampleData={enviosTemplate}
+              />
+            </TabsContent>
+
             <TabsContent value="workflows">
               <CSVImporter
                 tableName="configuracion_workflows"
@@ -260,6 +294,23 @@ export default function DataImport() {
                   "tipo_dias",
                 ]}
                 exampleData={workflowsTemplate}
+              />
+            </TabsContent>
+
+            <TabsContent value="incidencias">
+              <CSVImporter
+                tableName="incidencias"
+                tableLabel="Issues"
+                expectedColumns={[
+                  "tipo",
+                  "panelista_id",
+                  "envio_id",
+                  "descripcion",
+                  "origen",
+                  "prioridad",
+                  "estado",
+                ]}
+                exampleData={incidenciasTemplate}
               />
             </TabsContent>
           </div>
