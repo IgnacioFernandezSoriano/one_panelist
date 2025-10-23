@@ -134,8 +134,38 @@ export default function Topology() {
     }
   };
 
-  const toggleItem = (key: string) => {
-    setOpenItems((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleItem = (key: string, level: 'cliente' | 'region' | 'ciudad') => {
+    const isOpening = !openItems[key];
+    
+    if (!isOpening) {
+      // When closing, also close all children
+      const newOpenItems = { ...openItems };
+      
+      if (level === 'cliente') {
+        // Close all regions, cities, and nodes under this client
+        const clienteId = parseInt(key.split('-')[1]);
+        const clientRegions = getRegionsByCliente(clienteId);
+        clientRegions.forEach((region) => {
+          delete newOpenItems[`region-${region.id}`];
+          const regionCities = getCiudadesByRegion(region.id);
+          regionCities.forEach((ciudad) => {
+            delete newOpenItems[`ciudad-${ciudad.id}`];
+          });
+        });
+      } else if (level === 'region') {
+        // Close all cities under this region
+        const regionId = parseInt(key.split('-')[1]);
+        const regionCities = getCiudadesByRegion(regionId);
+        regionCities.forEach((ciudad) => {
+          delete newOpenItems[`ciudad-${ciudad.id}`];
+        });
+      }
+      
+      newOpenItems[key] = false;
+      setOpenItems(newOpenItems);
+    } else {
+      setOpenItems((prev) => ({ ...prev, [key]: true }));
+    }
   };
 
   const getRegionsByCliente = (clienteId: number) => {
@@ -219,7 +249,7 @@ export default function Topology() {
         <div className="space-y-4">
           {clientes.map((cliente) => (
             <Card key={cliente.id}>
-              <Collapsible open={openItems[`cliente-${cliente.id}`]} onOpenChange={() => toggleItem(`cliente-${cliente.id}`)}>
+              <Collapsible open={openItems[`cliente-${cliente.id}`]} onOpenChange={() => toggleItem(`cliente-${cliente.id}`, 'cliente')}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CollapsibleTrigger className="flex items-center gap-3 hover:opacity-70 transition-opacity flex-1">
@@ -230,7 +260,10 @@ export default function Topology() {
                       )}
                       <Building2 className="w-6 h-6 text-primary" />
                       <div className="flex-1 text-left">
-                        <CardTitle className="text-xl">{cliente.nombre}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-xl">{cliente.nombre}</CardTitle>
+                          <Badge variant="outline" className="text-xs">Client</Badge>
+                        </div>
                         <p className="text-sm text-muted-foreground">
                           {cliente.codigo} • {cliente.pais}
                         </p>
@@ -250,7 +283,7 @@ export default function Topology() {
                     <div className="ml-8 space-y-3">
                       {getRegionsByCliente(cliente.id).map((region) => (
                         <Card key={region.id} className="bg-muted/30">
-                          <Collapsible open={openItems[`region-${region.id}`]} onOpenChange={() => toggleItem(`region-${region.id}`)}>
+                          <Collapsible open={openItems[`region-${region.id}`]} onOpenChange={() => toggleItem(`region-${region.id}`, 'region')}>
                             <CardHeader className="pb-3">
                               <div className="flex items-center justify-between">
                                 <CollapsibleTrigger className="flex items-center gap-3 hover:opacity-70 transition-opacity flex-1">
@@ -261,7 +294,10 @@ export default function Topology() {
                                   )}
                                   <Map className="w-5 h-5 text-primary" />
                                   <div className="flex-1 text-left">
-                                    <h3 className="font-semibold">{region.nombre}</h3>
+                                    <div className="flex items-center gap-2">
+                                      <h3 className="font-semibold">{region.nombre}</h3>
+                                      <Badge variant="secondary" className="text-xs">Region</Badge>
+                                    </div>
                                     <p className="text-xs text-muted-foreground">
                                       {region.codigo} • {region.pais}
                                     </p>
@@ -281,7 +317,7 @@ export default function Topology() {
                                 <div className="ml-8 space-y-2">
                                   {getCiudadesByRegion(region.id).map((ciudad) => (
                                     <Card key={ciudad.id} className="bg-background">
-                                      <Collapsible open={openItems[`ciudad-${ciudad.id}`]} onOpenChange={() => toggleItem(`ciudad-${ciudad.id}`)}>
+                                      <Collapsible open={openItems[`ciudad-${ciudad.id}`]} onOpenChange={() => toggleItem(`ciudad-${ciudad.id}`, 'ciudad')}>
                                         <CardHeader className="pb-3">
                                           <div className="flex items-center justify-between">
                                             <CollapsibleTrigger className="flex items-center gap-3 hover:opacity-70 transition-opacity flex-1">
@@ -292,7 +328,10 @@ export default function Topology() {
                                               )}
                                               <MapPin className="w-4 h-4 text-primary" />
                                               <div className="flex-1 text-left">
-                                                <h4 className="font-medium text-sm">{ciudad.nombre}</h4>
+                                                <div className="flex items-center gap-2">
+                                                  <h4 className="font-medium text-sm">{ciudad.nombre}</h4>
+                                                  <Badge variant="secondary" className="text-xs">City</Badge>
+                                                </div>
                                                 <p className="text-xs text-muted-foreground">
                                                   {ciudad.codigo} • {ciudad.clasificacion}
                                                 </p>
@@ -318,14 +357,15 @@ export default function Topology() {
                                                       <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-3 flex-1">
                                                           <GitBranch className="w-4 h-4 text-primary" />
-                                                          <div className="flex-1">
-                                                            <div className="flex items-center gap-2">
-                                                              <p className="font-medium text-sm">{nodo.codigo}</p>
-                                                              {getEstadoBadge(nodo.estado)}
-                                                            </div>
-                                                            <p className="text-xs text-muted-foreground">
-                                                              {nodo.ciudad}, {nodo.pais}
-                                                            </p>
+                                                            <div className="flex-1">
+                                                              <div className="flex items-center gap-2">
+                                                                <p className="font-medium text-sm">{nodo.codigo}</p>
+                                                                <Badge variant="outline" className="text-xs">Node</Badge>
+                                                                {getEstadoBadge(nodo.estado)}
+                                                              </div>
+                                                              <p className="text-xs text-muted-foreground">
+                                                                {nodo.ciudad}, {nodo.pais}
+                                                              </p>
                                                             {panelista && (
                                                               <div className="flex items-center gap-2 mt-1">
                                                                 <User className="w-3 h-3 text-muted-foreground" />
