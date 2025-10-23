@@ -28,7 +28,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   const [gestorOpen, setGestorOpen] = useState(false);
   const [paisOpen, setPaisOpen] = useState(false);
   const { toast } = useToast();
-  const isEditing = !!initialData;
+  const isEditing = !!initialData?.id;
   const [formData, setFormData] = useState({
     nombre_completo: initialData?.nombre_completo || "",
     email: initialData?.email || "",
