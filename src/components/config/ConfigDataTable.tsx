@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Plus, Upload } from "lucide-react";
+import { Edit, Trash2, Plus, Upload, Copy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CSVImporter } from "@/components/import/CSVImporter";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -12,6 +12,7 @@ interface ConfigDataTableProps {
   columns: { key: string; label: string }[];
   onEdit?: (item: any) => void;
   onDelete?: (item: any) => void;
+  onDuplicate?: (item: any) => void;
   onCreate?: () => void;
   isLoading?: boolean;
   csvConfig?: {
@@ -26,7 +27,8 @@ export function ConfigDataTable({
   data, 
   columns, 
   onEdit, 
-  onDelete, 
+  onDelete,
+  onDuplicate,
   onCreate,
   isLoading,
   csvConfig
@@ -109,6 +111,15 @@ export function ConfigDataTable({
                               onClick={() => onEdit(item)}
                             >
                               <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {onDuplicate && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onDuplicate(item)}
+                            >
+                              <Copy className="h-4 w-4" />
                             </Button>
                           )}
                           {onDelete && (

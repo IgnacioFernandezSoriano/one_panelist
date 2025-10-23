@@ -55,6 +55,93 @@ export default function ConfigNodos() {
     }
   };
 
+  const handleDuplicate = async (item: any) => {
+    try {
+      // Obtener información completa del cliente, región y ciudad
+      const { data: clienteData } = await supabase
+        .from("clientes")
+        .select("codigo")
+        .eq("pais", item.pais)
+        .single();
+
+      const { data: regionData } = await supabase
+        .from("regiones")
+        .select("codigo")
+        .eq("id", item.region_id)
+        .single();
+
+      const { data: ciudadData } = await supabase
+        .from("ciudades")
+        .select("codigo")
+        .eq("id", item.ciudad_id)
+        .single();
+
+      if (!clienteData || !regionData || !ciudadData) {
+        toast({
+          title: "Error",
+          description: "Could not retrieve node information",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Obtener el último secuencial para esta combinación
+      const { data: existingNodos, error: fetchError } = await supabase
+        .from("nodos")
+        .select("codigo")
+        .like("codigo", `${clienteData.codigo}-${regionData.codigo}-${ciudadData.codigo}-%`)
+        .order("codigo", { ascending: false })
+        .limit(1);
+
+      if (fetchError) {
+        toast({
+          title: "Error",
+          description: fetchError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      let secuencial = 1;
+      if (existingNodos && existingNodos.length > 0) {
+        const lastCode = existingNodos[0].codigo;
+        const parts = lastCode.split("-");
+        secuencial = parseInt(parts[parts.length - 1]) + 1;
+      }
+
+      const newCodigo = `${clienteData.codigo}-${regionData.codigo}-${ciudadData.codigo}-${secuencial.toString().padStart(4, "0")}`;
+
+      // Crear el nodo duplicado con el nuevo código
+      const { error: insertError } = await supabase
+        .from("nodos")
+        .insert([{
+          codigo: newCodigo,
+          region_id: item.region_id,
+          ciudad_id: item.ciudad_id,
+          pais: item.pais,
+          ciudad: item.ciudad,
+          estado: item.estado,
+        }]);
+
+      if (insertError) {
+        toast({
+          title: "Error duplicating node",
+          description: insertError.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "Node duplicated successfully" });
+        loadData();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const columns = [
     { key: "codigo", label: "Code" },
     { key: "ciudad", label: "City" },
@@ -89,6 +176,7 @@ export default function ConfigNodos() {
             setSelectedItem(item);
             setEditDialogOpen(true);
           }}
+          onDuplicate={handleDuplicate}
           onDelete={handleDelete}
           onCreate={() => setCreateDialogOpen(true)}
           isLoading={isLoading}
