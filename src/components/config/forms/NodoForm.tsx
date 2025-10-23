@@ -5,10 +5,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PanelistaForm } from "./PanelistaForm";
 
 interface NodoFormProps {
   onSuccess: () => void;
@@ -26,6 +28,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
   const [regionOpen, setRegionOpen] = useState(false);
   const [ciudadOpen, setCiudadOpen] = useState(false);
   const [panelistaOpen, setPanelistaOpen] = useState(false);
+  const [createPanelistaOpen, setCreatePanelistaOpen] = useState(false);
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
@@ -241,6 +244,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-4">
       {isEditing && (
         <div className="space-y-2">
@@ -322,7 +326,23 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
             <Command>
               <CommandInput placeholder="Search panelist..." />
               <CommandList>
-                <CommandEmpty>No panelist found.</CommandEmpty>
+                <CommandEmpty>
+                  <div className="p-2 space-y-2">
+                    <p className="text-sm text-muted-foreground">No panelist found.</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2"
+                      onClick={() => {
+                        setPanelistaOpen(false);
+                        setCreatePanelistaOpen(true);
+                      }}
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create new panelist
+                    </Button>
+                  </div>
+                </CommandEmpty>
                 <CommandGroup>
                   <CommandItem
                     value=""
@@ -482,5 +502,36 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
         </Button>
       </div>
     </form>
+
+    <Dialog open={createPanelistaOpen} onOpenChange={setCreatePanelistaOpen}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Create New Panelist</DialogTitle>
+        </DialogHeader>
+        <PanelistaForm
+          onSuccess={async () => {
+            // Recargar lista de panelistas
+            await loadPanelistas();
+            
+            // Obtener el último panelista creado
+            const { data: lastPanelista } = await supabase
+              .from("panelistas")
+              .select("id")
+              .order("id", { ascending: false })
+              .limit(1)
+              .single();
+            
+            if (lastPanelista) {
+              setFormData({ ...formData, panelista_id: lastPanelista.id.toString() });
+            }
+            
+            setCreatePanelistaOpen(false);
+            toast({ title: "Panelist created and assigned successfully" });
+          }}
+          onCancel={() => setCreatePanelistaOpen(false)}
+        />
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
