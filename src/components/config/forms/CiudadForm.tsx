@@ -106,8 +106,8 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
         codigo_postal_principal: null,
         pais: formData.pais,
         clasificacion: formData.clasificacion,
-        latitud: parseFloat(formData.latitud),
-        longitud: parseFloat(formData.longitud),
+        latitud: formData.latitud ? parseFloat(formData.latitud) : null,
+        longitud: formData.longitud ? parseFloat(formData.longitud) : null,
         volumen_poblacional: null,
         volumen_trafico_postal: null,
         criterio_clasificacion: null,
@@ -130,8 +130,8 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
         codigo_postal_principal: null,
         pais: formData.pais,
         clasificacion: formData.clasificacion,
-        latitud: parseFloat(formData.latitud),
-        longitud: parseFloat(formData.longitud),
+        latitud: formData.latitud ? parseFloat(formData.latitud) : null,
+        longitud: formData.longitud ? parseFloat(formData.longitud) : null,
         volumen_poblacional: null,
         volumen_trafico_postal: null,
         criterio_clasificacion: null,
@@ -384,26 +384,24 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="latitud">Latitude *</Label>
+          <Label htmlFor="latitud">Latitude</Label>
           <Input
             id="latitud"
             type="number"
             step="0.0000001"
             value={formData.latitud}
             onChange={(e) => setFormData({ ...formData, latitud: e.target.value })}
-            required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="longitud">Longitude *</Label>
+          <Label htmlFor="longitud">Longitude</Label>
           <Input
             id="longitud"
             type="number"
             step="0.0000001"
             value={formData.longitud}
             onChange={(e) => setFormData({ ...formData, longitud: e.target.value })}
-            required
           />
         </div>
       </div>
