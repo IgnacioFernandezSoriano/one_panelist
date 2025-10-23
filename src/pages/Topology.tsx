@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { NodoForm } from "@/components/config/forms/NodoForm";
 import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
+import { ClienteForm } from "@/components/config/forms/ClienteForm";
+import { RegionForm } from "@/components/config/forms/RegionForm";
+import { CiudadForm } from "@/components/config/forms/CiudadForm";
 
 interface Cliente {
   id: number;
@@ -88,8 +91,11 @@ export default function Topology() {
   const [selectedPanelista, setSelectedPanelista] = useState<Panelista | null>(null);
   
   const [clienteDialogOpen, setClienteDialogOpen] = useState(false);
+  const [editClienteDialogOpen, setEditClienteDialogOpen] = useState(false);
   const [regionDialogOpen, setRegionDialogOpen] = useState(false);
+  const [editRegionDialogOpen, setEditRegionDialogOpen] = useState(false);
   const [ciudadDialogOpen, setCiudadDialogOpen] = useState(false);
+  const [editCiudadDialogOpen, setEditCiudadDialogOpen] = useState(false);
   const [nodoDialogOpen, setNodoDialogOpen] = useState(false);
   const [editNodoDialogOpen, setEditNodoDialogOpen] = useState(false);
   const [panelistaDialogOpen, setPanelistaDialogOpen] = useState(false);
@@ -190,14 +196,29 @@ export default function Topology() {
     setClienteDialogOpen(true);
   };
 
+  const handleEditCliente = (cliente: Cliente) => {
+    setSelectedCliente(cliente);
+    setEditClienteDialogOpen(true);
+  };
+
   const handleViewRegion = (region: Region) => {
     setSelectedRegion(region);
     setRegionDialogOpen(true);
   };
 
+  const handleEditRegion = (region: Region) => {
+    setSelectedRegion(region);
+    setEditRegionDialogOpen(true);
+  };
+
   const handleViewCiudad = (ciudad: Ciudad) => {
     setSelectedCiudad(ciudad);
     setCiudadDialogOpen(true);
+  };
+
+  const handleEditCiudad = async (ciudad: Ciudad) => {
+    setSelectedCiudad(ciudad);
+    setEditCiudadDialogOpen(true);
   };
 
   const handleViewNodo = (nodo: Nodo) => {
@@ -272,7 +293,10 @@ export default function Topology() {
                     <div className="flex items-center gap-2">
                       {getEstadoBadge(cliente.estado)}
                       <Button variant="ghost" size="sm" onClick={() => handleViewCliente(cliente)}>
-                        View Details
+                        View
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleEditCliente(cliente)}>
+                        <Pencil className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -306,7 +330,10 @@ export default function Topology() {
                                 <div className="flex items-center gap-2">
                                   {getEstadoBadge(region.estado)}
                                   <Button variant="ghost" size="sm" onClick={() => handleViewRegion(region)}>
-                                    View Details
+                                    View
+                                  </Button>
+                                  <Button variant="ghost" size="sm" onClick={() => handleEditRegion(region)}>
+                                    <Pencil className="w-4 h-4" />
                                   </Button>
                                 </div>
                               </div>
@@ -340,7 +367,10 @@ export default function Topology() {
                                             <div className="flex items-center gap-2">
                                               {getEstadoBadge(ciudad.estado)}
                                               <Button variant="ghost" size="sm" onClick={() => handleViewCiudad(ciudad)}>
-                                                View Details
+                                                View
+                                              </Button>
+                                              <Button variant="ghost" size="sm" onClick={() => handleEditCiudad(ciudad)}>
+                                                <Pencil className="w-4 h-4" />
                                               </Button>
                                             </div>
                                           </div>
@@ -424,10 +454,28 @@ export default function Topology() {
         <Dialog open={clienteDialogOpen} onOpenChange={setClienteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Client Details</DialogTitle>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Client Details</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setClienteDialogOpen(false);
+                    setEditClienteDialogOpen(true);
+                  }}
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              </DialogTitle>
             </DialogHeader>
             {selectedCliente && (
               <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">ID</p>
+                  <p className="font-medium">{selectedCliente.id}</p>
+                </div>
+                <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground">Code</p>
                   <p className="font-medium">{selectedCliente.codigo}</p>
@@ -452,14 +500,56 @@ export default function Topology() {
           </DialogContent>
         </Dialog>
 
+        {/* Cliente Edit Dialog */}
+        <Dialog open={editClienteDialogOpen} onOpenChange={setEditClienteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Client</DialogTitle>
+            </DialogHeader>
+            {selectedCliente && (
+              <ClienteForm
+                initialData={selectedCliente}
+                onSuccess={() => {
+                  setEditClienteDialogOpen(false);
+                  setSelectedCliente(null);
+                  loadData();
+                  toast({
+                    title: "Success",
+                    description: "Client updated successfully",
+                  });
+                }}
+                onCancel={() => setEditClienteDialogOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Region Detail Dialog */}
         <Dialog open={regionDialogOpen} onOpenChange={setRegionDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Region Details</DialogTitle>
+              <DialogTitle className="flex items-center justify-between">
+                <span>Region Details</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setRegionDialogOpen(false);
+                    setEditRegionDialogOpen(true);
+                  }}
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              </DialogTitle>
             </DialogHeader>
             {selectedRegion && (
               <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">ID</p>
+                  <p className="font-medium">{selectedRegion.id}</p>
+                </div>
+                <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground">Code</p>
                   <p className="font-medium">{selectedRegion.codigo}</p>
@@ -493,14 +583,56 @@ export default function Topology() {
           </DialogContent>
         </Dialog>
 
+        {/* Region Edit Dialog */}
+        <Dialog open={editRegionDialogOpen} onOpenChange={setEditRegionDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Region</DialogTitle>
+            </DialogHeader>
+            {selectedRegion && (
+              <RegionForm
+                initialData={selectedRegion}
+                onSuccess={() => {
+                  setEditRegionDialogOpen(false);
+                  setSelectedRegion(null);
+                  loadData();
+                  toast({
+                    title: "Success",
+                    description: "Region updated successfully",
+                  });
+                }}
+                onCancel={() => setEditRegionDialogOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
         {/* Ciudad Detail Dialog */}
         <Dialog open={ciudadDialogOpen} onOpenChange={setCiudadDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>City Details</DialogTitle>
+              <DialogTitle className="flex items-center justify-between">
+                <span>City Details</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCiudadDialogOpen(false);
+                    setEditCiudadDialogOpen(true);
+                  }}
+                >
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+              </DialogTitle>
             </DialogHeader>
             {selectedCiudad && (
               <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">ID</p>
+                  <p className="font-medium">{selectedCiudad.id}</p>
+                </div>
+                <Separator />
                 <div>
                   <p className="text-sm text-muted-foreground">Code</p>
                   <p className="font-medium">{selectedCiudad.codigo}</p>
@@ -544,6 +676,60 @@ export default function Topology() {
                   {getEstadoBadge(selectedCiudad.estado)}
                 </div>
               </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Ciudad Edit Dialog */}
+        <Dialog open={editCiudadDialogOpen} onOpenChange={setEditCiudadDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit City</DialogTitle>
+            </DialogHeader>
+            {selectedCiudad && (
+              <CiudadForm
+                initialData={selectedCiudad}
+                onSuccess={async () => {
+                  // Update cascading data in nodos when ciudad name or country changes
+                  const oldCiudad = selectedCiudad;
+                  await loadData(); // Reload to get updated ciudad data
+                  
+                  // Get the updated ciudad data
+                  const { data: updatedCiudad } = await supabase
+                    .from("ciudades")
+                    .select("*")
+                    .eq("id", oldCiudad.id)
+                    .single();
+
+                  if (updatedCiudad && (updatedCiudad.nombre !== oldCiudad.nombre || updatedCiudad.pais !== oldCiudad.pais)) {
+                    // Update all nodos that reference this ciudad
+                    const { error } = await supabase
+                      .from("nodos")
+                      .update({
+                        ciudad: updatedCiudad.nombre,
+                        pais: updatedCiudad.pais
+                      })
+                      .eq("ciudad_id", updatedCiudad.id);
+
+                    if (error) {
+                      toast({
+                        title: "Warning",
+                        description: "City updated but nodes synchronization failed: " + error.message,
+                        variant: "destructive",
+                      });
+                    }
+                  }
+
+                  setEditCiudadDialogOpen(false);
+                  setSelectedCiudad(null);
+                  await loadData(); // Reload again to show updated nodes
+                  toast({
+                    title: "Success",
+                    description: "City and related nodes updated successfully",
+                  });
+                }}
+                onCancel={() => setEditCiudadDialogOpen(false)}
+              />
             )}
           </DialogContent>
         </Dialog>
