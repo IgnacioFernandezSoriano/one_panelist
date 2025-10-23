@@ -509,6 +509,9 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
           <DialogTitle>Create New Panelist</DialogTitle>
         </DialogHeader>
         <PanelistaForm
+          initialData={{
+            nodo_asignado: formData.codigo
+          }}
           onSuccess={async () => {
             // Recargar lista de panelistas
             await loadPanelistas();
