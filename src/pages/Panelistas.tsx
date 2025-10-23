@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Plus, Search, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
@@ -39,7 +40,20 @@ export default function Panelistas() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedPanelista, setSelectedPanelista] = useState<Panelista | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const { toast } = useToast();
+
+  const toggleExpand = (id: number) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
 
   useEffect(() => {
     loadPanelistas();
@@ -147,97 +161,115 @@ export default function Panelistas() {
         ) : (
           <div className="grid gap-4">
             {filteredPanelistas.map((panelista) => (
-              <Card key={panelista.id} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-foreground">
-                        {panelista.nombre_completo}
-                      </h3>
-                      {getEstadoBadge(panelista.estado)}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">ID:</span>
-                        <p className="font-medium">{panelista.id}</p>
+              <Card key={panelista.id} className="hover:shadow-lg transition-shadow">
+                <Collapsible open={expandedItems.has(panelista.id)} onOpenChange={() => toggleExpand(panelista.id)}>
+                  <div className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold text-foreground">
+                            {panelista.nombre_completo}
+                          </h3>
+                          {getEstadoBadge(panelista.estado)}
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">ID:</span>
+                            <p className="font-medium">{panelista.id}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">City:</span>
+                            <p className="font-medium">{panelista.direccion_ciudad}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Phone:</span>
+                            <p className="font-medium">{panelista.telefono}</p>
+                          </div>
+                        </div>
+                        
+                        <CollapsibleContent>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm mt-4 pt-4 border-t">
+                            <div>
+                              <span className="text-muted-foreground">Email:</span>
+                              <p className="font-medium">{panelista.email || "N/A"}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Address:</span>
+                              <p className="font-medium">{panelista.direccion_calle}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Postal Code:</span>
+                              <p className="font-medium">{panelista.direccion_codigo_postal}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Country:</span>
+                              <p className="font-medium">{panelista.direccion_pais}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Assigned Node:</span>
+                              <p className="font-medium">{panelista.nodo_asignado || "Not assigned"}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Language:</span>
+                              <p className="font-medium">{panelista.idioma}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Preferred Platform:</span>
+                              <p className="font-medium capitalize">{panelista.plataforma_preferida}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Time Zone:</span>
+                              <p className="font-medium">{panelista.zona_horaria}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Communication Days:</span>
+                              <p className="font-medium capitalize">{panelista.dias_comunicacion?.replace('_', ' ')}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Schedule:</span>
+                              <p className="font-medium">{panelista.horario_inicio} - {panelista.horario_fin}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Registration Date:</span>
+                              <p className="font-medium">{new Date(panelista.fecha_alta).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                        </CollapsibleContent>
                       </div>
-                      <div>
-                        <span className="text-muted-foreground">Email:</span>
-                        <p className="font-medium">{panelista.email || "N/A"}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Phone:</span>
-                        <p className="font-medium">{panelista.telefono}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Address:</span>
-                        <p className="font-medium">{panelista.direccion_calle}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">City:</span>
-                        <p className="font-medium">{panelista.direccion_ciudad}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Postal Code:</span>
-                        <p className="font-medium">{panelista.direccion_codigo_postal}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Country:</span>
-                        <p className="font-medium">{panelista.direccion_pais}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Assigned Node:</span>
-                        <p className="font-medium">{panelista.nodo_asignado || "Not assigned"}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Language:</span>
-                        <p className="font-medium">{panelista.idioma}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Preferred Platform:</span>
-                        <p className="font-medium capitalize">{panelista.plataforma_preferida}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Time Zone:</span>
-                        <p className="font-medium">{panelista.zona_horaria}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Communication Days:</span>
-                        <p className="font-medium capitalize">{panelista.dias_comunicacion?.replace('_', ' ')}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Schedule:</span>
-                        <p className="font-medium">{panelista.horario_inicio} - {panelista.horario_fin}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Registration Date:</span>
-                        <p className="font-medium">{new Date(panelista.fecha_alta).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex gap-2 ml-4">
-                    <Button 
-                      variant="outline" 
-                      size="icon"
-                      onClick={() => {
-                        setSelectedPanelista(panelista);
-                        setEditDialogOpen(true);
-                      }}
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDelete(panelista)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      <div className="flex gap-2 ml-4">
+                        <CollapsibleTrigger asChild>
+                          <Button variant="outline" size="icon">
+                            {expandedItems.has(panelista.id) ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </CollapsibleTrigger>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => {
+                            setSelectedPanelista(panelista);
+                            setEditDialogOpen(true);
+                          }}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(panelista)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Collapsible>
               </Card>
             ))}
           </div>
