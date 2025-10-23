@@ -150,13 +150,19 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="telefono">Phone *</Label>
+          <Label htmlFor="telefono">Phone * (International Format)</Label>
           <Input
             id="telefono"
             value={formData.telefono}
             onChange={(e) => setFormData({ ...formData, telefono: e.target.value })}
+            placeholder="+34600123456"
             required
+            pattern="^\+[1-9]\d{1,14}$"
+            title="Format: +[country code][number] (e.g., +34600123456)"
           />
+          <p className="text-xs text-muted-foreground">
+            Format: +[country code][number] (e.g., +34600123456, +52155123456, +12025551234)
+          </p>
         </div>
 
         <div className="space-y-2">

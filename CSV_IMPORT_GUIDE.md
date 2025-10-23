@@ -32,11 +32,12 @@ nombre_completo, direccion_calle, direccion_ciudad, direccion_codigo_postal, dir
 ### Example CSV:
 ```csv
 nombre_completo,direccion_calle,direccion_ciudad,direccion_codigo_postal,direccion_pais,telefono,email,idioma,plataforma_preferida,zona_horaria,horario_inicio,horario_fin,nodo_asignado,estado
-John Doe,123 Main Street,New York,10001,USA,+1234567890,john@example.com,EN,whatsapp,America/New_York,09:00:00,17:00:00,NYC001,activo
-Jane Smith,456 Oak Avenue,Los Angeles,90001,USA,+1987654321,jane@example.com,EN,telegram,America/Los_Angeles,08:00:00,16:00:00,LA001,activo
+John Doe,123 Main Street,New York,10001,USA,+12125551234,john@example.com,EN,whatsapp,America/New_York,09:00:00,17:00:00,NYC001,activo
+Jane Smith,456 Oak Avenue,Los Angeles,90001,USA,+13105559876,jane@example.com,EN,telegram,America/Los_Angeles,08:00:00,16:00:00,LA001,activo
 ```
 
 ### Field Notes:
+- **telefono**: International format required: +[country code][number] (e.g., +34600123456, +12125551234, +52155123456)
 - **idioma**: Must be EN, FR, AR, or SP
 - **plataforma_preferida**: Must be whatsapp or telegram
 - **zona_horaria**: Use IANA timezone names (e.g., America/New_York)
@@ -149,12 +150,13 @@ nombre_completo, email, password_hash, rol, telefono, estado
 ### Example CSV:
 ```csv
 nombre_completo,email,password_hash,rol,telefono,estado
-Admin User,admin@example.com,$2a$10$example_hash,administrador,+1234567890,activo
-Manager User,manager@example.com,$2a$10$example_hash,gestor,+1987654321,activo
-Coordinator User,coordinator@example.com,$2a$10$example_hash,coordinador,+1555555555,activo
+Admin User,admin@example.com,$2a$10$example_hash,administrador,+12125551234,activo
+Manager User,manager@example.com,$2a$10$example_hash,gestor,+13105559876,activo
+Coordinator User,coordinator@example.com,$2a$10$example_hash,coordinador,+34600123456,activo
 ```
 
 ### Field Notes:
+- **telefono**: International format required: +[country code][number] (e.g., +34600123456, +12125551234)
 - **password_hash**: Must be a bcrypt-hashed password (use a tool to generate)
 - **rol**: gestor, coordinador, or administrador
 - **estado**: activo or inactivo
