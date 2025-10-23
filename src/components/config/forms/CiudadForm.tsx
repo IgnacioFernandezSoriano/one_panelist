@@ -32,7 +32,6 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
   const [paisOpen, setPaisOpen] = useState(false);
   const [createRegionOpen, setCreateRegionOpen] = useState(false);
   const [newRegionName, setNewRegionName] = useState("");
-  const [newRegionPais, setNewRegionPais] = useState("");
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
@@ -97,10 +96,26 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
   };
 
   const handleCreateRegion = async () => {
-    if (!formData.cliente_id || !newRegionName.trim() || !newRegionPais.trim()) {
+    if (!formData.cliente_id || !newRegionName.trim()) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Obtener el país del cliente seleccionado
+    const { data: clienteData, error: clienteError } = await supabase
+      .from("clientes")
+      .select("pais")
+      .eq("id", parseInt(formData.cliente_id))
+      .single();
+
+    if (clienteError || !clienteData) {
+      toast({
+        title: "Error",
+        description: "Could not retrieve client information",
         variant: "destructive",
       });
       return;
@@ -113,7 +128,7 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
         cliente_id: parseInt(formData.cliente_id),
         codigo,
         nombre: newRegionName.trim(),
-        pais: newRegionPais.trim(),
+        pais: clienteData.pais,
         estado: "activo",
       }])
       .select()
@@ -131,7 +146,6 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
       setFormData({ ...formData, region_id: data.id.toString() });
       setCreateRegionOpen(false);
       setNewRegionName("");
-      setNewRegionPais("");
     }
   };
 
@@ -512,14 +526,6 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
                 placeholder="Region name"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Country *</Label>
-              <Input
-                value={newRegionPais}
-                onChange={(e) => setNewRegionPais(e.target.value)}
-                placeholder="Country"
-              />
-            </div>
             <div className="flex gap-2 justify-end">
               <Button
                 type="button"
@@ -527,7 +533,6 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
                 onClick={() => {
                   setCreateRegionOpen(false);
                   setNewRegionName("");
-                  setNewRegionPais("");
                 }}
               >
                 Cancel
