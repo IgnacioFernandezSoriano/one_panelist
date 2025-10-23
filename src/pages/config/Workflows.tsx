@@ -10,6 +10,8 @@ export default function ConfigWorkflows() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -89,6 +91,10 @@ export default function ConfigWorkflows() {
           title="Workflow Configurations"
           data={data}
           columns={columns}
+          onEdit={(item) => {
+            setSelectedItem(item);
+            setEditDialogOpen(true);
+          }}
           onDelete={handleDelete}
           onCreate={() => setCreateDialogOpen(true)}
           isLoading={isLoading}
@@ -106,6 +112,26 @@ export default function ConfigWorkflows() {
                 loadData();
               }}
               onCancel={() => setCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Workflow</DialogTitle>
+            </DialogHeader>
+            <WorkflowForm
+              initialData={selectedItem}
+              onSuccess={() => {
+                setEditDialogOpen(false);
+                setSelectedItem(null);
+                loadData();
+              }}
+              onCancel={() => {
+                setEditDialogOpen(false);
+                setSelectedItem(null);
+              }}
             />
           </DialogContent>
         </Dialog>

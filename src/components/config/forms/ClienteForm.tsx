@@ -9,32 +9,44 @@ import { useToast } from "@/hooks/use-toast";
 interface ClienteFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: any;
 }
 
-export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
+export function ClienteForm({ onSuccess, onCancel, initialData }: ClienteFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isEditing = !!initialData;
   const [formData, setFormData] = useState({
-    codigo: "",
-    nombre: "",
-    pais: "",
-    estado: "activo",
+    codigo: initialData?.codigo || "",
+    nombre: initialData?.nombre || "",
+    pais: initialData?.pais || "",
+    estado: initialData?.estado || "activo",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { error } = await supabase.from("clientes").insert([formData]);
+    let error;
+    if (isEditing) {
+      const result = await supabase
+        .from("clientes")
+        .update(formData)
+        .eq("id", initialData.id);
+      error = result.error;
+    } else {
+      const result = await supabase.from("clientes").insert([formData]);
+      error = result.error;
+    }
 
     if (error) {
       toast({
-        title: "Error creating client",
+        title: `Error ${isEditing ? "updating" : "creating"} client`,
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "Client created successfully" });
+      toast({ title: `Client ${isEditing ? "updated" : "created"} successfully` });
       onSuccess();
     }
     setIsSubmitting(false);
@@ -90,7 +102,7 @@ export function ClienteForm({ onSuccess, onCancel }: ClienteFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Client"}
+          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Client" : "Create Client")}
         </Button>
       </div>
     </form>

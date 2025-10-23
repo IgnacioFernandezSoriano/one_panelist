@@ -9,27 +9,29 @@ import { useToast } from "@/hooks/use-toast";
 interface WorkflowFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: any;
 }
 
-export function WorkflowForm({ onSuccess, onCancel }: WorkflowFormProps) {
+export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isEditing = !!initialData;
   const [formData, setFormData] = useState({
-    cliente_id: "",
-    servicio_postal: "",
-    tipo_dias: "habiles",
-    dias_verificacion_recepcion: "",
-    dias_recordatorio: "",
-    dias_escalamiento: "",
-    dias_declarar_extravio: "",
-    dias_segunda_verificacion: "",
+    cliente_id: initialData?.cliente_id?.toString() || "",
+    servicio_postal: initialData?.servicio_postal || "",
+    tipo_dias: initialData?.tipo_dias || "habiles",
+    dias_verificacion_recepcion: initialData?.dias_verificacion_recepcion?.toString() || "",
+    dias_recordatorio: initialData?.dias_recordatorio?.toString() || "",
+    dias_escalamiento: initialData?.dias_escalamiento?.toString() || "",
+    dias_declarar_extravio: initialData?.dias_declarar_extravio?.toString() || "",
+    dias_segunda_verificacion: initialData?.dias_segunda_verificacion?.toString() || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { error } = await supabase.from("configuracion_workflows").insert([{
+    const dataToSave = {
       cliente_id: parseInt(formData.cliente_id),
       servicio_postal: formData.servicio_postal || null,
       tipo_dias: formData.tipo_dias,
@@ -38,16 +40,28 @@ export function WorkflowForm({ onSuccess, onCancel }: WorkflowFormProps) {
       dias_escalamiento: parseInt(formData.dias_escalamiento),
       dias_declarar_extravio: parseInt(formData.dias_declarar_extravio),
       dias_segunda_verificacion: formData.dias_segunda_verificacion ? parseInt(formData.dias_segunda_verificacion) : null,
-    }]);
+    };
+
+    let error;
+    if (isEditing) {
+      const result = await supabase
+        .from("configuracion_workflows")
+        .update(dataToSave)
+        .eq("id", initialData.id);
+      error = result.error;
+    } else {
+      const result = await supabase.from("configuracion_workflows").insert([dataToSave]);
+      error = result.error;
+    }
 
     if (error) {
       toast({
-        title: "Error creating workflow",
+        title: `Error ${isEditing ? "updating" : "creating"} workflow`,
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "Workflow created successfully" });
+      toast({ title: `Workflow ${isEditing ? "updated" : "created"} successfully` });
       onSuccess();
     }
     setIsSubmitting(false);
@@ -149,7 +163,7 @@ export function WorkflowForm({ onSuccess, onCancel }: WorkflowFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Workflow"}
+          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Workflow" : "Create Workflow")}
         </Button>
       </div>
     </form>

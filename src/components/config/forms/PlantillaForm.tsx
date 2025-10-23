@@ -10,18 +10,20 @@ import { useToast } from "@/hooks/use-toast";
 interface PlantillaFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: any;
 }
 
-export function PlantillaForm({ onSuccess, onCancel }: PlantillaFormProps) {
+export function PlantillaForm({ onSuccess, onCancel, initialData }: PlantillaFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isEditing = !!initialData;
   const [formData, setFormData] = useState({
-    codigo: "",
-    tipo: "notificacion",
-    idioma: "es",
-    contenido: "",
-    variables: "{}",
-    estado: "activa",
+    codigo: initialData?.codigo || "",
+    tipo: initialData?.tipo || "notificacion",
+    idioma: initialData?.idioma || "es",
+    contenido: initialData?.contenido || "",
+    variables: initialData?.variables ? JSON.stringify(initialData.variables, null, 2) : "{}",
+    estado: initialData?.estado || "activa",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,19 +32,35 @@ export function PlantillaForm({ onSuccess, onCancel }: PlantillaFormProps) {
 
     try {
       const jsonVariables = JSON.parse(formData.variables);
-      const { error } = await supabase.from("plantillas_mensajes").insert([{
-        ...formData,
+      const dataToSave = {
+        codigo: formData.codigo,
+        tipo: formData.tipo,
+        idioma: formData.idioma,
+        contenido: formData.contenido,
         variables: jsonVariables,
-      }]);
+        estado: formData.estado,
+      };
+
+      let error;
+      if (isEditing) {
+        const result = await supabase
+          .from("plantillas_mensajes")
+          .update(dataToSave)
+          .eq("id", initialData.id);
+        error = result.error;
+      } else {
+        const result = await supabase.from("plantillas_mensajes").insert([dataToSave]);
+        error = result.error;
+      }
 
       if (error) {
         toast({
-          title: "Error creating template",
+          title: `Error ${isEditing ? "updating" : "creating"} template`,
           description: error.message,
           variant: "destructive",
         });
       } else {
-        toast({ title: "Template created successfully" });
+        toast({ title: `Template ${isEditing ? "updated" : "created"} successfully` });
         onSuccess();
       }
     } catch (err) {
@@ -122,7 +140,7 @@ export function PlantillaForm({ onSuccess, onCancel }: PlantillaFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Template"}
+          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Template" : "Create Template")}
         </Button>
       </div>
     </form>

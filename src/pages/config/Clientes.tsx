@@ -10,6 +10,8 @@ export default function ConfigClientes() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -85,6 +87,10 @@ export default function ConfigClientes() {
           title="Clients"
           data={data}
           columns={columns}
+          onEdit={(item) => {
+            setSelectedItem(item);
+            setEditDialogOpen(true);
+          }}
           onDelete={handleDelete}
           onCreate={() => setCreateDialogOpen(true)}
           isLoading={isLoading}
@@ -102,6 +108,26 @@ export default function ConfigClientes() {
                 loadData();
               }}
               onCancel={() => setCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Client</DialogTitle>
+            </DialogHeader>
+            <ClienteForm
+              initialData={selectedItem}
+              onSuccess={() => {
+                setEditDialogOpen(false);
+                setSelectedItem(null);
+                loadData();
+              }}
+              onCancel={() => {
+                setEditDialogOpen(false);
+                setSelectedItem(null);
+              }}
             />
           </DialogContent>
         </Dialog>

@@ -9,46 +9,60 @@ import { useToast } from "@/hooks/use-toast";
 interface PanelistaFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: any;
 }
 
-export function PanelistaForm({ onSuccess, onCancel }: PanelistaFormProps) {
+export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isEditing = !!initialData;
   const [formData, setFormData] = useState({
-    nombre_completo: "",
-    email: "",
-    telefono: "",
-    direccion_calle: "",
-    direccion_ciudad: "",
-    direccion_codigo_postal: "",
-    direccion_pais: "",
-    nodo_asignado: "",
-    idioma: "es",
-    zona_horaria: "Europe/Madrid",
-    horario_inicio: "09:00:00",
-    horario_fin: "18:00:00",
-    plataforma_preferida: "whatsapp",
-    gestor_asignado_id: "",
-    estado: "activo",
+    nombre_completo: initialData?.nombre_completo || "",
+    email: initialData?.email || "",
+    telefono: initialData?.telefono || "",
+    direccion_calle: initialData?.direccion_calle || "",
+    direccion_ciudad: initialData?.direccion_ciudad || "",
+    direccion_codigo_postal: initialData?.direccion_codigo_postal || "",
+    direccion_pais: initialData?.direccion_pais || "",
+    nodo_asignado: initialData?.nodo_asignado || "",
+    idioma: initialData?.idioma || "es",
+    zona_horaria: initialData?.zona_horaria || "Europe/Madrid",
+    horario_inicio: initialData?.horario_inicio || "09:00:00",
+    horario_fin: initialData?.horario_fin || "18:00:00",
+    plataforma_preferida: initialData?.plataforma_preferida || "whatsapp",
+    gestor_asignado_id: initialData?.gestor_asignado_id?.toString() || "",
+    estado: initialData?.estado || "activo",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { error } = await supabase.from("panelistas").insert([{
+    const dataToSave = {
       ...formData,
       gestor_asignado_id: formData.gestor_asignado_id ? parseInt(formData.gestor_asignado_id) : null,
-    }]);
+    };
+
+    let error;
+    if (isEditing) {
+      const result = await supabase
+        .from("panelistas")
+        .update(dataToSave)
+        .eq("id", initialData.id);
+      error = result.error;
+    } else {
+      const result = await supabase.from("panelistas").insert([dataToSave]);
+      error = result.error;
+    }
 
     if (error) {
       toast({
-        title: "Error creating panelist",
+        title: `Error ${isEditing ? "updating" : "creating"} panelist`,
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "Panelist created successfully" });
+      toast({ title: `Panelist ${isEditing ? "updated" : "created"} successfully` });
       onSuccess();
     }
     setIsSubmitting(false);
@@ -216,7 +230,7 @@ export function PanelistaForm({ onSuccess, onCancel }: PanelistaFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Panelist"}
+          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Panelist" : "Create Panelist")}
         </Button>
       </div>
     </form>

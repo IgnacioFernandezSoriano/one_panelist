@@ -9,34 +9,46 @@ import { useToast } from "@/hooks/use-toast";
 interface NodoFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: any;
 }
 
-export function NodoForm({ onSuccess, onCancel }: NodoFormProps) {
+export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isEditing = !!initialData;
   const [formData, setFormData] = useState({
-    codigo: "",
-    nombre: "",
-    tipo: "urbano",
-    ciudad: "",
-    pais: "",
-    estado: "activo",
+    codigo: initialData?.codigo || "",
+    nombre: initialData?.nombre || "",
+    tipo: initialData?.tipo || "urbano",
+    ciudad: initialData?.ciudad || "",
+    pais: initialData?.pais || "",
+    estado: initialData?.estado || "activo",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { error } = await supabase.from("nodos").insert([formData]);
+    let error;
+    if (isEditing) {
+      const result = await supabase
+        .from("nodos")
+        .update(formData)
+        .eq("codigo", initialData.codigo);
+      error = result.error;
+    } else {
+      const result = await supabase.from("nodos").insert([formData]);
+      error = result.error;
+    }
 
     if (error) {
       toast({
-        title: "Error creating node",
+        title: `Error ${isEditing ? "updating" : "creating"} node`,
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "Node created successfully" });
+      toast({ title: `Node ${isEditing ? "updated" : "created"} successfully` });
       onSuccess();
     }
     setIsSubmitting(false);
@@ -50,6 +62,7 @@ export function NodoForm({ onSuccess, onCancel }: NodoFormProps) {
           id="codigo"
           value={formData.codigo}
           onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
+          disabled={isEditing}
           required
         />
       </div>
@@ -116,7 +129,7 @@ export function NodoForm({ onSuccess, onCancel }: NodoFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Node"}
+          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Node" : "Create Node")}
         </Button>
       </div>
     </form>

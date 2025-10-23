@@ -9,35 +9,47 @@ import { useToast } from "@/hooks/use-toast";
 interface UsuarioFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: any;
 }
 
-export function UsuarioForm({ onSuccess, onCancel }: UsuarioFormProps) {
+export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const isEditing = !!initialData;
   const [formData, setFormData] = useState({
-    nombre_completo: "",
-    email: "",
-    password_hash: "",
-    rol: "gestor" as "administrador" | "coordinador" | "gestor",
-    telefono: "",
-    whatsapp_telegram_cuenta: "",
-    estado: "activo",
+    nombre_completo: initialData?.nombre_completo || "",
+    email: initialData?.email || "",
+    password_hash: initialData?.password_hash || "",
+    rol: (initialData?.rol || "gestor") as "administrador" | "coordinador" | "gestor",
+    telefono: initialData?.telefono || "",
+    whatsapp_telegram_cuenta: initialData?.whatsapp_telegram_cuenta || "",
+    estado: initialData?.estado || "activo",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { error } = await supabase.from("usuarios").insert([formData]);
+    let error;
+    if (isEditing) {
+      const result = await supabase
+        .from("usuarios")
+        .update(formData)
+        .eq("id", initialData.id);
+      error = result.error;
+    } else {
+      const result = await supabase.from("usuarios").insert([formData]);
+      error = result.error;
+    }
 
     if (error) {
       toast({
-        title: "Error creating user",
+        title: `Error ${isEditing ? "updating" : "creating"} user`,
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "User created successfully" });
+      toast({ title: `User ${isEditing ? "updated" : "created"} successfully` });
       onSuccess();
     }
     setIsSubmitting(false);
@@ -114,7 +126,7 @@ export function UsuarioForm({ onSuccess, onCancel }: UsuarioFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create User"}
+          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update User" : "Create User")}
         </Button>
       </div>
     </form>
