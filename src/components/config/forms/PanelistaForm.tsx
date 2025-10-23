@@ -324,9 +324,11 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="es">Spanish</SelectItem>
-              <SelectItem value="en">English</SelectItem>
-              <SelectItem value="pt">Portuguese</SelectItem>
+              <SelectItem value="es">Spanish (es)</SelectItem>
+              <SelectItem value="en">English (en)</SelectItem>
+              <SelectItem value="pt">Portuguese (pt)</SelectItem>
+              <SelectItem value="fr">French (fr)</SelectItem>
+              <SelectItem value="ar">Arabic (ar)</SelectItem>
             </SelectContent>
           </Select>
         </div>
