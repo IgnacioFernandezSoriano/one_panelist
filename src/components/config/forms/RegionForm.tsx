@@ -10,6 +10,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { generateUniqueCode } from "@/lib/codeGenerator";
 
 interface RegionFormProps {
   onSuccess: () => void;
@@ -69,23 +70,32 @@ export function RegionForm({ onSuccess, onCancel, initialData }: RegionFormProps
     e.preventDefault();
     setIsSubmitting(true);
 
-    const dataToSave = {
-      cliente_id: parseInt(formData.cliente_id),
-      codigo: formData.codigo,
-      nombre: formData.nombre,
-      pais: formData.pais,
-      descripcion: formData.descripcion || null,
-      estado: formData.estado,
-    };
-
     let error;
     if (isEditing) {
+      const dataToSave = {
+        cliente_id: parseInt(formData.cliente_id),
+        codigo: formData.codigo,
+        nombre: formData.nombre,
+        pais: formData.pais,
+        descripcion: formData.descripcion || null,
+        estado: formData.estado,
+      };
       const result = await supabase
         .from("regiones")
         .update(dataToSave)
         .eq("id", initialData.id);
       error = result.error;
     } else {
+      // Generar código automáticamente para nuevos registros
+      const codigo = await generateUniqueCode("regiones");
+      const dataToSave = {
+        cliente_id: parseInt(formData.cliente_id),
+        codigo,
+        nombre: formData.nombre,
+        pais: formData.pais,
+        descripcion: formData.descripcion || null,
+        estado: formData.estado,
+      };
       const result = await supabase.from("regiones").insert([dataToSave]);
       error = result.error;
     }
@@ -159,29 +169,29 @@ export function RegionForm({ onSuccess, onCancel, initialData }: RegionFormProps
               </CommandList>
             </Command>
           </PopoverContent>
-        </Popover>
+      </Popover>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      {isEditing && (
         <div className="space-y-2">
-          <Label htmlFor="codigo">Code *</Label>
+          <Label htmlFor="codigo">Code</Label>
           <Input
             id="codigo"
             value={formData.codigo}
-            onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-            required
+            disabled
+            className="bg-muted"
           />
         </div>
+      )}
 
-        <div className="space-y-2">
-          <Label htmlFor="nombre">Name *</Label>
-          <Input
-            id="nombre"
-            value={formData.nombre}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-            required
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="nombre">Name *</Label>
+        <Input
+          id="nombre"
+          value={formData.nombre}
+          onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+          required
+        />
       </div>
 
       <div className="space-y-2">

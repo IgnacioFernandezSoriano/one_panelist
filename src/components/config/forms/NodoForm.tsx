@@ -9,6 +9,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { generateUniqueCode } from "@/lib/codeGenerator";
 
 interface NodoFormProps {
   onSuccess: () => void;
@@ -60,7 +61,10 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
         .eq("codigo", initialData.codigo);
       error = result.error;
     } else {
-      const result = await supabase.from("nodos").insert([formData]);
+      // Generar código automáticamente para nuevos registros
+      const codigo = await generateUniqueCode("nodos");
+      const dataToInsert = { ...formData, codigo };
+      const result = await supabase.from("nodos").insert([dataToInsert]);
       error = result.error;
     }
 
@@ -79,16 +83,17 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="codigo">Code *</Label>
-        <Input
-          id="codigo"
-          value={formData.codigo}
-          onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-          disabled={isEditing}
-          required
-        />
-      </div>
+      {isEditing && (
+        <div className="space-y-2">
+          <Label htmlFor="codigo">Code</Label>
+          <Input
+            id="codigo"
+            value={formData.codigo}
+            disabled
+            className="bg-muted"
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="nombre">Name *</Label>

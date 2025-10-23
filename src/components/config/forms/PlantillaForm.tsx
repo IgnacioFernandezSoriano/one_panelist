@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { generateUniqueCode } from "@/lib/codeGenerator";
 
 interface PlantillaFormProps {
   onSuccess: () => void;
@@ -32,23 +33,33 @@ export function PlantillaForm({ onSuccess, onCancel, initialData }: PlantillaFor
 
     try {
       const jsonVariables = JSON.parse(formData.variables);
-      const dataToSave = {
-        codigo: formData.codigo,
-        tipo: formData.tipo,
-        idioma: formData.idioma,
-        contenido: formData.contenido,
-        variables: jsonVariables,
-        estado: formData.estado,
-      };
-
+      
       let error;
       if (isEditing) {
+        const dataToSave = {
+          codigo: formData.codigo,
+          tipo: formData.tipo,
+          idioma: formData.idioma,
+          contenido: formData.contenido,
+          variables: jsonVariables,
+          estado: formData.estado,
+        };
         const result = await supabase
           .from("plantillas_mensajes")
           .update(dataToSave)
           .eq("id", initialData.id);
         error = result.error;
       } else {
+        // Generar código automáticamente para nuevos registros
+        const codigo = await generateUniqueCode("plantillas_mensajes");
+        const dataToSave = {
+          codigo,
+          tipo: formData.tipo,
+          idioma: formData.idioma,
+          contenido: formData.contenido,
+          variables: jsonVariables,
+          estado: formData.estado,
+        };
         const result = await supabase.from("plantillas_mensajes").insert([dataToSave]);
         error = result.error;
       }
@@ -75,15 +86,17 @@ export function PlantillaForm({ onSuccess, onCancel, initialData }: PlantillaFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="codigo">Code *</Label>
-        <Input
-          id="codigo"
-          value={formData.codigo}
-          onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-          required
-        />
-      </div>
+      {isEditing && (
+        <div className="space-y-2">
+          <Label htmlFor="codigo">Code</Label>
+          <Input
+            id="codigo"
+            value={formData.codigo}
+            disabled
+            className="bg-muted"
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="tipo">Type *</Label>

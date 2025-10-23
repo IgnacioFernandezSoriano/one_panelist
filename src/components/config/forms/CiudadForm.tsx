@@ -10,6 +10,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { generateUniqueCode } from "@/lib/codeGenerator";
 
 interface CiudadFormProps {
   onSuccess: () => void;
@@ -99,31 +100,48 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
     e.preventDefault();
     setIsSubmitting(true);
 
-    const dataToSave = {
-      cliente_id: parseInt(formData.cliente_id),
-      region_id: parseInt(formData.region_id),
-      codigo: formData.codigo,
-      nombre: formData.nombre,
-      codigo_postal_principal: formData.codigo_postal_principal || null,
-      pais: formData.pais,
-      clasificacion: formData.clasificacion,
-      latitud: parseFloat(formData.latitud),
-      longitud: parseFloat(formData.longitud),
-      volumen_poblacional: formData.volumen_poblacional ? parseInt(formData.volumen_poblacional) : null,
-      volumen_trafico_postal: formData.volumen_trafico_postal ? parseInt(formData.volumen_trafico_postal) : null,
-      criterio_clasificacion: formData.criterio_clasificacion || null,
-      descripcion: formData.descripcion || null,
-      estado: formData.estado,
-    };
-
     let error;
     if (isEditing) {
+      const dataToSave = {
+        cliente_id: parseInt(formData.cliente_id),
+        region_id: parseInt(formData.region_id),
+        codigo: formData.codigo,
+        nombre: formData.nombre,
+        codigo_postal_principal: formData.codigo_postal_principal || null,
+        pais: formData.pais,
+        clasificacion: formData.clasificacion,
+        latitud: parseFloat(formData.latitud),
+        longitud: parseFloat(formData.longitud),
+        volumen_poblacional: formData.volumen_poblacional ? parseInt(formData.volumen_poblacional) : null,
+        volumen_trafico_postal: formData.volumen_trafico_postal ? parseInt(formData.volumen_trafico_postal) : null,
+        criterio_clasificacion: formData.criterio_clasificacion || null,
+        descripcion: formData.descripcion || null,
+        estado: formData.estado,
+      };
       const result = await supabase
         .from("ciudades")
         .update(dataToSave)
         .eq("id", initialData.id);
       error = result.error;
     } else {
+      // Generar código automáticamente para nuevos registros
+      const codigo = await generateUniqueCode("ciudades");
+      const dataToSave = {
+        cliente_id: parseInt(formData.cliente_id),
+        region_id: parseInt(formData.region_id),
+        codigo,
+        nombre: formData.nombre,
+        codigo_postal_principal: formData.codigo_postal_principal || null,
+        pais: formData.pais,
+        clasificacion: formData.clasificacion,
+        latitud: parseFloat(formData.latitud),
+        longitud: parseFloat(formData.longitud),
+        volumen_poblacional: formData.volumen_poblacional ? parseInt(formData.volumen_poblacional) : null,
+        volumen_trafico_postal: formData.volumen_trafico_postal ? parseInt(formData.volumen_trafico_postal) : null,
+        criterio_clasificacion: formData.criterio_clasificacion || null,
+        descripcion: formData.descripcion || null,
+        estado: formData.estado,
+      };
       const result = await supabase.from("ciudades").insert([dataToSave]);
       error = result.error;
     }
@@ -260,26 +278,26 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      {isEditing && (
         <div className="space-y-2">
-          <Label htmlFor="codigo">Code *</Label>
+          <Label htmlFor="codigo">Code</Label>
           <Input
             id="codigo"
             value={formData.codigo}
-            onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-            required
+            disabled
+            className="bg-muted"
           />
         </div>
+      )}
 
-        <div className="space-y-2">
-          <Label htmlFor="nombre">Name *</Label>
-          <Input
-            id="nombre"
-            value={formData.nombre}
-            onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-            required
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="nombre">Name *</Label>
+        <Input
+          id="nombre"
+          value={formData.nombre}
+          onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+          required
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-4">
