@@ -98,6 +98,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     const dataToSave = {
       ...formData,
       gestor_asignado_id: formData.gestor_asignado_id ? parseInt(formData.gestor_asignado_id) : null,
+      ciudad_id: null, // No usamos este campo por ahora
     };
 
     let error;
