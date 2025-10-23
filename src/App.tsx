@@ -24,6 +24,7 @@ import ConfigPanelistas from "./pages/config/ConfigPanelistas";
 import ConfigEnvios from "./pages/config/ConfigEnvios";
 import ConfigWorkflows from "./pages/config/Workflows";
 import ConfigIncidencias from "./pages/config/ConfigIncidencias";
+import NuevoEnvio from "./pages/NuevoEnvio";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/panelistas" element={<Panelistas />} />
             <Route path="/envios" element={<Envios />} />
+            <Route path="/envios/nuevo" element={<NuevoEnvio />} />
             <Route path="/incidencias" element={<Incidencias />} />
             <Route path="/nodos" element={<Nodos />} />
             <Route path="/topology" element={<Topology />} />

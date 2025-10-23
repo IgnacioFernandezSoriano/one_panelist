@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ interface Envio {
 }
 
 export default function Envios() {
+  const navigate = useNavigate();
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -77,9 +79,9 @@ export default function Envios() {
               Manage shipping plans and tracking
             </p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => navigate("/envios/nuevo")}>
             <Plus className="w-4 h-4" />
-            New Shipment
+            Nuevo Allocation Plan
           </Button>
         </div>
 
