@@ -192,7 +192,16 @@ export default function Panelistas() {
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 text-sm mt-4 pt-4 border-t">
                             <div>
                               <span className="text-muted-foreground">Email:</span>
-                              <p className="font-medium">{panelista.email || "N/A"}</p>
+                              {panelista.email ? (
+                                <a 
+                                  href={`mailto:${panelista.email}`}
+                                  className="font-medium text-primary hover:underline"
+                                >
+                                  {panelista.email}
+                                </a>
+                              ) : (
+                                <p className="font-medium">N/A</p>
+                              )}
                             </div>
                             <div>
                               <span className="text-muted-foreground">Address:</span>
