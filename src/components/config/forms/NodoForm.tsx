@@ -33,7 +33,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
     codigo: initialData?.codigo || "",
-    cliente_id: initialData?.cliente_id?.toString() || "",
+    cliente_id: "",
     region_id: initialData?.region_id?.toString() || "",
     ciudad_id: initialData?.ciudad_id?.toString() || "",
     panelista_id: initialData?.panelista_id?.toString() || "",
@@ -45,6 +45,26 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
   useEffect(() => {
     loadClientes();
     loadPanelistas();
+    
+    // Si estamos editando, cargar las listas de regiones y ciudades basadas en los valores iniciales
+    if (isEditing && initialData?.region_id) {
+      // Obtener el cliente_id desde la región para cargar la lista y actualizar el formData
+      supabase
+        .from("regiones")
+        .select("cliente_id")
+        .eq("id", initialData.region_id)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setFormData(prev => ({ ...prev, cliente_id: data.cliente_id.toString() }));
+            loadRegiones(data.cliente_id);
+          }
+        });
+      
+      if (initialData.ciudad_id) {
+        loadCiudades(initialData.region_id);
+      }
+    }
   }, []);
 
   useEffect(() => {
