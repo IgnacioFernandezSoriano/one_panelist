@@ -169,70 +169,61 @@ export type Database = {
       envios: {
         Row: {
           cliente_id: number
-          codigo: string
-          envio_original_id: number | null
           estado: Database["public"]["Enums"]["estado_envio"]
           fecha_creacion: string
           fecha_envio_real: string | null
-          fecha_limite: string
+          fecha_limite: string | null
           fecha_notificacion: string | null
           fecha_programada: string
           fecha_recepcion_real: string | null
-          fecha_ultima_modificacion: string
           id: number
           motivo_creacion: string
           nodo_destino: string
           nodo_origen: string
           numero_etiqueta: string | null
           observaciones: string | null
-          panelista_destino_id: number
-          panelista_origen_id: number
+          panelista_destino_id: number | null
+          panelista_origen_id: number | null
           tiempo_transito_dias: number | null
           tipo_producto: string
         }
         Insert: {
           cliente_id: number
-          codigo: string
-          envio_original_id?: number | null
           estado?: Database["public"]["Enums"]["estado_envio"]
           fecha_creacion?: string
           fecha_envio_real?: string | null
-          fecha_limite: string
+          fecha_limite?: string | null
           fecha_notificacion?: string | null
           fecha_programada: string
           fecha_recepcion_real?: string | null
-          fecha_ultima_modificacion?: string
           id?: number
           motivo_creacion: string
           nodo_destino: string
           nodo_origen: string
           numero_etiqueta?: string | null
           observaciones?: string | null
-          panelista_destino_id: number
-          panelista_origen_id: number
+          panelista_destino_id?: number | null
+          panelista_origen_id?: number | null
           tiempo_transito_dias?: number | null
           tipo_producto: string
         }
         Update: {
           cliente_id?: number
-          codigo?: string
-          envio_original_id?: number | null
           estado?: Database["public"]["Enums"]["estado_envio"]
           fecha_creacion?: string
           fecha_envio_real?: string | null
-          fecha_limite?: string
+          fecha_limite?: string | null
           fecha_notificacion?: string | null
           fecha_programada?: string
           fecha_recepcion_real?: string | null
-          fecha_ultima_modificacion?: string
           id?: number
           motivo_creacion?: string
           nodo_destino?: string
           nodo_origen?: string
           numero_etiqueta?: string | null
           observaciones?: string | null
-          panelista_destino_id?: number
-          panelista_origen_id?: number
+          panelista_destino_id?: number | null
+          panelista_origen_id?: number | null
           tiempo_transito_dias?: number | null
           tipo_producto?: string
         }
@@ -242,13 +233,6 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_envio_original_id_fkey"
-            columns: ["envio_original_id"]
-            isOneToOne: false
-            referencedRelation: "envios"
             referencedColumns: ["id"]
           },
           {

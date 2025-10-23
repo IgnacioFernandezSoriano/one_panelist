@@ -12,7 +12,6 @@ import { enUS } from "date-fns/locale";
 
 interface Envio {
   id: number;
-  codigo: string;
   tipo_producto: string;
   estado: string;
   fecha_programada: string;
@@ -35,7 +34,7 @@ export default function Envios() {
       const { data, error } = await supabase
         .from("envios")
         .select("*")
-        .order("fecha_creacion", { ascending: false });
+        .order("fecha_programada", { ascending: false });
 
       if (error) throw error;
       setEnvios(data || []);
@@ -51,8 +50,10 @@ export default function Envios() {
   };
 
   const filteredEnvios = envios.filter((e) =>
-    e.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.tipo_producto.toLowerCase().includes(searchTerm.toLowerCase())
+    e.id.toString().includes(searchTerm) ||
+    e.tipo_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.nodo_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    e.nodo_destino.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getEstadoBadge = (estado: string) => {
@@ -86,7 +87,7 @@ export default function Envios() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Search by code or product type..."
+              placeholder="Search by ID, product type, or node..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -110,7 +111,7 @@ export default function Envios() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
                       <h3 className="text-lg font-semibold text-foreground">
-                        {envio.codigo}
+                        Shipment #{envio.id}
                       </h3>
                       <Badge 
                         variant={getEstadoBadge(envio.estado).variant}

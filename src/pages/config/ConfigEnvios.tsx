@@ -53,7 +53,6 @@ export default function ConfigEnvios() {
 
   const columns = [
     { key: "id", label: "ID" },
-    { key: "codigo", label: "Code" },
     { key: "cliente_id", label: "Client ID" },
     { key: "panelista_origen_id", label: "Origin Panelist" },
     { key: "panelista_destino_id", label: "Dest. Panelist" },
@@ -61,17 +60,17 @@ export default function ConfigEnvios() {
     { key: "nodo_destino", label: "Dest. Node" },
     { key: "estado", label: "Status" },
     { key: "fecha_programada", label: "Scheduled" },
+    { key: "fecha_limite", label: "Due Date" },
   ];
 
   const csvConfig = {
     tableName: "envios",
     expectedColumns: [
-      "codigo", "cliente_id", "panelista_origen_id", "panelista_destino_id",
-      "nodo_origen", "nodo_destino", "fecha_programada", "fecha_limite",
+      "cliente_id", "nodo_origen", "nodo_destino", "fecha_programada",
       "tipo_producto", "estado", "motivo_creacion"
     ],
     exampleData: [
-      ["ENV001", "1", "1", "2", "MAD", "BCN", "2024-01-15", "2024-01-20", "paquete", "PENDIENTE", "inicial"],
+      ["1", "MAD", "BCN", "2024-01-15", "paquete", "PENDIENTE", "inicial"],
     ],
   };
 
