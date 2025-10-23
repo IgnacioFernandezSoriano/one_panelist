@@ -80,12 +80,12 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
   const loadPaises = async () => {
     const { data, error } = await supabase
-      .from("nodos")
+      .from("clientes")
       .select("pais")
       .order("pais", { ascending: true });
 
     if (!error && data) {
-      const uniquePaises = Array.from(new Set(data.map(n => n.pais)));
+      const uniquePaises = Array.from(new Set(data.map(c => c.pais).filter(p => p)));
       setPaises(uniquePaises);
     }
   };
