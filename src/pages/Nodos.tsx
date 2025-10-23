@@ -44,7 +44,11 @@ export default function Nodos() {
   };
 
   const getEstadoBadge = (estado: string) => {
-    return estado === "activo" ? "default" : "secondary";
+    return estado === "activo" ? (
+      <Badge variant="default" className="bg-success text-white">Active</Badge>
+    ) : (
+      <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>
+    );
   };
 
 
@@ -83,9 +87,7 @@ export default function Nodos() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-foreground">{nodo.codigo}</h3>
-                      <Badge variant={getEstadoBadge(nodo.estado)} className="mt-1">
-                        {nodo.estado}
-                      </Badge>
+                      {getEstadoBadge(nodo.estado)}
                     </div>
                   </div>
                 </div>

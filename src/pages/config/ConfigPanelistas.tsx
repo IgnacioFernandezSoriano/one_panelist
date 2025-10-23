@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
+import { Badge } from "@/components/ui/badge";
 
 export default function ConfigPanelistas() {
   const [data, setData] = useState([]);
@@ -62,7 +63,19 @@ export default function ConfigPanelistas() {
     { key: "telefono", label: "Phone" },
     { key: "nodo_asignado", label: "Node" },
     { key: "dias_comunicacion", label: "Communication Days" },
-    { key: "estado", label: "Status" },
+    { 
+      key: "estado", 
+      label: "Status",
+      render: (item: any) => {
+        if (item.estado === "activo") {
+          return <Badge variant="default" className="bg-success text-white">Active</Badge>;
+        } else if (item.estado === "suspendido") {
+          return <Badge variant="destructive" className="bg-destructive text-white">Suspended</Badge>;
+        } else {
+          return <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>;
+        }
+      }
+    },
   ];
 
   const csvConfig = {

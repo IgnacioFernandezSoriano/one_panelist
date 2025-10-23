@@ -10,6 +10,7 @@ import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
 import { Pencil } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 export default function ConfigNodos() {
   const [data, setData] = useState([]);
@@ -187,7 +188,15 @@ export default function ConfigNodos() {
         );
       }
     },
-    { key: "estado", label: "Status" },
+    { 
+      key: "estado", 
+      label: "Status",
+      render: (item: any) => item.estado === "activo" ? (
+        <Badge variant="default" className="bg-success text-white">Active</Badge>
+      ) : (
+        <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>
+      )
+    },
   ];
 
   const csvConfig = {

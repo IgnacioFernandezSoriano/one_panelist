@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CiudadForm } from "@/components/config/forms/CiudadForm";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 export default function Ciudades() {
   const [data, setData] = useState([]);
@@ -73,7 +74,15 @@ export default function Ciudades() {
     { key: "region_nombre", label: "Region" },
     { key: "clasificacion", label: "Classification" },
     { key: "pais", label: "Country" },
-    { key: "estado", label: "Status" },
+    { 
+      key: "estado", 
+      label: "Status",
+      render: (item: any) => item.estado === "activo" ? (
+        <Badge variant="default" className="bg-success text-white">Active</Badge>
+      ) : (
+        <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>
+      )
+    },
   ];
 
   const csvConfig = {

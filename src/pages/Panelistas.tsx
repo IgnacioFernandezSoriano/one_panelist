@@ -59,12 +59,13 @@ export default function Panelistas() {
   );
 
   const getEstadoBadge = (estado: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive"> = {
-      activo: "default",
-      inactivo: "secondary",
-      suspendido: "destructive",
-    };
-    return variants[estado] || "secondary";
+    if (estado === "activo") {
+      return <Badge variant="default" className="bg-success text-white">Active</Badge>;
+    } else if (estado === "suspendido") {
+      return <Badge variant="destructive" className="bg-destructive text-white">Suspended</Badge>;
+    } else {
+      return <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>;
+    }
   };
 
   return (
@@ -113,9 +114,7 @@ export default function Panelistas() {
                       <h3 className="text-lg font-semibold text-foreground">
                         {panelista.nombre_completo}
                       </h3>
-                      <Badge variant={getEstadoBadge(panelista.estado)}>
-                        {panelista.estado}
-                      </Badge>
+                      {getEstadoBadge(panelista.estado)}
                     </div>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">

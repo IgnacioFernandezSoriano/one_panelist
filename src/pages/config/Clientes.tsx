@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ClienteForm } from "@/components/config/forms/ClienteForm";
+import { Badge } from "@/components/ui/badge";
 
 export default function ConfigClientes() {
   const [data, setData] = useState([]);
@@ -60,7 +61,15 @@ export default function ConfigClientes() {
     { key: "codigo", label: "Code" },
     { key: "nombre", label: "Name" },
     { key: "pais", label: "Country" },
-    { key: "estado", label: "Status" },
+    { 
+      key: "estado", 
+      label: "Status",
+      render: (item: any) => item.estado === "activo" ? (
+        <Badge variant="default" className="bg-success text-white">Active</Badge>
+      ) : (
+        <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>
+      )
+    },
     { key: "fecha_alta", label: "Created" },
   ];
 
