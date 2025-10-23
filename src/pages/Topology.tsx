@@ -243,9 +243,9 @@ export default function Topology() {
 
   const getEstadoBadge = (estado: string) => {
     return estado === "activo" ? (
-      <Badge variant="default" className="bg-success">Active</Badge>
+      <Badge variant="default" className="bg-success text-white">Active</Badge>
     ) : (
-      <Badge variant="secondary">Inactive</Badge>
+      <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>
     );
   };
 
