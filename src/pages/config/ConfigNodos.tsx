@@ -314,16 +314,24 @@ export default function ConfigNodos() {
                     <p className="text-foreground">{selectedPanelista.telefono}</p>
                   </div>
                   <div>
+                    <p className="text-sm font-medium text-muted-foreground">Assigned Node</p>
+                    <p className="text-foreground">{selectedPanelista.nodo_asignado || "-"}</p>
+                  </div>
+                  <div>
                     <p className="text-sm font-medium text-muted-foreground">Preferred Platform</p>
-                    <p className="text-foreground">{selectedPanelista.plataforma_preferida}</p>
+                    <p className="text-foreground capitalize">{selectedPanelista.plataforma_preferida}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Communication Days</p>
+                    <p className="text-foreground capitalize">{selectedPanelista.dias_comunicacion?.replace('_', ' ')}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Language</p>
-                    <p className="text-foreground">{selectedPanelista.idioma}</p>
+                    <p className="text-foreground uppercase">{selectedPanelista.idioma}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Status</p>
-                    <p className="text-foreground">{selectedPanelista.estado}</p>
+                    <p className="text-foreground capitalize">{selectedPanelista.estado}</p>
                   </div>
                 </div>
                 <div>
