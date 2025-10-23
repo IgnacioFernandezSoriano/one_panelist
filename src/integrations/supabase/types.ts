@@ -26,8 +26,8 @@ export type Database = {
           fecha_creacion: string
           fecha_modificacion: string
           id: number
-          latitud: number
-          longitud: number
+          latitud: number | null
+          longitud: number | null
           nombre: string
           pais: string
           region_id: number
@@ -45,8 +45,8 @@ export type Database = {
           fecha_creacion?: string
           fecha_modificacion?: string
           id?: number
-          latitud: number
-          longitud: number
+          latitud?: number | null
+          longitud?: number | null
           nombre: string
           pais: string
           region_id: number
@@ -64,8 +64,8 @@ export type Database = {
           fecha_creacion?: string
           fecha_modificacion?: string
           id?: number
-          latitud?: number
-          longitud?: number
+          latitud?: number | null
+          longitud?: number | null
           nombre?: string
           pais?: string
           region_id?: number
