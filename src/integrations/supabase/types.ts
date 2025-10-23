@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      ciudades: {
+        Row: {
+          clasificacion: string
+          cliente_id: number
+          codigo: string
+          codigo_postal_principal: string | null
+          criterio_clasificacion: string | null
+          descripcion: string | null
+          estado: string
+          fecha_creacion: string
+          fecha_modificacion: string
+          id: number
+          latitud: number
+          longitud: number
+          nombre: string
+          pais: string
+          region_id: number
+          volumen_poblacional: number | null
+          volumen_trafico_postal: number | null
+        }
+        Insert: {
+          clasificacion: string
+          cliente_id: number
+          codigo: string
+          codigo_postal_principal?: string | null
+          criterio_clasificacion?: string | null
+          descripcion?: string | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          latitud: number
+          longitud: number
+          nombre: string
+          pais: string
+          region_id: number
+          volumen_poblacional?: number | null
+          volumen_trafico_postal?: number | null
+        }
+        Update: {
+          clasificacion?: string
+          cliente_id?: number
+          codigo?: string
+          codigo_postal_principal?: string | null
+          criterio_clasificacion?: string | null
+          descripcion?: string | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          latitud?: number
+          longitud?: number
+          nombre?: string
+          pais?: string
+          region_id?: number
+          volumen_poblacional?: number | null
+          volumen_trafico_postal?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_ciudades_cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_ciudades_region"
+            columns: ["region_id"]
+            isOneToOne: false
+            referencedRelation: "regiones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           codigo: string
@@ -327,6 +402,7 @@ export type Database = {
       nodos: {
         Row: {
           ciudad: string
+          ciudad_id: number | null
           codigo: string
           estado: string
           nombre: string
@@ -335,6 +411,7 @@ export type Database = {
         }
         Insert: {
           ciudad: string
+          ciudad_id?: number | null
           codigo: string
           estado?: string
           nombre: string
@@ -343,16 +420,26 @@ export type Database = {
         }
         Update: {
           ciudad?: string
+          ciudad_id?: number | null
           codigo?: string
           estado?: string
           nombre?: string
           pais?: string
           tipo?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_nodos_ciudad"
+            columns: ["ciudad_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       panelistas: {
         Row: {
+          ciudad_id: number | null
           direccion_calle: string
           direccion_ciudad: string
           direccion_codigo_postal: string
@@ -373,6 +460,7 @@ export type Database = {
           zona_horaria: string
         }
         Insert: {
+          ciudad_id?: number | null
           direccion_calle: string
           direccion_ciudad: string
           direccion_codigo_postal: string
@@ -393,6 +481,7 @@ export type Database = {
           zona_horaria: string
         }
         Update: {
+          ciudad_id?: number | null
           direccion_calle?: string
           direccion_ciudad?: string
           direccion_codigo_postal?: string
@@ -413,6 +502,13 @@ export type Database = {
           zona_horaria?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_panelistas_ciudad"
+            columns: ["ciudad_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "panelistas_gestor_asignado_id_fkey"
             columns: ["gestor_asignado_id"]
@@ -464,6 +560,50 @@ export type Database = {
           variables?: Json | null
         }
         Relationships: []
+      }
+      regiones: {
+        Row: {
+          cliente_id: number
+          codigo: string
+          descripcion: string | null
+          estado: string
+          fecha_creacion: string
+          fecha_modificacion: string
+          id: number
+          nombre: string
+          pais: string
+        }
+        Insert: {
+          cliente_id: number
+          codigo: string
+          descripcion?: string | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          nombre: string
+          pais: string
+        }
+        Update: {
+          cliente_id?: number
+          codigo?: string
+          descripcion?: string | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          nombre?: string
+          pais?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_regiones_cliente"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       usuarios: {
         Row: {

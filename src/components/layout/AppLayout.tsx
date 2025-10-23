@@ -74,6 +74,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
   const configMenuItems = [
     { icon: Building2, label: "Clients", path: "/configuracion/clientes" },
+    { icon: MapPin, label: "Regions", path: "/configuracion/regiones" },
+    { icon: MapPin, label: "Cities", path: "/configuracion/ciudades" },
     { icon: MapPin, label: "Nodes", path: "/configuracion/nodos" },
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
     { icon: MessageSquare, label: "Templates", path: "/configuracion/plantillas" },

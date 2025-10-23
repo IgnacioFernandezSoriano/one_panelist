@@ -14,6 +14,8 @@ import DataImport from "./pages/DataImport";
 import ImportGuide from "./pages/ImportGuide";
 import NotFound from "./pages/NotFound";
 import ConfigClientes from "./pages/config/Clientes";
+import ConfigRegiones from "./pages/config/Regiones";
+import ConfigCiudades from "./pages/config/Ciudades";
 import ConfigNodos from "./pages/config/ConfigNodos";
 import ConfigUsuarios from "./pages/config/Usuarios";
 import ConfigPlantillas from "./pages/config/Plantillas";
@@ -42,6 +44,8 @@ const App = () => {
             <Route path="/import" element={<DataImport />} />
             <Route path="/import-guide" element={<ImportGuide />} />
             <Route path="/configuracion/clientes" element={<ConfigClientes />} />
+            <Route path="/configuracion/regiones" element={<ConfigRegiones />} />
+            <Route path="/configuracion/ciudades" element={<ConfigCiudades />} />
             <Route path="/configuracion/nodos" element={<ConfigNodos />} />
             <Route path="/configuracion/usuarios" element={<ConfigUsuarios />} />
             <Route path="/configuracion/plantillas" element={<ConfigPlantillas />} />
