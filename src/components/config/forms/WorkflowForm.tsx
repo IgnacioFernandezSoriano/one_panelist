@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +18,9 @@ interface WorkflowFormProps {
 
 export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [clientes, setClientes] = useState<Array<{ id: number; nombre: string; codigo: string }>>([]);
+  const [clienteSearch, setClienteSearch] = useState("");
+  const [clienteOpen, setClienteOpen] = useState(false);
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
@@ -26,6 +33,22 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
     dias_declarar_extravio: initialData?.dias_declarar_extravio?.toString() || "",
     dias_segunda_verificacion: initialData?.dias_segunda_verificacion?.toString() || "",
   });
+
+  useEffect(() => {
+    loadClientes();
+  }, []);
+
+  const loadClientes = async () => {
+    const { data, error } = await supabase
+      .from("clientes")
+      .select("id, nombre, codigo")
+      .eq("estado", "activo")
+      .order("nombre", { ascending: true });
+
+    if (!error && data) {
+      setClientes(data);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,14 +93,60 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="cliente_id">Client ID *</Label>
-        <Input
-          id="cliente_id"
-          type="number"
-          value={formData.cliente_id}
-          onChange={(e) => setFormData({ ...formData, cliente_id: e.target.value })}
-          required
-        />
+        <Label htmlFor="cliente_id">Client *</Label>
+        <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={clienteOpen}
+              className="w-full justify-between"
+            >
+              {formData.cliente_id 
+                ? clientes.find(c => c.id.toString() === formData.cliente_id)?.nombre || "Select client..."
+                : "Select client..."}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Command>
+              <CommandInput 
+                placeholder="Search client..." 
+                value={clienteSearch}
+                onValueChange={setClienteSearch}
+              />
+              <CommandList>
+                <CommandEmpty>No client found.</CommandEmpty>
+                <CommandGroup>
+                  {clientes
+                    .filter(c => 
+                      c.nombre.toLowerCase().includes(clienteSearch.toLowerCase()) ||
+                      c.codigo.toLowerCase().includes(clienteSearch.toLowerCase())
+                    )
+                    .map((cliente) => (
+                      <CommandItem
+                        key={cliente.id}
+                        value={cliente.id.toString()}
+                        onSelect={() => {
+                          setFormData({ ...formData, cliente_id: cliente.id.toString() });
+                          setClienteOpen(false);
+                          setClienteSearch("");
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.cliente_id === cliente.id.toString() ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {cliente.nombre} ({cliente.codigo})
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-2">

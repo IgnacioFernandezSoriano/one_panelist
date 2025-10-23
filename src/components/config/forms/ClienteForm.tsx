@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +18,9 @@ interface ClienteFormProps {
 
 export function ClienteForm({ onSuccess, onCancel, initialData }: ClienteFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paises, setPaises] = useState<string[]>([]);
+  const [paisSearch, setPaisSearch] = useState("");
+  const [paisOpen, setPaisOpen] = useState(false);
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
@@ -22,6 +29,22 @@ export function ClienteForm({ onSuccess, onCancel, initialData }: ClienteFormPro
     pais: initialData?.pais || "",
     estado: initialData?.estado || "activo",
   });
+
+  useEffect(() => {
+    loadPaises();
+  }, []);
+
+  const loadPaises = async () => {
+    const { data, error } = await supabase
+      .from("nodos")
+      .select("pais")
+      .order("pais", { ascending: true });
+
+    if (!error && data) {
+      const uniquePaises = Array.from(new Set(data.map(n => n.pais)));
+      setPaises(uniquePaises);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,12 +99,54 @@ export function ClienteForm({ onSuccess, onCancel, initialData }: ClienteFormPro
 
       <div className="space-y-2">
         <Label htmlFor="pais">Country *</Label>
-        <Input
-          id="pais"
-          value={formData.pais}
-          onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
-          required
-        />
+        <Popover open={paisOpen} onOpenChange={setPaisOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={paisOpen}
+              className="w-full justify-between"
+            >
+              {formData.pais || "Select country..."}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Command>
+              <CommandInput 
+                placeholder="Search country..." 
+                value={paisSearch}
+                onValueChange={setPaisSearch}
+              />
+              <CommandList>
+                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandGroup>
+                  {paises
+                    .filter(p => p.toLowerCase().includes(paisSearch.toLowerCase()))
+                    .map((pais) => (
+                      <CommandItem
+                        key={pais}
+                        value={pais}
+                        onSelect={() => {
+                          setFormData({ ...formData, pais });
+                          setPaisOpen(false);
+                          setPaisSearch("");
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.pais === pais ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {pais}
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-2">

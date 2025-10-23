@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +18,15 @@ interface PanelistaFormProps {
 
 export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nodos, setNodos] = useState<Array<{ codigo: string; nombre: string }>>([]);
+  const [gestores, setGestores] = useState<Array<{ id: number; nombre_completo: string }>>([]);
+  const [paises, setPaises] = useState<string[]>([]);
+  const [nodoSearch, setNodoSearch] = useState("");
+  const [gestorSearch, setGestorSearch] = useState("");
+  const [paisSearch, setPaisSearch] = useState("");
+  const [nodoOpen, setNodoOpen] = useState(false);
+  const [gestorOpen, setGestorOpen] = useState(false);
+  const [paisOpen, setPaisOpen] = useState(false);
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
@@ -33,6 +46,49 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     gestor_asignado_id: initialData?.gestor_asignado_id?.toString() || "",
     estado: initialData?.estado || "activo",
   });
+
+  useEffect(() => {
+    loadNodos();
+    loadGestores();
+    loadPaises();
+  }, []);
+
+  const loadNodos = async () => {
+    const { data, error } = await supabase
+      .from("nodos")
+      .select("codigo, nombre")
+      .eq("estado", "activo")
+      .order("nombre", { ascending: true });
+
+    if (!error && data) {
+      setNodos(data);
+    }
+  };
+
+  const loadGestores = async () => {
+    const { data, error } = await supabase
+      .from("usuarios")
+      .select("id, nombre_completo")
+      .eq("estado", "activo")
+      .in("rol", ["gestor", "administrador"])
+      .order("nombre_completo", { ascending: true });
+
+    if (!error && data) {
+      setGestores(data);
+    }
+  };
+
+  const loadPaises = async () => {
+    const { data, error } = await supabase
+      .from("nodos")
+      .select("pais")
+      .order("pais", { ascending: true });
+
+    if (!error && data) {
+      const uniquePaises = Array.from(new Set(data.map(n => n.pais)));
+      setPaises(uniquePaises);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,11 +159,59 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
         <div className="space-y-2">
           <Label htmlFor="nodo_asignado">Assigned Node</Label>
-          <Input
-            id="nodo_asignado"
-            value={formData.nodo_asignado}
-            onChange={(e) => setFormData({ ...formData, nodo_asignado: e.target.value })}
-          />
+          <Popover open={nodoOpen} onOpenChange={setNodoOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={nodoOpen}
+                className="w-full justify-between"
+              >
+                {formData.nodo_asignado 
+                  ? nodos.find(n => n.codigo === formData.nodo_asignado)?.nombre || formData.nodo_asignado
+                  : "Select node..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput 
+                  placeholder="Search node..." 
+                  value={nodoSearch}
+                  onValueChange={setNodoSearch}
+                />
+                <CommandList>
+                  <CommandEmpty>No node found.</CommandEmpty>
+                  <CommandGroup>
+                    {nodos
+                      .filter(n => 
+                        n.nombre.toLowerCase().includes(nodoSearch.toLowerCase()) ||
+                        n.codigo.toLowerCase().includes(nodoSearch.toLowerCase())
+                      )
+                      .map((nodo) => (
+                        <CommandItem
+                          key={nodo.codigo}
+                          value={nodo.codigo}
+                          onSelect={() => {
+                            setFormData({ ...formData, nodo_asignado: nodo.codigo });
+                            setNodoOpen(false);
+                            setNodoSearch("");
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.nodo_asignado === nodo.codigo ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {nodo.nombre} ({nodo.codigo})
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -144,12 +248,54 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
         <div className="space-y-2">
           <Label htmlFor="direccion_pais">Country *</Label>
-          <Input
-            id="direccion_pais"
-            value={formData.direccion_pais}
-            onChange={(e) => setFormData({ ...formData, direccion_pais: e.target.value })}
-            required
-          />
+          <Popover open={paisOpen} onOpenChange={setPaisOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={paisOpen}
+                className="w-full justify-between"
+              >
+                {formData.direccion_pais || "Select country..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput 
+                  placeholder="Search country..." 
+                  value={paisSearch}
+                  onValueChange={setPaisSearch}
+                />
+                <CommandList>
+                  <CommandEmpty>No country found.</CommandEmpty>
+                  <CommandGroup>
+                    {paises
+                      .filter(p => p.toLowerCase().includes(paisSearch.toLowerCase()))
+                      .map((pais) => (
+                        <CommandItem
+                          key={pais}
+                          value={pais}
+                          onSelect={() => {
+                            setFormData({ ...formData, direccion_pais: pais });
+                            setPaisOpen(false);
+                            setPaisSearch("");
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.direccion_pais === pais ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {pais}
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -215,13 +361,57 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="gestor_asignado_id">Assigned Manager ID</Label>
-          <Input
-            id="gestor_asignado_id"
-            type="number"
-            value={formData.gestor_asignado_id}
-            onChange={(e) => setFormData({ ...formData, gestor_asignado_id: e.target.value })}
-          />
+          <Label htmlFor="gestor_asignado_id">Assigned Manager</Label>
+          <Popover open={gestorOpen} onOpenChange={setGestorOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={gestorOpen}
+                className="w-full justify-between"
+              >
+                {formData.gestor_asignado_id 
+                  ? gestores.find(g => g.id.toString() === formData.gestor_asignado_id)?.nombre_completo || "Select manager..."
+                  : "Select manager..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput 
+                  placeholder="Search manager..." 
+                  value={gestorSearch}
+                  onValueChange={setGestorSearch}
+                />
+                <CommandList>
+                  <CommandEmpty>No manager found.</CommandEmpty>
+                  <CommandGroup>
+                    {gestores
+                      .filter(g => g.nombre_completo.toLowerCase().includes(gestorSearch.toLowerCase()))
+                      .map((gestor) => (
+                        <CommandItem
+                          key={gestor.id}
+                          value={gestor.id.toString()}
+                          onSelect={() => {
+                            setFormData({ ...formData, gestor_asignado_id: gestor.id.toString() });
+                            setGestorOpen(false);
+                            setGestorSearch("");
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.gestor_asignado_id === gestor.id.toString() ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {gestor.nombre_completo}
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
