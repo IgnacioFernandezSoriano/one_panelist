@@ -192,10 +192,10 @@ export default function ConfigNodos() {
 
   const csvConfig = {
     tableName: "nodos",
-    expectedColumns: ["codigo", "region_id", "ciudad_id", "ciudad", "pais", "estado"],
+    expectedColumns: ["region_id", "ciudad_id", "panelista_id", "ciudad", "pais", "estado"],
     exampleData: [
-      ["ESP-01-001-0001", "1", "1", "Madrid", "España", "activo"],
-      ["ESP-02-002-0001", "2", "2", "Barcelona", "España", "activo"],
+      ["1", "1", "", "Madrid", "España", "activo"],
+      ["2", "2", "1", "Barcelona", "España", "activo"],
     ],
   };
 

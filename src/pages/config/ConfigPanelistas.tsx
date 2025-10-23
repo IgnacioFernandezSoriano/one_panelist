@@ -74,7 +74,7 @@ export default function ConfigPanelistas() {
       "dias_comunicacion", "gestor_asignado_id", "estado"
     ],
     exampleData: [
-      ["Ana López", "ana@example.com", "+34600000000", "Calle Mayor 1", "Madrid", "28001", "España", "MAD", "es", "Europe/Madrid", "09:00:00", "18:00:00", "whatsapp", "ambos", "1", "activo"],
+      ["María García", "maria@example.com", "+34600123456", "Calle Mayor 5", "Madrid", "28001", "España", "MAD001", "es", "Europe/Madrid", "09:00:00", "18:00:00", "whatsapp", "ambos", "1", "activo"],
     ],
   };
 
