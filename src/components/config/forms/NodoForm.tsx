@@ -71,19 +71,23 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
     if (formData.cliente_id) {
       loadRegiones(parseInt(formData.cliente_id));
     } else {
-      setRegiones([]);
-      setFormData(prev => ({ ...prev, region_id: "", ciudad_id: "" }));
+      if (!isEditing) {
+        setRegiones([]);
+        setFormData(prev => ({ ...prev, region_id: "", ciudad_id: "" }));
+      }
     }
-  }, [formData.cliente_id]);
+  }, [formData.cliente_id, isEditing]);
 
   useEffect(() => {
     if (formData.region_id) {
       loadCiudades(parseInt(formData.region_id));
     } else {
-      setCiudades([]);
-      setFormData(prev => ({ ...prev, ciudad_id: "" }));
+      if (!isEditing) {
+        setCiudades([]);
+        setFormData(prev => ({ ...prev, ciudad_id: "" }));
+      }
     }
-  }, [formData.region_id]);
+  }, [formData.region_id, isEditing]);
 
   const loadClientes = async () => {
     const { data, error } = await supabase
