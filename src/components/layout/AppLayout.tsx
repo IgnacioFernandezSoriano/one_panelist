@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   LayoutDashboard,
-  MapPin
+  MapPin,
+  Database
 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
@@ -52,6 +53,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     { icon: Send, label: "Shipments", path: "/envios" },
     { icon: AlertCircle, label: "Issues", path: "/incidencias" },
     { icon: MapPin, label: "Nodes", path: "/nodos" },
+    { icon: Database, label: "Data Import", path: "/import" },
     { icon: Settings, label: "Configuration", path: "/configuracion" },
   ];
 

@@ -11,6 +11,8 @@ import Envios from "./pages/Envios";
 import Incidencias from "./pages/Incidencias";
 import Nodos from "./pages/Nodos";
 import Configuracion from "./pages/Configuracion";
+import DataImport from "./pages/DataImport";
+import ImportGuide from "./pages/ImportGuide";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const App = () => {
             <Route path="/incidencias" element={<Incidencias />} />
             <Route path="/nodos" element={<Nodos />} />
             <Route path="/configuracion" element={<Configuracion />} />
+            <Route path="/import" element={<DataImport />} />
+            <Route path="/import-guide" element={<ImportGuide />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
