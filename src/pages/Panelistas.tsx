@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Search, Edit, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
 
 interface Panelista {
   id: number;
@@ -26,6 +28,9 @@ export default function Panelistas() {
   const [panelistas, setPanelistas] = useState<Panelista[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedPanelista, setSelectedPanelista] = useState<Panelista | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -58,6 +63,33 @@ export default function Panelistas() {
     p.direccion_ciudad.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleDelete = async (panelista: Panelista) => {
+    if (!confirm(`¿Está seguro de eliminar al panelista ${panelista.nombre_completo}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("panelistas")
+        .delete()
+        .eq("id", panelista.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Panelist deleted successfully",
+      });
+      loadPanelistas();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Could not delete panelist: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getEstadoBadge = (estado: string) => {
     if (estado === "activo") {
       return <Badge variant="default" className="bg-success text-white">Active</Badge>;
@@ -78,7 +110,7 @@ export default function Panelistas() {
               Manage panelists participating in the studies
             </p>
           </div>
-          <Button className="gap-2">
+          <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
             <Plus className="w-4 h-4" />
             New Panelist
           </Button>
@@ -144,10 +176,22 @@ export default function Panelistas() {
                   </div>
 
                   <div className="flex gap-2 ml-4">
-                    <Button variant="outline" size="icon">
+                    <Button 
+                      variant="outline" 
+                      size="icon"
+                      onClick={() => {
+                        setSelectedPanelista(panelista);
+                        setEditDialogOpen(true);
+                      }}
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="outline" size="icon" className="text-destructive hover:text-destructive">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="text-destructive hover:text-destructive"
+                      onClick={() => handleDelete(panelista)}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
@@ -156,6 +200,53 @@ export default function Panelistas() {
             ))}
           </div>
         )}
+
+        {/* Create Dialog */}
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Panelist</DialogTitle>
+            </DialogHeader>
+            <PanelistaForm
+              onSuccess={() => {
+                setCreateDialogOpen(false);
+                loadPanelistas();
+                toast({
+                  title: "Success",
+                  description: "Panelist created successfully",
+                });
+              }}
+              onCancel={() => setCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Panelist</DialogTitle>
+            </DialogHeader>
+            {selectedPanelista && (
+              <PanelistaForm
+                initialData={selectedPanelista}
+                onSuccess={() => {
+                  setEditDialogOpen(false);
+                  setSelectedPanelista(null);
+                  loadPanelistas();
+                  toast({
+                    title: "Success",
+                    description: "Panelist updated successfully",
+                  });
+                }}
+                onCancel={() => {
+                  setEditDialogOpen(false);
+                  setSelectedPanelista(null);
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
