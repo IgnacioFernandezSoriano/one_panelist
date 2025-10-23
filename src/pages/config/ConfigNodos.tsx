@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NodoForm } from "@/components/config/forms/NodoForm";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Link } from "react-router-dom";
 
 export default function ConfigNodos() {
   const [data, setData] = useState([]);
@@ -161,6 +163,26 @@ export default function ConfigNodos() {
   return (
     <AppLayout>
       <div className="p-8">
+        <Breadcrumb className="mb-4">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/configuracion/regiones">Regions</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link to="/configuracion/ciudades">Cities</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Nodes</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Nodes Configuration</h1>
           <p className="text-muted-foreground">
