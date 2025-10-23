@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Package, 
   Users, 
@@ -11,7 +12,14 @@ import {
   LogOut,
   LayoutDashboard,
   MapPin,
-  Database
+  Database,
+  ChevronDown,
+  ChevronRight,
+  Building2,
+  UserCog,
+  MessageSquare,
+  Workflow,
+  FileText
 } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
@@ -21,6 +29,7 @@ interface AppLayoutProps {
 
 export const AppLayout = ({ children }: AppLayoutProps) => {
   const [user, setUser] = useState<User | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,19 +51,36 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  useEffect(() => {
+    // Auto-open config menu if on a config route
+    if (location.pathname.startsWith("/configuracion/")) {
+      setConfigOpen(true);
+    }
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
 
-  const menuItems = [
+  const mainMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Users, label: "Panelists", path: "/panelistas" },
     { icon: Send, label: "Shipments", path: "/envios" },
     { icon: AlertCircle, label: "Issues", path: "/incidencias" },
     { icon: MapPin, label: "Nodes", path: "/nodos" },
     { icon: Database, label: "Data Import", path: "/import" },
-    { icon: Settings, label: "Configuration", path: "/configuracion" },
+  ];
+
+  const configMenuItems = [
+    { icon: Building2, label: "Clients", path: "/configuracion/clientes" },
+    { icon: MapPin, label: "Nodes", path: "/configuracion/nodos" },
+    { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
+    { icon: MessageSquare, label: "Templates", path: "/configuracion/plantillas" },
+    { icon: Users, label: "Panelists", path: "/configuracion/panelistas" },
+    { icon: Send, label: "Shipments", path: "/configuracion/envios" },
+    { icon: Workflow, label: "Workflows", path: "/configuracion/workflows" },
+    { icon: AlertCircle, label: "Issues", path: "/configuracion/incidencias" },
   ];
 
   if (!user) return null;
@@ -76,7 +102,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         </div>
 
         <nav className="px-3 space-y-1">
-          {menuItems.map((item) => {
+          {mainMenuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -93,6 +119,40 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
               </Link>
             );
           })}
+
+          {/* Configuration Collapsible Menu */}
+          <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
+            <CollapsibleTrigger className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent">
+              <div className="flex items-center gap-3">
+                <Settings className="w-5 h-5" />
+                <span className="font-medium">Configuration</span>
+              </div>
+              {configOpen ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-1 space-y-1">
+              {configMenuItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg transition-colors ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent"
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span className="text-sm font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
+            </CollapsibleContent>
+          </Collapsible>
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 w-64 p-4 border-t border-sidebar-border">

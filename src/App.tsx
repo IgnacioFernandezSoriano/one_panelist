@@ -10,10 +10,17 @@ import Panelistas from "./pages/Panelistas";
 import Envios from "./pages/Envios";
 import Incidencias from "./pages/Incidencias";
 import Nodos from "./pages/Nodos";
-import Configuracion from "./pages/Configuracion";
 import DataImport from "./pages/DataImport";
 import ImportGuide from "./pages/ImportGuide";
 import NotFound from "./pages/NotFound";
+import ConfigClientes from "./pages/config/Clientes";
+import ConfigNodos from "./pages/config/ConfigNodos";
+import ConfigUsuarios from "./pages/config/Usuarios";
+import ConfigPlantillas from "./pages/config/Plantillas";
+import ConfigPanelistas from "./pages/config/ConfigPanelistas";
+import ConfigEnvios from "./pages/config/ConfigEnvios";
+import ConfigWorkflows from "./pages/config/Workflows";
+import ConfigIncidencias from "./pages/config/ConfigIncidencias";
 
 const queryClient = new QueryClient();
 
@@ -32,9 +39,16 @@ const App = () => {
             <Route path="/envios" element={<Envios />} />
             <Route path="/incidencias" element={<Incidencias />} />
             <Route path="/nodos" element={<Nodos />} />
-            <Route path="/configuracion" element={<Configuracion />} />
             <Route path="/import" element={<DataImport />} />
             <Route path="/import-guide" element={<ImportGuide />} />
+            <Route path="/configuracion/clientes" element={<ConfigClientes />} />
+            <Route path="/configuracion/nodos" element={<ConfigNodos />} />
+            <Route path="/configuracion/usuarios" element={<ConfigUsuarios />} />
+            <Route path="/configuracion/plantillas" element={<ConfigPlantillas />} />
+            <Route path="/configuracion/panelistas" element={<ConfigPanelistas />} />
+            <Route path="/configuracion/envios" element={<ConfigEnvios />} />
+            <Route path="/configuracion/workflows" element={<ConfigWorkflows />} />
+            <Route path="/configuracion/incidencias" element={<ConfigIncidencias />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

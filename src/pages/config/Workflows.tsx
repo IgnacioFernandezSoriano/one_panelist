@@ -1,0 +1,96 @@
+import { AppLayout } from "@/components/layout/AppLayout";
+import { ConfigDataTable } from "@/components/config/ConfigDataTable";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+export default function ConfigWorkflows() {
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    const { data: workflows, error } = await supabase
+      .from("configuracion_workflows")
+      .select("*")
+      .order("id", { ascending: true });
+
+    if (error) {
+      toast({
+        title: "Error loading workflows",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setData(workflows || []);
+    }
+    setIsLoading(false);
+  };
+
+  const handleDelete = async (item: any) => {
+    const { error } = await supabase
+      .from("configuracion_workflows")
+      .delete()
+      .eq("id", item.id);
+
+    if (error) {
+      toast({
+        title: "Error deleting workflow",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({ title: "Workflow deleted successfully" });
+      loadData();
+    }
+  };
+
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "cliente_id", label: "Client ID" },
+    { key: "servicio_postal", label: "Postal Service" },
+    { key: "tipo_dias", label: "Day Type" },
+    { key: "dias_verificacion_recepcion", label: "Verification Days" },
+    { key: "dias_recordatorio", label: "Reminder Days" },
+    { key: "dias_escalamiento", label: "Escalation Days" },
+  ];
+
+  const csvConfig = {
+    tableName: "configuracion_workflows",
+    expectedColumns: [
+      "cliente_id", "servicio_postal", "tipo_dias", "dias_verificacion_recepcion",
+      "dias_recordatorio", "dias_escalamiento", "dias_declarar_extravio", "dias_segunda_verificacion"
+    ],
+    exampleData: [
+      ["1", "Correos", "habiles", "3", "2", "5", "15", "7"],
+      ["2", "DHL", "calendario", "2", "1", "3", "10", "5"],
+    ],
+  };
+
+  return (
+    <AppLayout>
+      <div className="p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Workflows Configuration</h1>
+          <p className="text-muted-foreground">
+            Manage workflow configurations by client
+          </p>
+        </div>
+
+        <ConfigDataTable
+          title="Workflow Configurations"
+          data={data}
+          columns={columns}
+          onDelete={handleDelete}
+          isLoading={isLoading}
+          csvConfig={csvConfig}
+        />
+      </div>
+    </AppLayout>
+  );
+}
