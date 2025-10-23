@@ -174,6 +174,40 @@ export default function Topology() {
     }
   };
 
+  const openSpecificItem = (key: string, level: 'region' | 'ciudad', parentClienteId?: number, parentRegionId?: number) => {
+    const newOpenItems = { ...openItems };
+    
+    // Close all siblings at the same level
+    if (level === 'region' && parentClienteId) {
+      // Close all other regions of the same client
+      const clientRegions = getRegionsByCliente(parentClienteId);
+      clientRegions.forEach((region) => {
+        const regionKey = `region-${region.id}`;
+        if (regionKey !== key) {
+          delete newOpenItems[regionKey];
+          // Close all cities under closed regions
+          const regionCities = getCiudadesByRegion(region.id);
+          regionCities.forEach((ciudad) => {
+            delete newOpenItems[`ciudad-${ciudad.id}`];
+          });
+        }
+      });
+    } else if (level === 'ciudad' && parentRegionId) {
+      // Close all other cities of the same region
+      const regionCities = getCiudadesByRegion(parentRegionId);
+      regionCities.forEach((ciudad) => {
+        const ciudadKey = `ciudad-${ciudad.id}`;
+        if (ciudadKey !== key) {
+          delete newOpenItems[ciudadKey];
+        }
+      });
+    }
+    
+    // Open the selected item
+    newOpenItems[key] = true;
+    setOpenItems(newOpenItems);
+  };
+
   const getRegionsByCliente = (clienteId: number) => {
     return regiones.filter((r) => r.cliente_id === clienteId);
   };
@@ -314,7 +348,7 @@ export default function Topology() {
                           {getRegionsByCliente(cliente.id).map((region) => (
                             <button
                               key={region.id}
-                              onClick={() => toggleItem(`region-${region.id}`, 'region')}
+                              onClick={() => openSpecificItem(`region-${region.id}`, 'region', cliente.id)}
                               className="text-xs px-2 py-1 rounded bg-background hover:bg-primary/10 border border-border transition-colors"
                             >
                               {region.nombre}
@@ -369,7 +403,7 @@ export default function Topology() {
                                       {getCiudadesByRegion(region.id).map((ciudad) => (
                                         <button
                                           key={ciudad.id}
-                                          onClick={() => toggleItem(`ciudad-${ciudad.id}`, 'ciudad')}
+                                          onClick={() => openSpecificItem(`ciudad-${ciudad.id}`, 'ciudad', undefined, region.id)}
                                           className="text-xs px-2 py-1 rounded bg-background hover:bg-primary/10 border border-border transition-colors"
                                         >
                                           {ciudad.nombre}
