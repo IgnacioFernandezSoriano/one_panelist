@@ -36,14 +36,10 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
     region_id: initialData?.region_id?.toString() || "",
     codigo: initialData?.codigo || "",
     nombre: initialData?.nombre || "",
-    codigo_postal_principal: initialData?.codigo_postal_principal || "",
     pais: initialData?.pais || "",
     clasificacion: initialData?.clasificacion || "B",
     latitud: initialData?.latitud?.toString() || "",
     longitud: initialData?.longitud?.toString() || "",
-    volumen_poblacional: initialData?.volumen_poblacional?.toString() || "",
-    volumen_trafico_postal: initialData?.volumen_trafico_postal?.toString() || "",
-    criterio_clasificacion: initialData?.criterio_clasificacion || "",
     descripcion: initialData?.descripcion || "",
     estado: initialData?.estado || "activo",
   });
@@ -107,14 +103,14 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
         region_id: parseInt(formData.region_id),
         codigo: formData.codigo,
         nombre: formData.nombre,
-        codigo_postal_principal: formData.codigo_postal_principal || null,
+        codigo_postal_principal: null,
         pais: formData.pais,
         clasificacion: formData.clasificacion,
         latitud: parseFloat(formData.latitud),
         longitud: parseFloat(formData.longitud),
-        volumen_poblacional: formData.volumen_poblacional ? parseInt(formData.volumen_poblacional) : null,
-        volumen_trafico_postal: formData.volumen_trafico_postal ? parseInt(formData.volumen_trafico_postal) : null,
-        criterio_clasificacion: formData.criterio_clasificacion || null,
+        volumen_poblacional: null,
+        volumen_trafico_postal: null,
+        criterio_clasificacion: null,
         descripcion: formData.descripcion || null,
         estado: formData.estado,
       };
@@ -131,14 +127,14 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
         region_id: parseInt(formData.region_id),
         codigo,
         nombre: formData.nombre,
-        codigo_postal_principal: formData.codigo_postal_principal || null,
+        codigo_postal_principal: null,
         pais: formData.pais,
         clasificacion: formData.clasificacion,
         latitud: parseFloat(formData.latitud),
         longitud: parseFloat(formData.longitud),
-        volumen_poblacional: formData.volumen_poblacional ? parseInt(formData.volumen_poblacional) : null,
-        volumen_trafico_postal: formData.volumen_trafico_postal ? parseInt(formData.volumen_trafico_postal) : null,
-        criterio_clasificacion: formData.criterio_clasificacion || null,
+        volumen_poblacional: null,
+        volumen_trafico_postal: null,
+        criterio_clasificacion: null,
         descripcion: formData.descripcion || null,
         estado: formData.estado,
       };
@@ -300,16 +296,7 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="codigo_postal_principal">Postal Code</Label>
-          <Input
-            id="codigo_postal_principal"
-            value={formData.codigo_postal_principal}
-            onChange={(e) => setFormData({ ...formData, codigo_postal_principal: e.target.value })}
-          />
-        </div>
-
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="pais">Country *</Label>
           <Popover open={paisOpen} onOpenChange={setPaisOpen}>
@@ -418,42 +405,6 @@ export function CiudadForm({ onSuccess, onCancel, initialData }: CiudadFormProps
             onChange={(e) => setFormData({ ...formData, longitud: e.target.value })}
             required
           />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="volumen_poblacional">Population Volume</Label>
-          <Input
-            id="volumen_poblacional"
-            type="number"
-            value={formData.volumen_poblacional}
-            onChange={(e) => setFormData({ ...formData, volumen_poblacional: e.target.value })}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="volumen_trafico_postal">Postal Traffic Volume</Label>
-          <Input
-            id="volumen_trafico_postal"
-            type="number"
-            value={formData.volumen_trafico_postal}
-            onChange={(e) => setFormData({ ...formData, volumen_trafico_postal: e.target.value })}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="criterio_clasificacion">Classification Criteria</Label>
-          <Select value={formData.criterio_clasificacion} onValueChange={(value) => setFormData({ ...formData, criterio_clasificacion: value })}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="poblacional">Population</SelectItem>
-              <SelectItem value="postal">Postal</SelectItem>
-              <SelectItem value="mixto">Mixed</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
