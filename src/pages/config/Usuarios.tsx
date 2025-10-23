@@ -3,10 +3,13 @@ import { ConfigDataTable } from "@/components/config/ConfigDataTable";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { UsuarioForm } from "@/components/config/forms/UsuarioForm";
 
 export default function ConfigUsuarios() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -83,9 +86,25 @@ export default function ConfigUsuarios() {
           data={data}
           columns={columns}
           onDelete={handleDelete}
+          onCreate={() => setCreateDialogOpen(true)}
           isLoading={isLoading}
           csvConfig={csvConfig}
         />
+
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New User</DialogTitle>
+            </DialogHeader>
+            <UsuarioForm
+              onSuccess={() => {
+                setCreateDialogOpen(false);
+                loadData();
+              }}
+              onCancel={() => setCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
