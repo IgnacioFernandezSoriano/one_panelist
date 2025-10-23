@@ -265,7 +265,7 @@ export default function Topology() {
                           <Badge variant="outline" className="text-xs">Client</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {cliente.codigo} • {cliente.pais}
+                          ID: {cliente.id} • {cliente.codigo} • {cliente.pais}
                         </p>
                       </div>
                     </CollapsibleTrigger>
@@ -299,7 +299,7 @@ export default function Topology() {
                                       <Badge variant="secondary" className="text-xs">Region</Badge>
                                     </div>
                                     <p className="text-xs text-muted-foreground">
-                                      {region.codigo} • {region.pais}
+                                      ID: {region.id} • {region.codigo} • {region.pais}
                                     </p>
                                   </div>
                                 </CollapsibleTrigger>
@@ -333,7 +333,7 @@ export default function Topology() {
                                                   <Badge variant="secondary" className="text-xs">City</Badge>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground">
-                                                  {ciudad.codigo} • {ciudad.clasificacion}
+                                                  ID: {ciudad.id} • {ciudad.codigo} • {ciudad.clasificacion}
                                                 </p>
                                               </div>
                                             </CollapsibleTrigger>
