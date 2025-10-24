@@ -145,7 +145,9 @@ export default function Envios() {
         nodo_pais: nodo.pais,
         nodo_estado: nodo.estado,
         tiene_panelista_activo: nodo.panelista_id ? 'SI' : 'NO',
-        cartas_semana: ''
+        from_A: '',
+        from_B: '',
+        from_C: ''
       }));
 
       const csv = Papa.unparse(csvData, {
