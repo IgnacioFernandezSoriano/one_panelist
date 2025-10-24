@@ -69,8 +69,8 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
   const mainMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: Users, label: "Panelists", path: "/panelistas" },
     { icon: Send, label: "Allocation Plan", path: "/envios" },
+    { icon: Users, label: "Panelists", path: "/panelistas" },
     { icon: AlertCircle, label: "Issues", path: "/incidencias" },
     { icon: MapPin, label: "Nodes", path: "/nodos" },
     { icon: GitBranch, label: "Topology", path: "/topology" },
