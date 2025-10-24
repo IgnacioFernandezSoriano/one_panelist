@@ -98,9 +98,9 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
   const loadCarriers = async () => {
     const { data, error } = await supabase
       .from("carriers")
-      .select("id, carrier_code, legal_name, commercial_name")
+      .select("id, legal_name, commercial_name")
       .eq("status", "active")
-      .order("carrier_code");
+      .order("legal_name");
 
     if (!error && data) {
       setCarriers(data);
@@ -256,7 +256,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                 {formData.carrier_id 
                   ? (() => {
                       const carrier = carriers.find(c => c.id.toString() === formData.carrier_id);
-                      return carrier ? `${carrier.carrier_code} - ${carrier.commercial_name || carrier.legal_name}` : "Select carrier...";
+                      return carrier ? `${carrier.commercial_name || carrier.legal_name}` : "Select carrier...";
                     })()
                   : "Select carrier..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -285,7 +285,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                   {carriers.map((carrier) => (
                     <CommandItem
                       key={carrier.id}
-                      value={`${carrier.carrier_code} ${carrier.commercial_name || carrier.legal_name}`}
+                      value={`${carrier.commercial_name || carrier.legal_name}`}
                       onSelect={() => {
                         setFormData({ ...formData, carrier_id: carrier.id.toString() });
                         setOpenCarrier(false);
@@ -297,7 +297,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                           formData.carrier_id === carrier.id.toString() ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      {carrier.carrier_code} - {carrier.commercial_name || carrier.legal_name}
+                      {carrier.commercial_name || carrier.legal_name}
                     </CommandItem>
                   ))}
                 </CommandGroup>

@@ -17,7 +17,7 @@ export type Database = {
       carriers: {
         Row: {
           authorization_date: string | null
-          carrier_code: string
+          carrier_code: string | null
           commercial_name: string | null
           created_at: string | null
           declared_coverage: string | null
@@ -47,7 +47,7 @@ export type Database = {
         }
         Insert: {
           authorization_date?: string | null
-          carrier_code: string
+          carrier_code?: string | null
           commercial_name?: string | null
           created_at?: string | null
           declared_coverage?: string | null
@@ -77,7 +77,7 @@ export type Database = {
         }
         Update: {
           authorization_date?: string | null
-          carrier_code?: string
+          carrier_code?: string | null
           commercial_name?: string | null
           created_at?: string | null
           declared_coverage?: string | null

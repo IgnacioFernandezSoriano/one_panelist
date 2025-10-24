@@ -15,7 +15,6 @@ interface QuickCreateCarrierProps {
 export function QuickCreateCarrier({ open, onOpenChange, onSuccess }: QuickCreateCarrierProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    carrier_code: "",
     legal_name: "",
     commercial_name: "",
   });
@@ -45,7 +44,7 @@ export function QuickCreateCarrier({ open, onOpenChange, onSuccess }: QuickCreat
 
       onSuccess(data);
       onOpenChange(false);
-      setFormData({ carrier_code: "", legal_name: "", commercial_name: "" });
+      setFormData({ legal_name: "", commercial_name: "" });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -64,15 +63,6 @@ export function QuickCreateCarrier({ open, onOpenChange, onSuccess }: QuickCreat
           <DialogTitle>Create New Carrier</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="carrier_code">Carrier Code *</Label>
-            <Input
-              id="carrier_code"
-              value={formData.carrier_code}
-              onChange={(e) => setFormData({ ...formData, carrier_code: e.target.value })}
-              required
-            />
-          </div>
           <div className="space-y-2">
             <Label htmlFor="legal_name">Legal Name *</Label>
             <Input

@@ -24,7 +24,7 @@ export default function Carriers() {
     const { data: carriers, error } = await supabase
       .from("carriers")
       .select("*")
-      .order("carrier_code", { ascending: true });
+      .order("legal_name", { ascending: true });
 
     if (error) {
       toast({
@@ -80,7 +80,7 @@ export default function Carriers() {
   };
 
   const columns = [
-    { key: "carrier_code", label: "Code" },
+    { key: "id", label: "ID" },
     { key: "legal_name", label: "Legal Name" },
     { key: "commercial_name", label: "Commercial Name" },
     { key: "operator_type", label: "Type" },
@@ -100,17 +100,17 @@ export default function Carriers() {
   const csvConfig = {
     tableName: "carriers",
     expectedColumns: [
-      "carrier_code", "legal_name", "commercial_name", "tax_id", "operator_type",
+      "legal_name", "commercial_name", "tax_id", "operator_type",
       "license_number", "regulatory_status", "authorization_date", "license_expiration_date",
-      "legal_representative", "phone", "email", "website", "geographic_scope", "status"
+      "legal_representative", "phone", "email", "website", "geographic_scope", "status", "carrier_code"
     ],
     exampleData: [
-      ["CORREOS", "Sociedad Estatal Correos y Telégrafos", "Correos", "A83052407", "universal_postal", 
+      ["Sociedad Estatal Correos y Telégrafos", "Correos", "A83052407", "universal_postal", 
        "LIC-2020-001", "authorized", "2020-01-01", "2030-12-31", "Juan García", 
-       "+34900123456", "info@correos.es", "https://www.correos.es", "national", "active"],
-      ["DHL", "DHL Express Spain S.L.", "DHL", "B12345678", "courier", 
+       "+34900123456", "info@correos.es", "https://www.correos.es", "national", "active", "CORREOS"],
+      ["DHL Express Spain S.L.", "DHL", "B12345678", "courier", 
        "LIC-2019-050", "authorized", "2019-06-15", "2029-06-15", "María López", 
-       "+34900789012", "info@dhl.es", "https://www.dhl.es", "international", "active"],
+       "+34900789012", "info@dhl.es", "https://www.dhl.es", "international", "active", "DHL"],
     ],
   };
 

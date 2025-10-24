@@ -58,6 +58,7 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
 
     const dataToSave = {
       ...formData,
+      carrier_code: formData.carrier_code || null,
       guarantee_amount: formData.guarantee_amount ? parseFloat(formData.guarantee_amount) : null,
       number_of_branches: formData.number_of_branches ? parseInt(formData.number_of_branches) : null,
       authorization_date: formData.authorization_date || null,
@@ -123,17 +124,16 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
         <TabsContent value="basic" className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="carrier_code">Carrier Code *</Label>
+              <Label htmlFor="carrier_code">Carrier Code (Optional)</Label>
               <Input
                 id="carrier_code"
                 value={formData.carrier_code}
                 onChange={(e) => setFormData({ ...formData, carrier_code: e.target.value })}
-                required
                 disabled={isEditing}
-                placeholder="e.g., CORREOS"
+                placeholder="e.g., CORREOS (leave blank to use ID)"
               />
               <p className="text-xs text-muted-foreground">
-                Unique identifier for the carrier (cannot be changed after creation)
+                Optional custom code - ID will be used if not provided
               </p>
             </div>
 
