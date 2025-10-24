@@ -62,11 +62,11 @@ export default function Envios() {
 
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; className?: string }> = {
-      PENDIENTE: { variant: "outline" },
-      NOTIFICADO: { variant: "secondary" },
-      ENVIADO: { variant: "default" },
-      RECIBIDO: { variant: "default", className: "bg-success text-success-foreground" },
-      CANCELADO: { variant: "destructive" },
+      PENDING: { variant: "outline" },
+      NOTIFIED: { variant: "secondary" },
+      SENT: { variant: "default" },
+      RECEIVED: { variant: "default", className: "bg-success text-success-foreground" },
+      CANCELLED: { variant: "destructive" },
     };
     return variants[estado] || { variant: "secondary" };
   };

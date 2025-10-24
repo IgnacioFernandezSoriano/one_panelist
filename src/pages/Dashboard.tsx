@@ -35,8 +35,8 @@ export default function Dashboard() {
         supabase.from("panelistas").select("id", { count: "exact", head: true }),
         supabase.from("panelistas").select("id", { count: "exact", head: true }).eq("estado", "activo"),
         supabase.from("envios").select("id", { count: "exact", head: true }),
-        supabase.from("envios").select("id", { count: "exact", head: true }).eq("estado", "PENDIENTE"),
-        supabase.from("envios").select("id", { count: "exact", head: true }).eq("estado", "RECIBIDO"),
+        supabase.from("envios").select("id", { count: "exact", head: true }).eq("estado", "PENDING"),
+        supabase.from("envios").select("id", { count: "exact", head: true }).eq("estado", "RECEIVED"),
         supabase.from("incidencias").select("id", { count: "exact", head: true }),
         supabase.from("incidencias").select("id", { count: "exact", head: true }).eq("estado", "abierta"),
       ]);

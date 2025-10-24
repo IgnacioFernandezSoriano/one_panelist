@@ -56,7 +56,7 @@ export default function DataImport() {
       fecha_programada: "2025-11-01",
       fecha_limite: "2025-11-05",
       tipo_producto: "carta",
-      estado: "PENDIENTE",
+      estado: "PENDING",
       motivo_creacion: "programado",
     },
   ];

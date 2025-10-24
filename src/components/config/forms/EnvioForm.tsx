@@ -50,7 +50,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     producto_id: initialData?.producto_id || "",
     tipo_producto: initialData?.tipo_producto || "",
     motivo_creacion: initialData?.motivo_creacion || "",
-    estado: initialData?.estado || "PENDIENTE",
+    estado: initialData?.estado || "PENDING",
     observaciones: initialData?.observaciones || "",
   });
 
@@ -553,11 +553,11 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="PENDIENTE">Pending</SelectItem>
-              <SelectItem value="NOTIFICADO">Notified</SelectItem>
-              <SelectItem value="ENVIADO">Sent</SelectItem>
-              <SelectItem value="RECIBIDO">Received</SelectItem>
-              <SelectItem value="CANCELADO">Cancelled</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="NOTIFIED">Notified</SelectItem>
+              <SelectItem value="SENT">Sent</SelectItem>
+              <SelectItem value="RECEIVED">Received</SelectItem>
+              <SelectItem value="CANCELLED">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>

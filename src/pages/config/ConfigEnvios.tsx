@@ -71,7 +71,7 @@ export default function ConfigEnvios() {
       "tipo_producto", "estado", "motivo_creacion"
     ],
     exampleData: [
-      ["1", "1", "MAD", "BCN", "2024-01-15", "paquete", "PENDIENTE", "inicial"],
+      ["1", "1", "MAD", "BCN", "2024-01-15", "paquete", "PENDING", "inicial"],
     ],
   };
 

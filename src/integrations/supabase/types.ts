@@ -822,12 +822,7 @@ export type Database = {
     Enums: {
       app_role: "gestor" | "coordinador" | "administrador"
       dias_comunicacion: "dias_laborables" | "fines_semana" | "ambos"
-      estado_envio:
-        | "PENDIENTE"
-        | "NOTIFICADO"
-        | "ENVIADO"
-        | "RECIBIDO"
-        | "CANCELADO"
+      estado_envio: "PENDING" | "NOTIFIED" | "SENT" | "RECEIVED" | "CANCELLED"
       estado_general: "activo" | "inactivo" | "suspendido"
       estado_incidencia: "abierta" | "en_proceso" | "resuelta" | "cerrada"
       geographic_scope: "local" | "regional" | "national" | "international"
@@ -977,13 +972,7 @@ export const Constants = {
     Enums: {
       app_role: ["gestor", "coordinador", "administrador"],
       dias_comunicacion: ["dias_laborables", "fines_semana", "ambos"],
-      estado_envio: [
-        "PENDIENTE",
-        "NOTIFICADO",
-        "ENVIADO",
-        "RECIBIDO",
-        "CANCELADO",
-      ],
+      estado_envio: ["PENDING", "NOTIFIED", "SENT", "RECEIVED", "CANCELLED"],
       estado_general: ["activo", "inactivo", "suspendido"],
       estado_incidencia: ["abierta", "en_proceso", "resuelta", "cerrada"],
       geographic_scope: ["local", "regional", "national", "international"],
