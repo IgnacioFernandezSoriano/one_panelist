@@ -18,9 +18,36 @@ interface Envio {
   tipo_producto: string;
   estado: string;
   fecha_programada: string;
+  fecha_limite?: string;
   nodo_origen: string;
   nodo_destino: string;
   carrier_name?: string;
+  carrier_id?: number;
+  cliente_id: number;
+  producto_id?: number;
+  panelista_origen_id?: number;
+  panelista_destino_id?: number;
+  numero_etiqueta?: string;
+  carriers?: {
+    legal_name: string;
+    carrier_code?: string;
+  };
+  clientes?: {
+    nombre: string;
+    codigo: string;
+  };
+  productos_cliente?: {
+    nombre_producto: string;
+    codigo_producto: string;
+  };
+  panelista_origen?: {
+    nombre_completo: string;
+    nodo_asignado?: string;
+  };
+  panelista_destino?: {
+    nombre_completo: string;
+    nodo_asignado?: string;
+  };
 }
 
 export default function Envios() {
@@ -39,7 +66,29 @@ export default function Envios() {
     try {
       const { data, error } = await supabase
         .from("envios")
-        .select("*")
+        .select(`
+          *,
+          carriers:carrier_id (
+            legal_name,
+            carrier_code
+          ),
+          clientes:cliente_id (
+            nombre,
+            codigo
+          ),
+          productos_cliente:producto_id (
+            nombre_producto,
+            codigo_producto
+          ),
+          panelista_origen:panelistas!panelista_origen_id (
+            nombre_completo,
+            nodo_asignado
+          ),
+          panelista_destino:panelistas!panelista_destino_id (
+            nombre_completo,
+            nodo_asignado
+          )
+        `)
         .order("fecha_programada", { ascending: false });
 
       if (error) throw error;
@@ -55,13 +104,28 @@ export default function Envios() {
     }
   };
 
-  const filteredEnvios = envios.filter((e) =>
-    e.id.toString().includes(searchTerm) ||
-    e.tipo_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.nodo_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.nodo_destino.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (e.carrier_name && e.carrier_name.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredEnvios = envios.filter((e) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      e.id.toString().includes(searchTerm) ||
+      e.tipo_producto.toLowerCase().includes(searchLower) ||
+      e.estado.toLowerCase().includes(searchLower) ||
+      e.nodo_origen.toLowerCase().includes(searchLower) ||
+      e.nodo_destino.toLowerCase().includes(searchLower) ||
+      (e.numero_etiqueta && e.numero_etiqueta.toLowerCase().includes(searchLower)) ||
+      (e.carrier_name && e.carrier_name.toLowerCase().includes(searchLower)) ||
+      (e.carriers?.legal_name && e.carriers.legal_name.toLowerCase().includes(searchLower)) ||
+      (e.carriers?.carrier_code && e.carriers.carrier_code.toLowerCase().includes(searchLower)) ||
+      (e.clientes?.nombre && e.clientes.nombre.toLowerCase().includes(searchLower)) ||
+      (e.clientes?.codigo && e.clientes.codigo.toLowerCase().includes(searchLower)) ||
+      (e.productos_cliente?.nombre_producto && e.productos_cliente.nombre_producto.toLowerCase().includes(searchLower)) ||
+      (e.productos_cliente?.codigo_producto && e.productos_cliente.codigo_producto.toLowerCase().includes(searchLower)) ||
+      (e.panelista_origen?.nombre_completo && e.panelista_origen.nombre_completo.toLowerCase().includes(searchLower)) ||
+      (e.panelista_origen?.nodo_asignado && e.panelista_origen.nodo_asignado.toLowerCase().includes(searchLower)) ||
+      (e.panelista_destino?.nombre_completo && e.panelista_destino.nombre_completo.toLowerCase().includes(searchLower)) ||
+      (e.panelista_destino?.nodo_asignado && e.panelista_destino.nodo_asignado.toLowerCase().includes(searchLower))
+    );
+  });
 
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; className?: string }> = {
@@ -100,12 +164,15 @@ export default function Envios() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Search by ID, product type, carrier, or node..."
+              placeholder="Search by ID, account, product, carrier, panelist name, node, label..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Search across all fields: accounts, products, carriers, panelists, nodes, and tracking labels
+          </p>
         </Card>
 
         {loading ? (
@@ -124,7 +191,8 @@ export default function Envios() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
                       <h3 className="text-lg font-semibold text-foreground">
-                        Shipment #{envio.id}
+                        #{envio.id}
+                        {envio.numero_etiqueta && <span className="text-muted-foreground font-normal"> • {envio.numero_etiqueta}</span>}
                       </h3>
                       <Badge 
                         variant={getEstadoBadge(envio.estado).variant}
@@ -134,35 +202,75 @@ export default function Envios() {
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
+                      {envio.clientes && (
+                        <div>
+                          <span className="text-muted-foreground">Account:</span>
+                          <p className="font-medium">{envio.clientes.codigo}</p>
+                          <p className="text-xs text-muted-foreground truncate">{envio.clientes.nombre}</p>
+                        </div>
+                      )}
+                      
+                      {envio.productos_cliente && (
+                        <div>
+                          <span className="text-muted-foreground">Product:</span>
+                          <p className="font-medium">{envio.productos_cliente.codigo_producto}</p>
+                          <p className="text-xs text-muted-foreground truncate">{envio.productos_cliente.nombre_producto}</p>
+                        </div>
+                      )}
+                      
                       <div>
                         <span className="text-muted-foreground">Type:</span>
                         <p className="font-medium capitalize">{envio.tipo_producto}</p>
                       </div>
-                      {envio.carrier_name && (
+                      
+                      {(envio.carriers || envio.carrier_name) && (
                         <div>
                           <span className="text-muted-foreground">Carrier:</span>
-                          <p className="font-medium">{envio.carrier_name}</p>
+                          <p className="font-medium">
+                            {envio.carriers?.carrier_code || envio.carrier_name}
+                          </p>
+                          {envio.carriers?.legal_name && (
+                            <p className="text-xs text-muted-foreground truncate">{envio.carriers.legal_name}</p>
+                          )}
                         </div>
                       )}
+                      
                       <div>
                         <span className="text-muted-foreground">Origin:</span>
                         <p className="font-medium">{envio.nodo_origen}</p>
+                        {envio.panelista_origen && (
+                          <p className="text-xs text-muted-foreground truncate">{envio.panelista_origen.nombre_completo}</p>
+                        )}
                       </div>
+                      
                       <div>
                         <span className="text-muted-foreground">Destination:</span>
                         <p className="font-medium">{envio.nodo_destino}</p>
+                        {envio.panelista_destino && (
+                          <p className="text-xs text-muted-foreground truncate">{envio.panelista_destino.nombre_completo}</p>
+                        )}
                       </div>
+                      
                       <div>
-                        <span className="text-muted-foreground">Scheduled date:</span>
+                        <span className="text-muted-foreground">Scheduled:</span>
                         <p className="font-medium">
                           {format(new Date(envio.fecha_programada), "dd MMM yyyy", { locale: enUS })}
                         </p>
                       </div>
+                      
+                      {envio.fecha_limite && (
+                        <div>
+                          <span className="text-muted-foreground">Due date:</span>
+                          <p className="font-medium">
+                            {format(new Date(envio.fecha_limite), "dd MMM yyyy", { locale: enUS })}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  <Button variant="outline">View Details</Button>
+                  <Button variant="outline" size="sm">View Details</Button>
                 </div>
               </Card>
             ))}
