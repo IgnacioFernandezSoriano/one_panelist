@@ -22,6 +22,7 @@ import ConfigUsuarios from "./pages/config/Usuarios";
 import ConfigPlantillas from "./pages/config/Plantillas";
 import ConfigPanelistas from "./pages/config/ConfigPanelistas";
 import ConfigEnvios from "./pages/config/ConfigEnvios";
+import ConfigCarriers from "./pages/config/Carriers";
 import ConfigWorkflows from "./pages/config/Workflows";
 import ConfigIncidencias from "./pages/config/ConfigIncidencias";
 import NuevoEnvio from "./pages/NuevoEnvio";
@@ -55,6 +56,7 @@ const App = () => {
             <Route path="/configuracion/plantillas" element={<ConfigPlantillas />} />
             <Route path="/configuracion/panelistas" element={<ConfigPanelistas />} />
             <Route path="/configuracion/envios" element={<ConfigEnvios />} />
+            <Route path="/configuracion/carriers" element={<ConfigCarriers />} />
             <Route path="/configuracion/workflows" element={<ConfigWorkflows />} />
             <Route path="/configuracion/incidencias" element={<ConfigIncidencias />} />
             <Route path="*" element={<NotFound />} />

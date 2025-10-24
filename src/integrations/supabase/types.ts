@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      carriers: {
+        Row: {
+          authorization_date: string | null
+          carrier_code: string
+          commercial_name: string | null
+          created_at: string | null
+          declared_coverage: string | null
+          email: string | null
+          geographic_scope:
+            | Database["public"]["Enums"]["geographic_scope"]
+            | null
+          guarantee_amount: number | null
+          id: number
+          legal_address: string | null
+          legal_name: string
+          legal_representative: string | null
+          license_expiration_date: string | null
+          license_number: string | null
+          notes: string | null
+          number_of_branches: number | null
+          operator_type: Database["public"]["Enums"]["operator_type"]
+          phone: string | null
+          regulator_data_api_url: string | null
+          regulatory_status: Database["public"]["Enums"]["regulatory_status"]
+          report_format: Database["public"]["Enums"]["report_format"] | null
+          status: string
+          tax_id: string | null
+          tracking_api_url: string | null
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          authorization_date?: string | null
+          carrier_code: string
+          commercial_name?: string | null
+          created_at?: string | null
+          declared_coverage?: string | null
+          email?: string | null
+          geographic_scope?:
+            | Database["public"]["Enums"]["geographic_scope"]
+            | null
+          guarantee_amount?: number | null
+          id?: number
+          legal_address?: string | null
+          legal_name: string
+          legal_representative?: string | null
+          license_expiration_date?: string | null
+          license_number?: string | null
+          notes?: string | null
+          number_of_branches?: number | null
+          operator_type: Database["public"]["Enums"]["operator_type"]
+          phone?: string | null
+          regulator_data_api_url?: string | null
+          regulatory_status: Database["public"]["Enums"]["regulatory_status"]
+          report_format?: Database["public"]["Enums"]["report_format"] | null
+          status?: string
+          tax_id?: string | null
+          tracking_api_url?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          authorization_date?: string | null
+          carrier_code?: string
+          commercial_name?: string | null
+          created_at?: string | null
+          declared_coverage?: string | null
+          email?: string | null
+          geographic_scope?:
+            | Database["public"]["Enums"]["geographic_scope"]
+            | null
+          guarantee_amount?: number | null
+          id?: number
+          legal_address?: string | null
+          legal_name?: string
+          legal_representative?: string | null
+          license_expiration_date?: string | null
+          license_number?: string | null
+          notes?: string | null
+          number_of_branches?: number | null
+          operator_type?: Database["public"]["Enums"]["operator_type"]
+          phone?: string | null
+          regulator_data_api_url?: string | null
+          regulatory_status?: Database["public"]["Enums"]["regulatory_status"]
+          report_format?: Database["public"]["Enums"]["report_format"] | null
+          status?: string
+          tax_id?: string | null
+          tracking_api_url?: string | null
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       ciudades: {
         Row: {
           clasificacion: string
@@ -663,8 +756,16 @@ export type Database = {
         | "CANCELADO"
       estado_general: "activo" | "inactivo" | "suspendido"
       estado_incidencia: "abierta" | "en_proceso" | "resuelta" | "cerrada"
+      geographic_scope: "local" | "regional" | "national" | "international"
+      operator_type:
+        | "universal_postal"
+        | "private_postal"
+        | "courier"
+        | "logistics"
       origen_incidencia: "agente" | "gestor" | "sistema"
       prioridad_incidencia: "baja" | "media" | "alta" | "critica"
+      regulatory_status: "authorized" | "suspended" | "sanctioned" | "revoked"
+      report_format: "xml" | "json" | "csv"
       tipo_incidencia:
         | "cambio_direccion"
         | "no_disponible"
@@ -809,8 +910,17 @@ export const Constants = {
       ],
       estado_general: ["activo", "inactivo", "suspendido"],
       estado_incidencia: ["abierta", "en_proceso", "resuelta", "cerrada"],
+      geographic_scope: ["local", "regional", "national", "international"],
+      operator_type: [
+        "universal_postal",
+        "private_postal",
+        "courier",
+        "logistics",
+      ],
       origen_incidencia: ["agente", "gestor", "sistema"],
       prioridad_incidencia: ["baja", "media", "alta", "critica"],
+      regulatory_status: ["authorized", "suspended", "sanctioned", "revoked"],
+      report_format: ["xml", "json", "csv"],
       tipo_incidencia: [
         "cambio_direccion",
         "no_disponible",
