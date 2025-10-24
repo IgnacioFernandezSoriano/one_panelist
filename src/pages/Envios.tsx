@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { CSVImporter } from "@/components/import/CSVImporter";
 
 interface Envio {
   id: number;
@@ -26,6 +28,7 @@ export default function Envios() {
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -81,10 +84,16 @@ export default function Envios() {
               Manage shipping plans and tracking
             </p>
           </div>
-          <Button className="gap-2" onClick={() => navigate("/envios/nuevo")}>
-            <Plus className="w-4 h-4" />
-            Allocation Event
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => setImportDialogOpen(true)}>
+              <Upload className="w-4 h-4" />
+              Import CSV
+            </Button>
+            <Button className="gap-2" onClick={() => navigate("/envios/nuevo")}>
+              <Plus className="w-4 h-4" />
+              Allocation Event
+            </Button>
+          </div>
         </div>
 
         <Card className="p-6 mb-6">
@@ -159,6 +168,50 @@ export default function Envios() {
             ))}
           </div>
         )}
+
+        <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Import Allocation Plans</DialogTitle>
+            </DialogHeader>
+            <CSVImporter
+              tableName="envios"
+              tableLabel="Allocation Plans"
+              expectedColumns={[
+                "cliente_id",
+                "carrier_id",
+                "producto_id",
+                "panelista_origen_id",
+                "panelista_destino_id",
+                "nodo_origen",
+                "nodo_destino",
+                "fecha_programada",
+                "tipo_producto",
+                "estado",
+                "motivo_creacion"
+              ]}
+              exampleData={[
+                {
+                  cliente_id: "1",
+                  carrier_id: "1",
+                  producto_id: "2",
+                  panelista_origen_id: "5",
+                  panelista_destino_id: "8",
+                  nodo_origen: "MAD",
+                  nodo_destino: "BCN",
+                  fecha_programada: "2025-01-15",
+                  tipo_producto: "letter",
+                  estado: "PENDING",
+                  motivo_creacion: "scheduled"
+                },
+              ]}
+              onImportComplete={() => {
+                setImportDialogOpen(false);
+                loadEnvios();
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   );
