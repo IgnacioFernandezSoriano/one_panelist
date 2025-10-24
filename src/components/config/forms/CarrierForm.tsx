@@ -25,7 +25,7 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
     legal_name: initialData?.legal_name || "",
     commercial_name: initialData?.commercial_name || "",
     tax_id: initialData?.tax_id || "",
-    operator_type: initialData?.operator_type || "courier",
+    operator_type: initialData?.operator_type || "licensed_postal",
     regulatory_status: initialData?.regulatory_status || "authorized",
     geographic_scope: initialData?.geographic_scope || "national",
     status: initialData?.status || "active",
@@ -167,10 +167,12 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="universal_postal">Universal Postal</SelectItem>
-                  <SelectItem value="private_postal">Private Postal</SelectItem>
-                  <SelectItem value="courier">Courier</SelectItem>
-                  <SelectItem value="logistics">Logistics</SelectItem>
+                  <SelectItem value="designated_usp">Designated Universal Service Provider (USP)</SelectItem>
+                  <SelectItem value="licensed_postal">Licensed/Authorized Postal Operators</SelectItem>
+                  <SelectItem value="express_courier">Express/Courier Service Providers</SelectItem>
+                  <SelectItem value="ecommerce_parcel">E-commerce Parcel Operators</SelectItem>
+                  <SelectItem value="exempt">Exempt Operators</SelectItem>
+                  <SelectItem value="others">Others</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
