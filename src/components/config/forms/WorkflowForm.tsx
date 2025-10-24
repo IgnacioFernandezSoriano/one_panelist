@@ -20,24 +20,34 @@ interface WorkflowFormProps {
 export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientes, setClientes] = useState<Array<{ id: number; nombre: string; codigo: string }>>([]);
+  const [productos, setProductos] = useState<Array<{ id: number; nombre_producto: string; codigo_producto: string }>>([]);
   const [clienteSearch, setClienteSearch] = useState("");
+  const [productoSearch, setProductoSearch] = useState("");
   const [clienteOpen, setClienteOpen] = useState(false);
+  const [productoOpen, setProductoOpen] = useState(false);
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
     cliente_id: initialData?.cliente_id?.toString() || "",
+    producto_id: initialData?.producto_id?.toString() || "",
     servicio_postal: initialData?.servicio_postal || "",
     tipo_dias: initialData?.tipo_dias || "habiles",
-    dias_verificacion_recepcion: initialData?.dias_verificacion_recepcion?.toString() || "",
-    dias_recordatorio: initialData?.dias_recordatorio?.toString() || "",
-    dias_escalamiento: initialData?.dias_escalamiento?.toString() || "",
-    dias_declarar_extravio: initialData?.dias_declarar_extravio?.toString() || "",
-    dias_segunda_verificacion: initialData?.dias_segunda_verificacion?.toString() || "",
+    horas_verificacion_recepcion_receptor: initialData?.horas_verificacion_recepcion_receptor?.toString() || "",
+    horas_recordatorio_receptor: initialData?.horas_recordatorio_receptor?.toString() || "",
+    horas_escalamiento: initialData?.horas_escalamiento?.toString() || "",
+    horas_declarar_extravio: initialData?.horas_declarar_extravio?.toString() || "",
+    horas_segunda_verificacion_receptor: initialData?.horas_segunda_verificacion_receptor?.toString() || "",
   });
 
   useEffect(() => {
     loadClientes();
   }, []);
+
+  useEffect(() => {
+    if (formData.cliente_id) {
+      loadProductos();
+    }
+  }, [formData.cliente_id]);
 
   const loadClientes = async () => {
     const { data, error } = await supabase
@@ -51,19 +61,35 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
     }
   };
 
+  const loadProductos = async () => {
+    if (!formData.cliente_id) return;
+    
+    const { data, error } = await supabase
+      .from("productos_cliente")
+      .select("id, nombre_producto, codigo_producto")
+      .eq("cliente_id", parseInt(formData.cliente_id))
+      .eq("estado", "activo")
+      .order("nombre_producto", { ascending: true });
+
+    if (!error && data) {
+      setProductos(data);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const dataToSave = {
       cliente_id: parseInt(formData.cliente_id),
+      producto_id: formData.producto_id ? parseInt(formData.producto_id) : null,
       servicio_postal: formData.servicio_postal || null,
       tipo_dias: formData.tipo_dias,
-      dias_verificacion_recepcion: parseInt(formData.dias_verificacion_recepcion),
-      dias_recordatorio: parseInt(formData.dias_recordatorio),
-      dias_escalamiento: parseInt(formData.dias_escalamiento),
-      dias_declarar_extravio: parseInt(formData.dias_declarar_extravio),
-      dias_segunda_verificacion: formData.dias_segunda_verificacion ? parseInt(formData.dias_segunda_verificacion) : null,
+      horas_verificacion_recepcion_receptor: parseInt(formData.horas_verificacion_recepcion_receptor),
+      horas_recordatorio_receptor: parseInt(formData.horas_recordatorio_receptor),
+      horas_escalamiento: parseInt(formData.horas_escalamiento),
+      horas_declarar_extravio: parseInt(formData.horas_declarar_extravio),
+      horas_segunda_verificacion_receptor: formData.horas_segunda_verificacion_receptor ? parseInt(formData.horas_segunda_verificacion_receptor) : null,
     };
 
     let error;
@@ -132,11 +158,11 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
                       c.codigo.toLowerCase().includes(clienteSearch.toLowerCase())
                     )
                     .map((cliente) => (
-                      <CommandItem
+                       <CommandItem
                         key={cliente.id}
                         value={cliente.id.toString()}
                         onSelect={() => {
-                          setFormData({ ...formData, cliente_id: cliente.id.toString() });
+                          setFormData({ ...formData, cliente_id: cliente.id.toString(), producto_id: "" });
                           setClienteOpen(false);
                           setClienteSearch("");
                         }}
@@ -157,6 +183,67 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
         </Popover>
         <p className="text-xs text-muted-foreground">
           Select the account for which this workflow configuration will apply
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="producto_id">Product</Label>
+        <Popover open={productoOpen} onOpenChange={setProductoOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={productoOpen}
+              className="w-full justify-between"
+              disabled={!formData.cliente_id}
+            >
+              {formData.producto_id 
+                ? productos.find(p => p.id.toString() === formData.producto_id)?.nombre_producto || "Select product..."
+                : "Select product..."}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Command>
+              <CommandInput 
+                placeholder="Search product..." 
+                value={productoSearch}
+                onValueChange={setProductoSearch}
+              />
+              <CommandList>
+                <CommandEmpty>No product found.</CommandEmpty>
+                <CommandGroup>
+                  {productos
+                    .filter(p => 
+                      p.nombre_producto.toLowerCase().includes(productoSearch.toLowerCase()) ||
+                      p.codigo_producto.toLowerCase().includes(productoSearch.toLowerCase())
+                    )
+                    .map((producto) => (
+                      <CommandItem
+                        key={producto.id}
+                        value={producto.id.toString()}
+                        onSelect={() => {
+                          setFormData({ ...formData, producto_id: producto.id.toString() });
+                          setProductoOpen(false);
+                          setProductoSearch("");
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            formData.producto_id === producto.id.toString() ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {producto.nombre_producto} ({producto.codigo_producto})
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <p className="text-xs text-muted-foreground">
+          (Optional) Select a specific product for this workflow configuration
         </p>
       </div>
 
@@ -192,81 +279,81 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="dias_verificacion_recepcion">Verification Days *</Label>
+            <Label htmlFor="horas_verificacion_recepcion_receptor">Receiver Verification (hours) *</Label>
             <Input
-              id="dias_verificacion_recepcion"
+              id="horas_verificacion_recepcion_receptor"
               type="number"
               min="1"
-              value={formData.dias_verificacion_recepcion}
-              onChange={(e) => setFormData({ ...formData, dias_verificacion_recepcion: e.target.value })}
+              value={formData.horas_verificacion_recepcion_receptor}
+              onChange={(e) => setFormData({ ...formData, horas_verificacion_recepcion_receptor: e.target.value })}
               required
-              placeholder="e.g., 3"
+              placeholder="e.g., 72"
             />
             <p className="text-xs text-muted-foreground">
-              Days to wait before requesting panelist to verify reception
+              Hours to wait before requesting receiver panelist to verify reception
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dias_recordatorio">Reminder Days *</Label>
+            <Label htmlFor="horas_recordatorio_receptor">Receiver Reminder (hours) *</Label>
             <Input
-              id="dias_recordatorio"
+              id="horas_recordatorio_receptor"
               type="number"
               min="1"
-              value={formData.dias_recordatorio}
-              onChange={(e) => setFormData({ ...formData, dias_recordatorio: e.target.value })}
+              value={formData.horas_recordatorio_receptor}
+              onChange={(e) => setFormData({ ...formData, horas_recordatorio_receptor: e.target.value })}
               required
-              placeholder="e.g., 2"
+              placeholder="e.g., 48"
             />
             <p className="text-xs text-muted-foreground">
-              Days after verification before sending a reminder
+              Hours after verification request before sending reminder to receiver
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dias_escalamiento">Escalation Days *</Label>
+            <Label htmlFor="horas_escalamiento">Escalation (hours) *</Label>
             <Input
-              id="dias_escalamiento"
+              id="horas_escalamiento"
               type="number"
               min="1"
-              value={formData.dias_escalamiento}
-              onChange={(e) => setFormData({ ...formData, dias_escalamiento: e.target.value })}
+              value={formData.horas_escalamiento}
+              onChange={(e) => setFormData({ ...formData, horas_escalamiento: e.target.value })}
               required
-              placeholder="e.g., 5"
+              placeholder="e.g., 120"
             />
             <p className="text-xs text-muted-foreground">
-              Days after reminder before escalating to supervisor
+              Hours after reminder before escalating to supervisor
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dias_declarar_extravio">Loss Declaration Days *</Label>
+            <Label htmlFor="horas_declarar_extravio">Loss Declaration (hours) *</Label>
             <Input
-              id="dias_declarar_extravio"
+              id="horas_declarar_extravio"
               type="number"
               min="1"
-              value={formData.dias_declarar_extravio}
-              onChange={(e) => setFormData({ ...formData, dias_declarar_extravio: e.target.value })}
+              value={formData.horas_declarar_extravio}
+              onChange={(e) => setFormData({ ...formData, horas_declarar_extravio: e.target.value })}
               required
-              placeholder="e.g., 15"
+              placeholder="e.g., 360"
             />
             <p className="text-xs text-muted-foreground">
-              Days after escalation before declaring shipment as lost
+              Hours after escalation before declaring shipment as lost
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dias_segunda_verificacion">2nd Verification Days</Label>
+            <Label htmlFor="horas_segunda_verificacion_receptor">Receiver 2nd Verification (hours)</Label>
             <Input
-              id="dias_segunda_verificacion"
+              id="horas_segunda_verificacion_receptor"
               type="number"
               min="1"
-              value={formData.dias_segunda_verificacion}
-              onChange={(e) => setFormData({ ...formData, dias_segunda_verificacion: e.target.value })}
-              placeholder="e.g., 7"
+              value={formData.horas_segunda_verificacion_receptor}
+              onChange={(e) => setFormData({ ...formData, horas_segunda_verificacion_receptor: e.target.value })}
+              placeholder="e.g., 168"
             />
             <p className="text-xs text-muted-foreground">
-              (Optional) Days for a second verification attempt
+              (Optional) Hours for a second verification attempt with receiver
             </p>
           </div>
         </div>
@@ -274,7 +361,7 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
         <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
           <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
           <AlertDescription className="text-xs text-amber-800 dark:text-amber-200">
-            <span className="font-semibold">Workflow Timeline Example:</span> Day 0 → Shipment created | Day 3 → Verification request | Day 5 → Reminder | Day 10 → Escalation | Day 25 → Loss declaration
+            <span className="font-semibold">Workflow Timeline Example:</span> Hour 0 → Shipment created | Hour 72 → Verification request to receiver | Hour 120 → Reminder to receiver | Hour 240 → Escalation | Hour 600 → Loss declaration
           </AlertDescription>
         </Alert>
       </div>
