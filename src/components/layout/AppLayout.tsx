@@ -20,7 +20,8 @@ import {
   MessageSquare,
   Workflow,
   FileText,
-  GitBranch
+  GitBranch,
+  Box
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -78,6 +79,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   const solutionParametersItems = [
     { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
+    { icon: Box, label: "Products", path: "/configuracion/productos" },
     { icon: Package, label: "Carriers", path: "/configuracion/carriers" },
     { icon: Workflow, label: "Workflows", path: "/configuracion/workflows" },
     { icon: AlertCircle, label: "Issues", path: "/configuracion/incidencias" },

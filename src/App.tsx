@@ -19,6 +19,7 @@ import ConfigRegiones from "./pages/config/Regiones";
 import ConfigCiudades from "./pages/config/Ciudades";
 import ConfigNodos from "./pages/config/ConfigNodos";
 import ConfigUsuarios from "./pages/config/Usuarios";
+import ConfigProductos from "./pages/config/Productos";
 import ConfigPlantillas from "./pages/config/Plantillas";
 import ConfigPanelistas from "./pages/config/ConfigPanelistas";
 import ConfigEnvios from "./pages/config/ConfigEnvios";
@@ -53,6 +54,7 @@ const App = () => {
             <Route path="/configuracion/ciudades" element={<ConfigCiudades />} />
             <Route path="/configuracion/nodos" element={<ConfigNodos />} />
             <Route path="/configuracion/usuarios" element={<ConfigUsuarios />} />
+            <Route path="/configuracion/productos" element={<ConfigProductos />} />
             <Route path="/configuracion/plantillas" element={<ConfigPlantillas />} />
             <Route path="/configuracion/panelistas" element={<ConfigPanelistas />} />
             <Route path="/configuracion/envios" element={<ConfigEnvios />} />

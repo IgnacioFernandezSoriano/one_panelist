@@ -279,8 +279,9 @@ export type Database = {
           observaciones: string | null
           panelista_destino_id: number | null
           panelista_origen_id: number | null
+          producto_id: number | null
           tiempo_transito_dias: number | null
-          tipo_producto: string
+          tipo_producto: string | null
         }
         Insert: {
           carrier_id?: number | null
@@ -301,8 +302,9 @@ export type Database = {
           observaciones?: string | null
           panelista_destino_id?: number | null
           panelista_origen_id?: number | null
+          producto_id?: number | null
           tiempo_transito_dias?: number | null
-          tipo_producto: string
+          tipo_producto?: string | null
         }
         Update: {
           carrier_id?: number | null
@@ -323,8 +325,9 @@ export type Database = {
           observaciones?: string | null
           panelista_destino_id?: number | null
           panelista_origen_id?: number | null
+          producto_id?: number | null
           tiempo_transito_dias?: number | null
-          tipo_producto?: string
+          tipo_producto?: string | null
         }
         Relationships: [
           {
@@ -367,6 +370,13 @@ export type Database = {
             columns: ["panelista_origen_id"]
             isOneToOne: false
             referencedRelation: "panelistas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_cliente"
             referencedColumns: ["id"]
           },
         ]
@@ -667,6 +677,47 @@ export type Database = {
           variables?: Json | null
         }
         Relationships: []
+      }
+      productos_cliente: {
+        Row: {
+          cliente_id: number
+          codigo_producto: string
+          descripcion: string | null
+          estado: string
+          fecha_creacion: string
+          fecha_modificacion: string
+          id: number
+          nombre_producto: string
+        }
+        Insert: {
+          cliente_id: number
+          codigo_producto: string
+          descripcion?: string | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          nombre_producto: string
+        }
+        Update: {
+          cliente_id?: number
+          codigo_producto?: string
+          descripcion?: string | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          nombre_producto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_cliente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       regiones: {
         Row: {

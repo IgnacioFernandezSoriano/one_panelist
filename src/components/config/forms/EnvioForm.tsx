@@ -23,10 +23,12 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
   const [clientes, setClientes] = useState<any[]>([]);
   const [nodos, setNodos] = useState<any[]>([]);
   const [carriers, setCarriers] = useState<any[]>([]);
+  const [productos, setProductos] = useState<any[]>([]);
   const [openCliente, setOpenCliente] = useState(false);
   const [openNodoOrigen, setOpenNodoOrigen] = useState(false);
   const [openNodoDestino, setOpenNodoDestino] = useState(false);
   const [openCarrier, setOpenCarrier] = useState(false);
+  const [openProducto, setOpenProducto] = useState(false);
   const [fechaProgramada, setFechaProgramada] = useState<Date | undefined>(
     initialData?.fecha_programada ? new Date(initialData.fecha_programada) : undefined
   );
@@ -36,6 +38,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     carrier_id: initialData?.carrier_id || "",
     nodo_origen: initialData?.nodo_origen || "",
     nodo_destino: initialData?.nodo_destino || "",
+    producto_id: initialData?.producto_id || "",
     tipo_producto: initialData?.tipo_producto || "",
     motivo_creacion: initialData?.motivo_creacion || "",
     estado: initialData?.estado || "PENDIENTE",
@@ -50,6 +53,14 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     loadNodos();
     loadCarriers();
   }, []);
+
+  useEffect(() => {
+    if (formData.cliente_id) {
+      loadProductos(parseInt(formData.cliente_id));
+    } else {
+      setProductos([]);
+    }
+  }, [formData.cliente_id]);
 
   const loadClientes = async () => {
     const { data, error } = await supabase
@@ -87,6 +98,19 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     }
   };
 
+  const loadProductos = async (clienteId: number) => {
+    const { data, error } = await supabase
+      .from("productos_cliente")
+      .select("id, codigo_producto, nombre_producto")
+      .eq("cliente_id", clienteId)
+      .eq("estado", "activo")
+      .order("nombre_producto");
+
+    if (!error && data) {
+      setProductos(data);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -101,10 +125,14 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
       return;
     }
 
+    const selectedProducto = productos.find(p => p.id.toString() === formData.producto_id);
+    
     const dataToSave = {
       ...formData,
       fecha_programada: format(fechaProgramada, "yyyy-MM-dd"),
       cliente_id: parseInt(formData.cliente_id),
+      producto_id: formData.producto_id ? parseInt(formData.producto_id) : null,
+      tipo_producto: selectedProducto ? `${selectedProducto.codigo_producto} - ${selectedProducto.nombre_producto}` : null,
       carrier_id: formData.carrier_id ? parseInt(formData.carrier_id) : null,
       carrier_name: formData.carrier_id ? carriers.find(c => c.id.toString() === formData.carrier_id)?.commercial_name || carriers.find(c => c.id.toString() === formData.carrier_id)?.legal_name : null,
     };
@@ -143,6 +171,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
   const selectedCliente = clientes.find(c => c.id.toString() === formData.cliente_id);
   const selectedNodoOrigen = nodos.find(n => n.codigo === formData.nodo_origen);
   const selectedNodoDestino = nodos.find(n => n.codigo === formData.nodo_destino);
+  const selectedProducto = productos.find(p => p.id.toString() === formData.producto_id);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -376,14 +405,51 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
 
         {/* Tipo de Producto */}
         <div className="space-y-2">
-          <Label htmlFor="tipo_producto">Tipo de Producto *</Label>
-          <Input
-            id="tipo_producto"
-            value={formData.tipo_producto}
-            onChange={(e) => setFormData({ ...formData, tipo_producto: e.target.value })}
-            placeholder="Ej: Paquete, Sobre, Documentos"
-            required
-          />
+          <Label htmlFor="producto_id">Product Type *</Label>
+          <Popover open={openProducto} onOpenChange={setOpenProducto}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={openProducto}
+                className="w-full justify-between"
+                disabled={!formData.cliente_id}
+              >
+                {selectedProducto 
+                  ? `${selectedProducto.codigo_producto} - ${selectedProducto.nombre_producto}` 
+                  : formData.cliente_id 
+                    ? "Seleccionar producto..." 
+                    : "Primero seleccione una cuenta..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Buscar producto..." />
+                <CommandEmpty>No se encontró el producto.</CommandEmpty>
+                <CommandGroup className="max-h-64 overflow-auto">
+                  {productos.map((producto) => (
+                    <CommandItem
+                      key={producto.id}
+                      value={`${producto.codigo_producto} ${producto.nombre_producto}`}
+                      onSelect={() => {
+                        setFormData({ ...formData, producto_id: producto.id.toString() });
+                        setOpenProducto(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          formData.producto_id === producto.id.toString() ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {producto.codigo_producto} - {producto.nombre_producto}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {/* Motivo de Creación */}
