@@ -5,12 +5,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandSeparator } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar as CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
+import { Calendar as CalendarIcon, Check, ChevronsUpDown, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { QuickCreateCliente } from "./quick-create/QuickCreateCliente";
+import { QuickCreateCarrier } from "./quick-create/QuickCreateCarrier";
+import { QuickCreateNodo } from "./quick-create/QuickCreateNodo";
+import { QuickCreateProducto } from "./quick-create/QuickCreateProducto";
 
 interface EnvioFormProps {
   onSuccess: () => void;
@@ -29,6 +33,11 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
   const [openNodoDestino, setOpenNodoDestino] = useState(false);
   const [openCarrier, setOpenCarrier] = useState(false);
   const [openProducto, setOpenProducto] = useState(false);
+  const [showQuickCreateCliente, setShowQuickCreateCliente] = useState(false);
+  const [showQuickCreateCarrier, setShowQuickCreateCarrier] = useState(false);
+  const [showQuickCreateNodoOrigen, setShowQuickCreateNodoOrigen] = useState(false);
+  const [showQuickCreateNodoDestino, setShowQuickCreateNodoDestino] = useState(false);
+  const [showQuickCreateProducto, setShowQuickCreateProducto] = useState(false);
   const [fechaProgramada, setFechaProgramada] = useState<Date | undefined>(
     initialData?.fecha_programada ? new Date(initialData.fecha_programada) : undefined
   );
@@ -215,6 +224,19 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                     </CommandItem>
                   ))}
                 </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => {
+                      setOpenCliente(false);
+                      setShowQuickCreateCliente(true);
+                    }}
+                    className="text-primary"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create new account
+                  </CommandItem>
+                </CommandGroup>
               </Command>
             </PopoverContent>
           </Popover>
@@ -278,6 +300,19 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                       {carrier.carrier_code} - {carrier.commercial_name || carrier.legal_name}
                     </CommandItem>
                   ))}
+                </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => {
+                      setOpenCarrier(false);
+                      setShowQuickCreateCarrier(true);
+                    }}
+                    className="text-primary"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create new carrier
+                  </CommandItem>
                 </CommandGroup>
               </Command>
             </PopoverContent>
@@ -352,6 +387,19 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                     </CommandItem>
                   ))}
                 </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => {
+                      setOpenNodoOrigen(false);
+                      setShowQuickCreateNodoOrigen(true);
+                    }}
+                    className="text-primary"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create new node
+                  </CommandItem>
+                </CommandGroup>
               </Command>
             </PopoverContent>
           </Popover>
@@ -397,6 +445,19 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                       {nodo.codigo} - {nodo.ciudad}, {nodo.pais}
                     </CommandItem>
                   ))}
+                </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup>
+                  <CommandItem
+                    onSelect={() => {
+                      setOpenNodoDestino(false);
+                      setShowQuickCreateNodoDestino(true);
+                    }}
+                    className="text-primary"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create new node
+                  </CommandItem>
                 </CommandGroup>
               </Command>
             </PopoverContent>
@@ -447,6 +508,23 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                     </CommandItem>
                   ))}
                 </CommandGroup>
+                {formData.cliente_id && (
+                  <>
+                    <CommandSeparator />
+                    <CommandGroup>
+                      <CommandItem
+                        onSelect={() => {
+                          setOpenProducto(false);
+                          setShowQuickCreateProducto(true);
+                        }}
+                        className="text-primary"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create new product
+                      </CommandItem>
+                    </CommandGroup>
+                  </>
+                )}
               </Command>
             </PopoverContent>
           </Popover>
@@ -504,6 +582,55 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
           {isSubmitting ? "Saving..." : isEditing ? "Update" : "Create"}
         </Button>
       </div>
+
+      {/* Quick Create Dialogs */}
+      <QuickCreateCliente 
+        open={showQuickCreateCliente}
+        onOpenChange={setShowQuickCreateCliente}
+        onSuccess={(newCliente) => {
+          setClientes([...clientes, newCliente]);
+          setFormData({ ...formData, cliente_id: newCliente.id.toString() });
+        }}
+      />
+      
+      <QuickCreateCarrier 
+        open={showQuickCreateCarrier}
+        onOpenChange={setShowQuickCreateCarrier}
+        onSuccess={(newCarrier) => {
+          setCarriers([...carriers, newCarrier]);
+          setFormData({ ...formData, carrier_id: newCarrier.id.toString() });
+        }}
+      />
+      
+      <QuickCreateNodo 
+        open={showQuickCreateNodoOrigen}
+        onOpenChange={setShowQuickCreateNodoOrigen}
+        onSuccess={(newNodo) => {
+          setNodos([...nodos, newNodo]);
+          setFormData({ ...formData, nodo_origen: newNodo.codigo });
+        }}
+      />
+      
+      <QuickCreateNodo 
+        open={showQuickCreateNodoDestino}
+        onOpenChange={setShowQuickCreateNodoDestino}
+        onSuccess={(newNodo) => {
+          setNodos([...nodos, newNodo]);
+          setFormData({ ...formData, nodo_destino: newNodo.codigo });
+        }}
+      />
+      
+      {formData.cliente_id && (
+        <QuickCreateProducto 
+          open={showQuickCreateProducto}
+          onOpenChange={setShowQuickCreateProducto}
+          clienteId={parseInt(formData.cliente_id)}
+          onSuccess={(newProducto) => {
+            setProductos([...productos, newProducto]);
+            setFormData({ ...formData, producto_id: newProducto.id.toString() });
+          }}
+        />
+      )}
     </form>
   );
 }
