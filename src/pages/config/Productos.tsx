@@ -74,6 +74,7 @@ export default function Productos() {
     { key: "clientes.nombre", label: "Account", render: (row: any) => row.clientes?.nombre },
     { key: "descripcion", label: "Description" },
     { key: "estado", label: "Status" },
+    { key: "id", label: "ID", hidden: true },
   ];
 
   const csvConfig = {
