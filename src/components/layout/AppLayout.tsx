@@ -21,7 +21,8 @@ import {
   Workflow,
   FileText,
   GitBranch,
-  Box
+  Box,
+  Truck
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -80,7 +81,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
     { icon: Box, label: "Products", path: "/configuracion/productos" },
-    { icon: Package, label: "Carriers", path: "/configuracion/carriers" },
+    { icon: Truck, label: "Carriers", path: "/configuracion/carriers" },
     { icon: Workflow, label: "Workflows", path: "/configuracion/workflows" },
     { icon: AlertCircle, label: "Issues", path: "/configuracion/incidencias" },
   ];
