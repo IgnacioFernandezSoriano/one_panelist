@@ -70,7 +70,7 @@ export default function Ciudades() {
   const columns = [
     { key: "codigo", label: "Code" },
     { key: "nombre", label: "Name" },
-    { key: "cliente_nombre", label: "Client" },
+    { key: "cliente_nombre", label: "Account" },
     { key: "region_nombre", label: "Region" },
     { key: "clasificacion", label: "Classification" },
     { key: "pais", label: "Country" },

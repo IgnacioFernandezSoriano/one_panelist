@@ -148,7 +148,7 @@ export default function Topology() {
       const newOpenItems = { ...openItems };
       
       if (level === 'cliente') {
-        // Close all regions, cities, and nodes under this client
+        // Close all regions, cities, and nodes under this account
         const clienteId = parseInt(key.split('-')[1]);
         const clientRegions = getRegionsByCliente(clienteId);
         clientRegions.forEach((region) => {
@@ -179,7 +179,7 @@ export default function Topology() {
     
     // Close all siblings at the same level
     if (level === 'region' && parentClienteId) {
-      // Close all other regions of the same client
+      // Close all other regions of the same account
       const clientRegions = getRegionsByCliente(parentClienteId);
       clientRegions.forEach((region) => {
         const regionKey = `region-${region.id}`;
@@ -298,7 +298,7 @@ export default function Topology() {
       <div className="p-8 space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Measurement Topology</h1>
-          <p className="text-muted-foreground">Hierarchical view of clients, regions, cities, and nodes</p>
+          <p className="text-muted-foreground">Hierarchical view of accounts, regions, cities, and nodes</p>
         </div>
 
         <div className="space-y-4">
@@ -317,7 +317,7 @@ export default function Topology() {
                       <div className="flex-1 text-left">
                         <div className="flex items-center gap-2">
                           <CardTitle className="text-xl">{cliente.nombre}</CardTitle>
-                          <Badge variant="outline" className="text-xs">Client</Badge>
+                          <Badge variant="outline" className="text-xs">Account</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           ID: {cliente.id} • {cliente.codigo} • {cliente.pais}
@@ -542,7 +542,7 @@ export default function Topology() {
           <DialogContent>
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
-                <span>Client Details</span>
+                <span>Account Details</span>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -591,7 +591,7 @@ export default function Topology() {
         <Dialog open={editClienteDialogOpen} onOpenChange={setEditClienteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Client</DialogTitle>
+              <DialogTitle>Edit Account</DialogTitle>
             </DialogHeader>
             {selectedCliente && (
               <ClienteForm
@@ -602,7 +602,7 @@ export default function Topology() {
                   loadData();
                   toast({
                     title: "Success",
-                    description: "Client updated successfully",
+                    description: "Account updated successfully",
                   });
                 }}
                 onCancel={() => setEditClienteDialogOpen(false)}

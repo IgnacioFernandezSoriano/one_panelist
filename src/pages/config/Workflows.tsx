@@ -57,7 +57,7 @@ export default function ConfigWorkflows() {
 
   const columns = [
     { key: "id", label: "ID" },
-    { key: "cliente_id", label: "Client ID" },
+    { key: "cliente_id", label: "Account ID" },
     { key: "servicio_postal", label: "Postal Service" },
     { key: "tipo_dias", label: "Day Type" },
     { key: "dias_verificacion_recepcion", label: "Verification Days" },
@@ -83,7 +83,7 @@ export default function ConfigWorkflows() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Workflows Configuration</h1>
           <p className="text-muted-foreground">
-            Manage workflow configurations by client
+            Manage workflow configurations by account
           </p>
         </div>
 

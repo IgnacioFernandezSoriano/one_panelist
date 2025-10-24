@@ -68,7 +68,7 @@ export default function Regiones() {
   const columns = [
     { key: "codigo", label: "Code" },
     { key: "nombre", label: "Name" },
-    { key: "cliente_nombre", label: "Client" },
+    { key: "cliente_nombre", label: "Account" },
     { key: "pais", label: "Country" },
     { 
       key: "estado", 
@@ -104,7 +104,7 @@ export default function Regiones() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">Regions Configuration</h1>
           <p className="text-muted-foreground">
-            Manage geographic regions by client
+            Manage geographic regions by account
           </p>
         </div>
 

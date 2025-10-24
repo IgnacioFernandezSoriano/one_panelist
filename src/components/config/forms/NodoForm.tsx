@@ -145,7 +145,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
     if (!formData.cliente_id || !formData.region_id || !formData.ciudad_id) {
       toast({
         title: "Error",
-        description: "Please select client, region and city",
+        description: "Please select account, region and city",
         variant: "destructive",
       });
       return;
@@ -283,7 +283,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
       )}
 
       <div className="space-y-2">
-        <Label>Client *</Label>
+        <Label>Account *</Label>
         <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -295,15 +295,15 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
             >
               {formData.cliente_id 
                 ? clientes.find(c => c.id === parseInt(formData.cliente_id))?.nombre
-                : "Select client..."}
+                : "Select account..."}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
             <Command>
-              <CommandInput placeholder="Search client..." />
+              <CommandInput placeholder="Search account..." />
               <CommandList>
-                <CommandEmpty>No client found.</CommandEmpty>
+                <CommandEmpty>No account found.</CommandEmpty>
                 <CommandGroup>
                   {clientes.map((cliente) => (
                     <CommandItem

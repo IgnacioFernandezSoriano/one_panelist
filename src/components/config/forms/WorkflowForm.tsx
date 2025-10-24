@@ -93,7 +93,7 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="cliente_id">Client *</Label>
+        <Label htmlFor="cliente_id">Account *</Label>
         <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -103,20 +103,20 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
               className="w-full justify-between"
             >
               {formData.cliente_id 
-                ? clientes.find(c => c.id.toString() === formData.cliente_id)?.nombre || "Select client..."
-                : "Select client..."}
+                ? clientes.find(c => c.id.toString() === formData.cliente_id)?.nombre || "Select account..."
+                : "Select account..."}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
             <Command>
               <CommandInput 
-                placeholder="Search client..." 
+                placeholder="Search account..." 
                 value={clienteSearch}
                 onValueChange={setClienteSearch}
               />
               <CommandList>
-                <CommandEmpty>No client found.</CommandEmpty>
+                <CommandEmpty>No account found.</CommandEmpty>
                 <CommandGroup>
                   {clientes
                     .filter(c => 
