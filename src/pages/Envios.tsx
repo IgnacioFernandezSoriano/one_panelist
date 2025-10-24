@@ -150,6 +150,9 @@ export default function Envios() {
         from_C: ''
       }));
 
+      const uniqueClientCodes = [...new Set(csvData.map(n => n.cliente_codigo))];
+      const accountId = uniqueClientCodes.length === 1 ? uniqueClientCodes[0] : 'Multiple';
+
       const csv = Papa.unparse(csvData, {
         quotes: true,
         header: true
@@ -158,10 +161,9 @@ export default function Envios() {
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
-      const fecha = format(new Date(), 'yyyy-MM-dd');
       
       link.setAttribute('href', url);
-      link.setAttribute('download', `topologia_nodos_${fecha}.csv`);
+      link.setAttribute('download', `Topology_${accountId}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
