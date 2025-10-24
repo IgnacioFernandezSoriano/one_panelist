@@ -105,10 +105,10 @@ export default function Carriers() {
       "legal_representative", "phone", "email", "website", "geographic_scope", "status", "carrier_code"
     ],
     exampleData: [
-      ["Sociedad Estatal Correos y Telégrafos", "Correos", "A83052407", "universal_postal", 
+      ["Sociedad Estatal Correos y Telégrafos", "Correos", "A83052407", "designated_usp", 
        "LIC-2020-001", "authorized", "2020-01-01", "2030-12-31", "Juan García", 
        "+34900123456", "info@correos.es", "https://www.correos.es", "national", "active", "CORREOS"],
-      ["DHL Express Spain S.L.", "DHL", "B12345678", "courier", 
+      ["DHL Express Spain S.L.", "DHL", "B12345678", "express_courier", 
        "LIC-2019-050", "authorized", "2019-06-15", "2029-06-15", "María López", 
        "+34900789012", "info@dhl.es", "https://www.dhl.es", "international", "active", "DHL"],
     ],

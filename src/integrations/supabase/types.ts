@@ -825,10 +825,12 @@ export type Database = {
       estado_incidencia: "abierta" | "en_proceso" | "resuelta" | "cerrada"
       geographic_scope: "local" | "regional" | "national" | "international"
       operator_type:
-        | "universal_postal"
-        | "private_postal"
-        | "courier"
-        | "logistics"
+        | "designated_usp"
+        | "licensed_postal"
+        | "express_courier"
+        | "ecommerce_parcel"
+        | "exempt"
+        | "others"
       origen_incidencia: "agente" | "gestor" | "sistema"
       prioridad_incidencia: "baja" | "media" | "alta" | "critica"
       regulatory_status: "authorized" | "suspended" | "sanctioned" | "revoked"
@@ -979,10 +981,12 @@ export const Constants = {
       estado_incidencia: ["abierta", "en_proceso", "resuelta", "cerrada"],
       geographic_scope: ["local", "regional", "national", "international"],
       operator_type: [
-        "universal_postal",
-        "private_postal",
-        "courier",
-        "logistics",
+        "designated_usp",
+        "licensed_postal",
+        "express_courier",
+        "ecommerce_parcel",
+        "exempt",
+        "others",
       ],
       origen_incidencia: ["agente", "gestor", "sistema"],
       prioridad_incidencia: ["baja", "media", "alta", "critica"],

@@ -29,7 +29,7 @@ export function QuickCreateCarrier({ open, onOpenChange, onSuccess }: QuickCreat
         .from("carriers")
         .insert([{
           ...formData,
-          operator_type: "universal_postal",
+          operator_type: "licensed_postal",
           regulatory_status: "authorized"
         }])
         .select()
