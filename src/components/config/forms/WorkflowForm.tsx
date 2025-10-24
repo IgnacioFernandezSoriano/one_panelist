@@ -30,7 +30,6 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
   const [formData, setFormData] = useState({
     cliente_id: initialData?.cliente_id?.toString() || "",
     producto_id: initialData?.producto_id?.toString() || "",
-    servicio_postal: initialData?.servicio_postal || "",
     tipo_dias: initialData?.tipo_dias || "habiles",
     horas_verificacion_recepcion_receptor: initialData?.horas_verificacion_recepcion_receptor?.toString() || "",
     horas_recordatorio_receptor: initialData?.horas_recordatorio_receptor?.toString() || "",
@@ -83,7 +82,6 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
     const dataToSave = {
       cliente_id: parseInt(formData.cliente_id),
       producto_id: formData.producto_id ? parseInt(formData.producto_id) : null,
-      servicio_postal: formData.servicio_postal || null,
       tipo_dias: formData.tipo_dias,
       horas_verificacion_recepcion_receptor: parseInt(formData.horas_verificacion_recepcion_receptor),
       horas_recordatorio_receptor: parseInt(formData.horas_recordatorio_receptor),
@@ -244,19 +242,6 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
         </Popover>
         <p className="text-xs text-muted-foreground">
           (Optional) Select a specific product for this workflow configuration
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="servicio_postal">Postal Service</Label>
-        <Input
-          id="servicio_postal"
-          value={formData.servicio_postal}
-          onChange={(e) => setFormData({ ...formData, servicio_postal: e.target.value })}
-          placeholder="e.g., Correos, DHL, FedEx"
-        />
-        <p className="text-xs text-muted-foreground">
-          (Optional) Name of the postal service or courier used by this account
         </p>
       </div>
 

@@ -59,7 +59,6 @@ export default function ConfigWorkflows() {
     { key: "id", label: "ID" },
     { key: "cliente_id", label: "Account ID" },
     { key: "producto_id", label: "Product ID" },
-    { key: "servicio_postal", label: "Postal Service" },
     { key: "tipo_dias", label: "Day Type" },
     { key: "horas_verificacion_recepcion_receptor", label: "Receiver Verification (hrs)" },
     { key: "horas_recordatorio_receptor", label: "Receiver Reminder (hrs)" },
@@ -69,12 +68,12 @@ export default function ConfigWorkflows() {
   const csvConfig = {
     tableName: "configuracion_workflows",
     expectedColumns: [
-      "cliente_id", "producto_id", "servicio_postal", "tipo_dias", "horas_verificacion_recepcion_receptor",
+      "cliente_id", "producto_id", "tipo_dias", "horas_verificacion_recepcion_receptor",
       "horas_recordatorio_receptor", "horas_escalamiento", "horas_declarar_extravio", "horas_segunda_verificacion_receptor"
     ],
     exampleData: [
-      ["1", "1", "Correos", "habiles", "72", "48", "120", "360", "168"],
-      ["2", "2", "DHL", "calendario", "48", "24", "72", "240", "120"],
+      ["1", "1", "habiles", "72", "48", "120", "360", "168"],
+      ["2", "2", "calendario", "48", "24", "72", "240", "120"],
     ],
   };
 

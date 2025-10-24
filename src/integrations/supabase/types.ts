@@ -221,7 +221,6 @@ export type Database = {
           horas_verificacion_recepcion_receptor: number
           id: number
           producto_id: number | null
-          servicio_postal: string | null
           tipo_dias: string
         }
         Insert: {
@@ -235,7 +234,6 @@ export type Database = {
           horas_verificacion_recepcion_receptor: number
           id?: number
           producto_id?: number | null
-          servicio_postal?: string | null
           tipo_dias: string
         }
         Update: {
@@ -249,7 +247,6 @@ export type Database = {
           horas_verificacion_recepcion_receptor?: number
           id?: number
           producto_id?: number | null
-          servicio_postal?: string | null
           tipo_dias?: string
         }
         Relationships: [
