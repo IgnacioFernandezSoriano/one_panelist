@@ -29,6 +29,9 @@ interface Envio {
   panelista_origen_id?: number;
   panelista_destino_id?: number;
   numero_etiqueta?: string;
+  fecha_envio_real?: string;
+  fecha_recepcion_real?: string;
+  tiempo_transito_dias?: number;
   carriers?: {
     legal_name: string;
     carrier_code?: string;
@@ -183,6 +186,63 @@ export default function Envios() {
     }
   };
 
+  const exportAllocationPlanCSV = () => {
+    try {
+      const csvData = filteredEnvios.map(envio => ({
+        id: envio.id,
+        cliente_codigo: envio.clientes?.codigo || '',
+        cliente_nombre: envio.clientes?.nombre || '',
+        producto_codigo: envio.productos_cliente?.codigo_producto || '',
+        producto_nombre: envio.productos_cliente?.nombre_producto || '',
+        tipo_producto: envio.tipo_producto,
+        carrier_code: envio.carriers?.carrier_code || '',
+        carrier_name: envio.carriers?.legal_name || envio.carrier_name || '',
+        nodo_origen: envio.nodo_origen,
+        panelista_origen: envio.panelista_origen?.nombre_completo || '',
+        nodo_destino: envio.nodo_destino,
+        panelista_destino: envio.panelista_destino?.nombre_completo || '',
+        fecha_programada: envio.fecha_programada,
+        fecha_limite: envio.fecha_limite || '',
+        estado: envio.estado,
+        numero_etiqueta: envio.numero_etiqueta || '',
+        fecha_envio_real: envio.fecha_envio_real || '',
+        fecha_recepcion_real: envio.fecha_recepcion_real || '',
+        tiempo_transito_dias: envio.tiempo_transito_dias || ''
+      }));
+
+      const uniqueClientCodes = [...new Set(csvData.map(e => e.cliente_codigo).filter(Boolean))];
+      const accountId = uniqueClientCodes.length === 1 ? uniqueClientCodes[0] : 'Multiple';
+
+      const csv = Papa.unparse(csvData, {
+        quotes: true,
+        header: true
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Allocation Plan_${accountId}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Export successful",
+        description: `Allocation plan exported with ${csvData.length} records`,
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Export error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredEnvios = envios.filter((e) => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -231,6 +291,10 @@ export default function Envios() {
             <Button variant="outline" className="gap-2" onClick={exportTopologyCSV}>
               <FileDown className="w-4 h-4" />
               Export Topology CSV
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={exportAllocationPlanCSV}>
+              <FileDown className="w-4 h-4" />
+              Export Allocation Plan
             </Button>
             <Button variant="outline" className="gap-2" onClick={() => setImportDialogOpen(true)}>
               <Upload className="w-4 h-4" />
