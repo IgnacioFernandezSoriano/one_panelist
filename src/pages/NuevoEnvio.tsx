@@ -18,14 +18,14 @@ export default function NuevoEnvio() {
             className="gap-2 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Volver a Allocation Plans
+            Back to Allocation Plans
           </Button>
           
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Nuevo Allocation Plan
+            New Allocation Plan
           </h1>
           <p className="text-muted-foreground">
-            Crear un nuevo plan de asignación de envíos
+            Create a new shipment allocation plan
           </p>
         </div>
 

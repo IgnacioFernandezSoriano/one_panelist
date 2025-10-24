@@ -118,7 +118,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     if (!fechaProgramada) {
       toast({
         title: "Error",
-        description: "La fecha programada es obligatoria",
+        description: "Scheduled date is required",
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -153,8 +153,8 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
       if (result.error) throw result.error;
 
       toast({
-        title: isEditing ? "Allocation Plan actualizado" : "Allocation Plan creado",
-        description: "Los cambios se guardaron correctamente",
+        title: isEditing ? "Allocation Plan updated" : "Allocation Plan created",
+        description: "Changes saved successfully",
       });
       onSuccess();
     } catch (error: any) {
@@ -187,14 +187,14 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                 aria-expanded={openCliente}
                 className="w-full justify-between"
               >
-                {selectedCliente ? `${selectedCliente.codigo} - ${selectedCliente.nombre}` : "Seleccionar cuenta..."}
+                {selectedCliente ? `${selectedCliente.codigo} - ${selectedCliente.nombre}` : "Select account..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
-                <CommandInput placeholder="Buscar cuenta..." />
-                <CommandEmpty>No se encontró la cuenta.</CommandEmpty>
+                <CommandInput placeholder="Search account..." />
+                <CommandEmpty>Account not found.</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-auto">
                   {clientes.map((cliente) => (
                     <CommandItem
@@ -234,16 +234,16 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                 {formData.carrier_id 
                   ? (() => {
                       const carrier = carriers.find(c => c.id.toString() === formData.carrier_id);
-                      return carrier ? `${carrier.carrier_code} - ${carrier.commercial_name || carrier.legal_name}` : "Seleccionar carrier...";
+                      return carrier ? `${carrier.carrier_code} - ${carrier.commercial_name || carrier.legal_name}` : "Select carrier...";
                     })()
-                  : "Seleccionar carrier..."}
+                  : "Select carrier..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
-                <CommandInput placeholder="Buscar carrier..." />
-                <CommandEmpty>No se encontró el carrier.</CommandEmpty>
+                <CommandInput placeholder="Search carrier..." />
+                <CommandEmpty>Carrier not found.</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-auto">
                   <CommandItem
                     value=""
@@ -258,7 +258,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                         !formData.carrier_id ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    (Ninguno)
+                    (None)
                   </CommandItem>
                   {carriers.map((carrier) => (
                     <CommandItem
@@ -286,7 +286,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
 
         {/* Fecha Programada */}
         <div className="space-y-2">
-          <Label>Fecha Programada *</Label>
+          <Label>Scheduled Date *</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -297,7 +297,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {fechaProgramada ? format(fechaProgramada, "dd/MM/yyyy") : "Seleccionar fecha"}
+                {fechaProgramada ? format(fechaProgramada, "dd/MM/yyyy") : "Select date"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -313,7 +313,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
 
         {/* Nodo Origen */}
         <div className="space-y-2">
-          <Label htmlFor="nodo_origen">Nodo Origen *</Label>
+          <Label htmlFor="nodo_origen">Origin Node *</Label>
           <Popover open={openNodoOrigen} onOpenChange={setOpenNodoOrigen}>
             <PopoverTrigger asChild>
               <Button
@@ -324,14 +324,14 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
               >
                 {selectedNodoOrigen 
                   ? `${selectedNodoOrigen.codigo} - ${selectedNodoOrigen.ciudad}` 
-                  : "Seleccionar nodo..."}
+                  : "Select node..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
-                <CommandInput placeholder="Buscar nodo..." />
-                <CommandEmpty>No se encontró el nodo.</CommandEmpty>
+                <CommandInput placeholder="Search node..." />
+                <CommandEmpty>Node not found.</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-auto">
                   {nodos.map((nodo) => (
                     <CommandItem
@@ -359,7 +359,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
 
         {/* Nodo Destino */}
         <div className="space-y-2">
-          <Label htmlFor="nodo_destino">Nodo Destino *</Label>
+          <Label htmlFor="nodo_destino">Destination Node *</Label>
           <Popover open={openNodoDestino} onOpenChange={setOpenNodoDestino}>
             <PopoverTrigger asChild>
               <Button
@@ -370,14 +370,14 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
               >
                 {selectedNodoDestino 
                   ? `${selectedNodoDestino.codigo} - ${selectedNodoDestino.ciudad}` 
-                  : "Seleccionar nodo..."}
+                  : "Select node..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
-                <CommandInput placeholder="Buscar nodo..." />
-                <CommandEmpty>No se encontró el nodo.</CommandEmpty>
+                <CommandInput placeholder="Search node..." />
+                <CommandEmpty>Node not found.</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-auto">
                   {nodos.map((nodo) => (
                     <CommandItem
@@ -418,15 +418,15 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                 {selectedProducto 
                   ? `${selectedProducto.codigo_producto} - ${selectedProducto.nombre_producto}` 
                   : formData.cliente_id 
-                    ? "Seleccionar producto..." 
-                    : "Primero seleccione una cuenta..."}
+                    ? "Select product..." 
+                    : "First select an account..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
-                <CommandInput placeholder="Buscar producto..." />
-                <CommandEmpty>No se encontró el producto.</CommandEmpty>
+                <CommandInput placeholder="Search product..." />
+                <CommandEmpty>Product not found.</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-auto">
                   {productos.map((producto) => (
                     <CommandItem
@@ -454,19 +454,19 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
 
         {/* Motivo de Creación */}
         <div className="space-y-2">
-          <Label htmlFor="motivo_creacion">Motivo de Creación *</Label>
+          <Label htmlFor="motivo_creacion">Creation Reason *</Label>
           <Input
             id="motivo_creacion"
             value={formData.motivo_creacion}
             onChange={(e) => setFormData({ ...formData, motivo_creacion: e.target.value })}
-            placeholder="Ej: Inicial, Reposición"
+            placeholder="E.g.: Initial, Replenishment"
             required
           />
         </div>
 
         {/* Estado */}
         <div className="space-y-2">
-          <Label htmlFor="estado">Estado *</Label>
+          <Label htmlFor="estado">Status *</Label>
           <Select
             value={formData.estado}
             onValueChange={(value) => setFormData({ ...formData, estado: value })}
@@ -475,11 +475,11 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="PENDIENTE">Pendiente</SelectItem>
-              <SelectItem value="NOTIFICADO">Notificado</SelectItem>
-              <SelectItem value="ENVIADO">Enviado</SelectItem>
-              <SelectItem value="RECIBIDO">Recibido</SelectItem>
-              <SelectItem value="CANCELADO">Cancelado</SelectItem>
+              <SelectItem value="PENDIENTE">Pending</SelectItem>
+              <SelectItem value="NOTIFICADO">Notified</SelectItem>
+              <SelectItem value="ENVIADO">Sent</SelectItem>
+              <SelectItem value="RECIBIDO">Received</SelectItem>
+              <SelectItem value="CANCELADO">Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -487,21 +487,21 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
 
       {/* Observaciones */}
       <div className="space-y-2">
-        <Label htmlFor="observaciones">Observaciones</Label>
+        <Label htmlFor="observaciones">Notes</Label>
         <Input
           id="observaciones"
           value={formData.observaciones}
           onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
-          placeholder="Notas adicionales (opcional)"
+          placeholder="Additional notes (optional)"
         />
       </div>
 
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancelar
+          Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Guardando..." : isEditing ? "Actualizar" : "Crear"}
+          {isSubmitting ? "Saving..." : isEditing ? "Update" : "Create"}
         </Button>
       </div>
     </form>
