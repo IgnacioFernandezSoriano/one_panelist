@@ -214,11 +214,11 @@ export type Database = {
           cliente_id: number
           fecha_creacion: string
           fecha_modificacion: string
-          horas_declarar_extravio: number
-          horas_escalamiento: number
-          horas_recordatorio_receptor: number
-          horas_segunda_verificacion_receptor: number | null
-          horas_verificacion_recepcion_receptor: number
+          hours_receiver_escalation: number
+          hours_receiver_verification: number
+          hours_sender_escalation: number
+          hours_sender_first_reminder: number
+          hours_sender_second_reminder: number
           id: number
           producto_id: number | null
           tipo_dias: string
@@ -227,11 +227,11 @@ export type Database = {
           cliente_id: number
           fecha_creacion?: string
           fecha_modificacion?: string
-          horas_declarar_extravio: number
-          horas_escalamiento: number
-          horas_recordatorio_receptor: number
-          horas_segunda_verificacion_receptor?: number | null
-          horas_verificacion_recepcion_receptor: number
+          hours_receiver_escalation?: number
+          hours_receiver_verification?: number
+          hours_sender_escalation?: number
+          hours_sender_first_reminder?: number
+          hours_sender_second_reminder?: number
           id?: number
           producto_id?: number | null
           tipo_dias: string
@@ -240,11 +240,11 @@ export type Database = {
           cliente_id?: number
           fecha_creacion?: string
           fecha_modificacion?: string
-          horas_declarar_extravio?: number
-          horas_escalamiento?: number
-          horas_recordatorio_receptor?: number
-          horas_segunda_verificacion_receptor?: number | null
-          horas_verificacion_recepcion_receptor?: number
+          hours_receiver_escalation?: number
+          hours_receiver_verification?: number
+          hours_sender_escalation?: number
+          hours_sender_first_reminder?: number
+          hours_sender_second_reminder?: number
           id?: number
           producto_id?: number | null
           tipo_dias?: string
@@ -695,6 +695,7 @@ export type Database = {
           fecha_modificacion: string
           id: number
           nombre_producto: string
+          standard_delivery_hours: number | null
         }
         Insert: {
           cliente_id: number
@@ -705,6 +706,7 @@ export type Database = {
           fecha_modificacion?: string
           id?: number
           nombre_producto: string
+          standard_delivery_hours?: number | null
         }
         Update: {
           cliente_id?: number
@@ -715,6 +717,7 @@ export type Database = {
           fecha_modificacion?: string
           id?: number
           nombre_producto?: string
+          standard_delivery_hours?: number | null
         }
         Relationships: [
           {

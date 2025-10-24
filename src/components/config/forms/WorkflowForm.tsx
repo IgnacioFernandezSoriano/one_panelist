@@ -31,11 +31,11 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
     cliente_id: initialData?.cliente_id?.toString() || "",
     producto_id: initialData?.producto_id?.toString() || "",
     tipo_dias: initialData?.tipo_dias || "habiles",
-    horas_verificacion_recepcion_receptor: initialData?.horas_verificacion_recepcion_receptor?.toString() || "",
-    horas_recordatorio_receptor: initialData?.horas_recordatorio_receptor?.toString() || "",
-    horas_escalamiento: initialData?.horas_escalamiento?.toString() || "",
-    horas_declarar_extravio: initialData?.horas_declarar_extravio?.toString() || "",
-    horas_segunda_verificacion_receptor: initialData?.horas_segunda_verificacion_receptor?.toString() || "",
+    hours_sender_first_reminder: initialData?.hours_sender_first_reminder?.toString() || "24",
+    hours_sender_second_reminder: initialData?.hours_sender_second_reminder?.toString() || "48",
+    hours_sender_escalation: initialData?.hours_sender_escalation?.toString() || "72",
+    hours_receiver_verification: initialData?.hours_receiver_verification?.toString() || "48",
+    hours_receiver_escalation: initialData?.hours_receiver_escalation?.toString() || "72",
   });
 
   useEffect(() => {
@@ -83,11 +83,11 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
       cliente_id: parseInt(formData.cliente_id),
       producto_id: formData.producto_id ? parseInt(formData.producto_id) : null,
       tipo_dias: formData.tipo_dias,
-      horas_verificacion_recepcion_receptor: parseInt(formData.horas_verificacion_recepcion_receptor),
-      horas_recordatorio_receptor: parseInt(formData.horas_recordatorio_receptor),
-      horas_escalamiento: parseInt(formData.horas_escalamiento),
-      horas_declarar_extravio: parseInt(formData.horas_declarar_extravio),
-      horas_segunda_verificacion_receptor: formData.horas_segunda_verificacion_receptor ? parseInt(formData.horas_segunda_verificacion_receptor) : null,
+      hours_sender_first_reminder: parseInt(formData.hours_sender_first_reminder),
+      hours_sender_second_reminder: parseInt(formData.hours_sender_second_reminder),
+      hours_sender_escalation: parseInt(formData.hours_sender_escalation),
+      hours_receiver_verification: parseInt(formData.hours_receiver_verification),
+      hours_receiver_escalation: parseInt(formData.hours_receiver_escalation),
     };
 
     let error;
@@ -261,92 +261,111 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="horas_verificacion_recepcion_receptor">Receiver Verification (hours) *</Label>
-            <Input
-              id="horas_verificacion_recepcion_receptor"
-              type="number"
-              min="1"
-              value={formData.horas_verificacion_recepcion_receptor}
-              onChange={(e) => setFormData({ ...formData, horas_verificacion_recepcion_receptor: e.target.value })}
-              required
-              placeholder="e.g., 72"
-            />
-            <p className="text-xs text-muted-foreground">
-              Hours to wait before requesting receiver panelist to verify reception
-            </p>
-          </div>
+      <div className="space-y-6">
+        <div className="border-l-4 border-primary pl-4">
+          <h3 className="font-semibold text-lg mb-4">Sender Panelist Workflow</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Triggered when status is SENT and due date (fecha_limite) has passed
+          </p>
+          
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="hours_sender_first_reminder">1st Reminder (hours) *</Label>
+              <Input
+                id="hours_sender_first_reminder"
+                type="number"
+                min="1"
+                value={formData.hours_sender_first_reminder}
+                onChange={(e) => setFormData({ ...formData, hours_sender_first_reminder: e.target.value })}
+                required
+                placeholder="e.g., 24"
+              />
+              <p className="text-xs text-muted-foreground">
+                Hours after due date to send first reminder to sender
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="horas_recordatorio_receptor">Receiver Reminder (hours) *</Label>
-            <Input
-              id="horas_recordatorio_receptor"
-              type="number"
-              min="1"
-              value={formData.horas_recordatorio_receptor}
-              onChange={(e) => setFormData({ ...formData, horas_recordatorio_receptor: e.target.value })}
-              required
-              placeholder="e.g., 48"
-            />
-            <p className="text-xs text-muted-foreground">
-              Hours after verification request before sending reminder to receiver
-            </p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="hours_sender_second_reminder">2nd Reminder (hours) *</Label>
+              <Input
+                id="hours_sender_second_reminder"
+                type="number"
+                min="1"
+                value={formData.hours_sender_second_reminder}
+                onChange={(e) => setFormData({ ...formData, hours_sender_second_reminder: e.target.value })}
+                required
+                placeholder="e.g., 48"
+              />
+              <p className="text-xs text-muted-foreground">
+                Hours after 1st reminder to send second reminder
+              </p>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="horas_escalamiento">Escalation (hours) *</Label>
-            <Input
-              id="horas_escalamiento"
-              type="number"
-              min="1"
-              value={formData.horas_escalamiento}
-              onChange={(e) => setFormData({ ...formData, horas_escalamiento: e.target.value })}
-              required
-              placeholder="e.g., 120"
-            />
-            <p className="text-xs text-muted-foreground">
-              Hours after reminder before escalating to supervisor
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="horas_declarar_extravio">Loss Declaration (hours) *</Label>
-            <Input
-              id="horas_declarar_extravio"
-              type="number"
-              min="1"
-              value={formData.horas_declarar_extravio}
-              onChange={(e) => setFormData({ ...formData, horas_declarar_extravio: e.target.value })}
-              required
-              placeholder="e.g., 360"
-            />
-            <p className="text-xs text-muted-foreground">
-              Hours after escalation before declaring shipment as lost
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="horas_segunda_verificacion_receptor">Receiver 2nd Verification (hours)</Label>
-            <Input
-              id="horas_segunda_verificacion_receptor"
-              type="number"
-              min="1"
-              value={formData.horas_segunda_verificacion_receptor}
-              onChange={(e) => setFormData({ ...formData, horas_segunda_verificacion_receptor: e.target.value })}
-              placeholder="e.g., 168"
-            />
-            <p className="text-xs text-muted-foreground">
-              (Optional) Hours for a second verification attempt with receiver
-            </p>
+            <div className="space-y-2">
+              <Label htmlFor="hours_sender_escalation">Escalation (hours) *</Label>
+              <Input
+                id="hours_sender_escalation"
+                type="number"
+                min="1"
+                value={formData.hours_sender_escalation}
+                onChange={(e) => setFormData({ ...formData, hours_sender_escalation: e.target.value })}
+                required
+                placeholder="e.g., 72"
+              />
+              <p className="text-xs text-muted-foreground">
+                Hours after 2nd reminder to escalate
+              </p>
+            </div>
           </div>
         </div>
 
-        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
-          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          <AlertDescription className="text-xs text-amber-800 dark:text-amber-200">
-            <span className="font-semibold">Workflow Timeline Example:</span> Hour 0 → Shipment created | Hour 72 → Verification request to receiver | Hour 120 → Reminder to receiver | Hour 240 → Escalation | Hour 600 → Loss declaration
+        <div className="border-l-4 border-accent pl-4">
+          <h3 className="font-semibold text-lg mb-4">Receiver Panelist Workflow</h3>
+          <p className="text-sm text-muted-foreground mb-4">
+            Triggered when status is SENT and standard delivery time (defined in product) has passed
+          </p>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="hours_receiver_verification">Verification Request (hours) *</Label>
+              <Input
+                id="hours_receiver_verification"
+                type="number"
+                min="1"
+                value={formData.hours_receiver_verification}
+                onChange={(e) => setFormData({ ...formData, hours_receiver_verification: e.target.value })}
+                required
+                placeholder="e.g., 48"
+              />
+              <p className="text-xs text-muted-foreground">
+                Hours after standard delivery time to request verification
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="hours_receiver_escalation">Escalation (hours) *</Label>
+              <Input
+                id="hours_receiver_escalation"
+                type="number"
+                min="1"
+                value={formData.hours_receiver_escalation}
+                onChange={(e) => setFormData({ ...formData, hours_receiver_escalation: e.target.value })}
+                required
+                placeholder="e.g., 72"
+              />
+              <p className="text-xs text-muted-foreground">
+                Hours after verification request to escalate
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+          <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription className="text-xs text-blue-800 dark:text-blue-200">
+            <span className="font-semibold">Example Timeline:</span><br/>
+            <strong>Sender:</strong> Due date passes → +{formData.hours_sender_first_reminder}h 1st reminder → +{formData.hours_sender_second_reminder}h 2nd reminder → +{formData.hours_sender_escalation}h escalation<br/>
+            <strong>Receiver:</strong> Standard delivery time passes → +{formData.hours_receiver_verification}h verification request → +{formData.hours_receiver_escalation}h escalation
           </AlertDescription>
         </Alert>
       </div>

@@ -28,6 +28,7 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
     cliente_id: initialData?.cliente_id || "",
     nombre_producto: initialData?.nombre_producto || "",
     descripcion: initialData?.descripcion || "",
+    standard_delivery_hours: initialData?.standard_delivery_hours?.toString() || "",
     estado: initialData?.estado || "activo",
   });
 
@@ -58,6 +59,7 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
         cliente_id: parseInt(formData.cliente_id),
         nombre_producto: formData.nombre_producto,
         descripcion: formData.descripcion || null,
+        standard_delivery_hours: formData.standard_delivery_hours ? parseInt(formData.standard_delivery_hours) : null,
         estado: formData.estado,
       };
 
@@ -180,6 +182,21 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
           onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
           rows={3}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="standard_delivery_hours">Standard Delivery Time (hours)</Label>
+        <Input
+          id="standard_delivery_hours"
+          type="number"
+          min="1"
+          value={formData.standard_delivery_hours}
+          onChange={(e) => setFormData({ ...formData, standard_delivery_hours: e.target.value })}
+          placeholder="e.g., 72"
+        />
+        <p className="text-xs text-muted-foreground">
+          Expected delivery time for this product type. Used to trigger receiver verification requests.
+        </p>
       </div>
 
       <div className="space-y-2">

@@ -72,6 +72,7 @@ export default function Productos() {
     { key: "codigo_producto", label: "Code" },
     { key: "nombre_producto", label: "Name" },
     { key: "clientes.nombre", label: "Account", render: (row: any) => row.clientes?.nombre },
+    { key: "standard_delivery_hours", label: "Std. Delivery (hrs)" },
     { key: "descripcion", label: "Description" },
     { key: "estado", label: "Status" },
     { key: "id", label: "ID", hidden: true },
@@ -79,8 +80,8 @@ export default function Productos() {
 
   const csvConfig = {
     tableName: "productos_cliente",
-    expectedColumns: ["cliente_id", "nombre_producto", "descripcion", "estado"],
-    exampleData: [["1", "Standard Package", "Standard postal package", "activo"]],
+    expectedColumns: ["cliente_id", "nombre_producto", "standard_delivery_hours", "descripcion", "estado"],
+    exampleData: [["1", "Standard Package", "72", "Standard postal package", "activo"]],
   };
 
   return (

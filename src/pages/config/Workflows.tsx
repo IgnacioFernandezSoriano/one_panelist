@@ -60,20 +60,22 @@ export default function ConfigWorkflows() {
     { key: "cliente_id", label: "Account ID" },
     { key: "producto_id", label: "Product ID" },
     { key: "tipo_dias", label: "Day Type" },
-    { key: "horas_verificacion_recepcion_receptor", label: "Receiver Verification (hrs)" },
-    { key: "horas_recordatorio_receptor", label: "Receiver Reminder (hrs)" },
-    { key: "horas_escalamiento", label: "Escalation (hrs)" },
+    { key: "hours_sender_first_reminder", label: "Sender 1st Reminder" },
+    { key: "hours_sender_second_reminder", label: "Sender 2nd Reminder" },
+    { key: "hours_sender_escalation", label: "Sender Escalation" },
+    { key: "hours_receiver_verification", label: "Receiver Verification" },
+    { key: "hours_receiver_escalation", label: "Receiver Escalation" },
   ];
 
   const csvConfig = {
     tableName: "configuracion_workflows",
     expectedColumns: [
-      "cliente_id", "producto_id", "tipo_dias", "horas_verificacion_recepcion_receptor",
-      "horas_recordatorio_receptor", "horas_escalamiento", "horas_declarar_extravio", "horas_segunda_verificacion_receptor"
+      "cliente_id", "producto_id", "tipo_dias", "hours_sender_first_reminder",
+      "hours_sender_second_reminder", "hours_sender_escalation", "hours_receiver_verification", "hours_receiver_escalation"
     ],
     exampleData: [
-      ["1", "1", "habiles", "72", "48", "120", "360", "168"],
-      ["2", "2", "calendario", "48", "24", "72", "240", "120"],
+      ["1", "1", "habiles", "24", "48", "72", "48", "72"],
+      ["2", "2", "calendario", "24", "48", "72", "48", "72"],
     ],
   };
 
@@ -102,7 +104,7 @@ export default function ConfigWorkflows() {
         />
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Workflow</DialogTitle>
             </DialogHeader>
@@ -117,7 +119,7 @@ export default function ConfigWorkflows() {
         </Dialog>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Workflow</DialogTitle>
             </DialogHeader>
