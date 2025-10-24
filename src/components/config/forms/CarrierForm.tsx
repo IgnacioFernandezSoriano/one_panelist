@@ -22,17 +22,20 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
   const isEditing = !!initialData;
   
   const [formData, setFormData] = useState({
-    carrier_code: initialData?.carrier_code || "",
     legal_name: initialData?.legal_name || "",
     commercial_name: initialData?.commercial_name || "",
     tax_id: initialData?.tax_id || "",
     operator_type: initialData?.operator_type || "courier",
+    regulatory_status: initialData?.regulatory_status || "authorized",
+    geographic_scope: initialData?.geographic_scope || "national",
+    status: initialData?.status || "active",
     
     license_number: initialData?.license_number || "",
-    regulatory_status: initialData?.regulatory_status || "authorized",
     authorization_date: initialData?.authorization_date || "",
     license_expiration_date: initialData?.license_expiration_date || "",
     guarantee_amount: initialData?.guarantee_amount || "",
+    declared_coverage: initialData?.declared_coverage || "",
+    number_of_branches: initialData?.number_of_branches || "",
     
     legal_representative: initialData?.legal_representative || "",
     legal_address: initialData?.legal_address || "",
@@ -40,15 +43,9 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
     email: initialData?.email || "",
     website: initialData?.website || "",
     
-    geographic_scope: initialData?.geographic_scope || "national",
-    declared_coverage: initialData?.declared_coverage || "",
-    number_of_branches: initialData?.number_of_branches || "",
-    
     tracking_api_url: initialData?.tracking_api_url || "",
     regulator_data_api_url: initialData?.regulator_data_api_url || "",
     report_format: initialData?.report_format || "json",
-    
-    status: initialData?.status || "active",
     notes: initialData?.notes || "",
   });
 
@@ -58,7 +55,6 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
 
     const dataToSave = {
       ...formData,
-      carrier_code: formData.carrier_code || null,
       guarantee_amount: formData.guarantee_amount ? parseFloat(formData.guarantee_amount) : null,
       number_of_branches: formData.number_of_branches ? parseInt(formData.number_of_branches) : null,
       authorization_date: formData.authorization_date || null,
@@ -71,7 +67,6 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
       phone: formData.phone || null,
       email: formData.email || null,
       website: formData.website || null,
-      geographic_scope: formData.geographic_scope || null,
       declared_coverage: formData.declared_coverage || null,
       tracking_api_url: formData.tracking_api_url || null,
       regulator_data_api_url: formData.regulator_data_api_url || null,
@@ -122,40 +117,6 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
         </TabsList>
 
         <TabsContent value="basic" className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="carrier_code">Carrier Code (Optional)</Label>
-              <Input
-                id="carrier_code"
-                value={formData.carrier_code}
-                onChange={(e) => setFormData({ ...formData, carrier_code: e.target.value })}
-                disabled={isEditing}
-                placeholder="e.g., CORREOS (leave blank to use ID)"
-              />
-              <p className="text-xs text-muted-foreground">
-                Optional custom code - ID will be used if not provided
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="operator_type">Operator Type *</Label>
-              <Select value={formData.operator_type} onValueChange={(value) => setFormData({ ...formData, operator_type: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="universal_postal">Universal Postal</SelectItem>
-                  <SelectItem value="private_postal">Private Postal</SelectItem>
-                  <SelectItem value="courier">Courier</SelectItem>
-                  <SelectItem value="logistics">Logistics</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Type of postal/delivery operator
-              </p>
-            </div>
-          </div>
-
           <div className="space-y-2">
             <Label htmlFor="legal_name">Legal Name *</Label>
             <Input
@@ -198,22 +159,25 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status">Status *</Label>
-            <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="regulatory" className="space-y-4 mt-4">
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="operator_type">Operator Type *</Label>
+              <Select value={formData.operator_type} onValueChange={(value) => setFormData({ ...formData, operator_type: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="universal_postal">Universal Postal</SelectItem>
+                  <SelectItem value="private_postal">Private Postal</SelectItem>
+                  <SelectItem value="courier">Courier</SelectItem>
+                  <SelectItem value="logistics">Logistics</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Type of postal/delivery operator
+              </p>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="regulatory_status">Regulatory Status *</Label>
               <Select value={formData.regulatory_status} onValueChange={(value) => setFormData({ ...formData, regulatory_status: value })}>
@@ -231,19 +195,54 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
                 Current regulatory authorization status
               </p>
             </div>
+          </div>
 
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="license_number">License Number</Label>
-              <Input
-                id="license_number"
-                value={formData.license_number}
-                onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
-                placeholder="e.g., LIC-2024-001"
-              />
+              <Label htmlFor="geographic_scope">Geographic Scope *</Label>
+              <Select value={formData.geographic_scope} onValueChange={(value) => setFormData({ ...formData, geographic_scope: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="local">Local</SelectItem>
+                  <SelectItem value="regional">Regional</SelectItem>
+                  <SelectItem value="national">National</SelectItem>
+                  <SelectItem value="international">International</SelectItem>
+                </SelectContent>
+              </Select>
               <p className="text-xs text-muted-foreground">
-                Official license or authorization number
+                Geographic coverage authorization
               </p>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status *</Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="regulatory" className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="license_number">License Number</Label>
+            <Input
+              id="license_number"
+              value={formData.license_number}
+              onChange={(e) => setFormData({ ...formData, license_number: e.target.value })}
+              placeholder="e.g., LIC-2024-001"
+            />
+            <p className="text-xs text-muted-foreground">
+              Official license or authorization number
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -289,38 +288,18 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="geographic_scope">Geographic Scope</Label>
-              <Select value={formData.geographic_scope} onValueChange={(value) => setFormData({ ...formData, geographic_scope: value })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="local">Local</SelectItem>
-                  <SelectItem value="regional">Regional</SelectItem>
-                  <SelectItem value="national">National</SelectItem>
-                  <SelectItem value="international">International</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Geographic coverage authorization
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="number_of_branches">Number of Branches</Label>
-              <Input
-                id="number_of_branches"
-                type="number"
-                value={formData.number_of_branches}
-                onChange={(e) => setFormData({ ...formData, number_of_branches: e.target.value })}
-                placeholder="e.g., 50"
-              />
-              <p className="text-xs text-muted-foreground">
-                Total number of physical locations
-              </p>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="number_of_branches">Number of Branches</Label>
+            <Input
+              id="number_of_branches"
+              type="number"
+              value={formData.number_of_branches}
+              onChange={(e) => setFormData({ ...formData, number_of_branches: e.target.value })}
+              placeholder="e.g., 50"
+            />
+            <p className="text-xs text-muted-foreground">
+              Total number of physical locations
+            </p>
           </div>
 
           <div className="space-y-2">
