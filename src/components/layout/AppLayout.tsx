@@ -76,7 +76,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
 
   // Solution Parameters section
   const solutionParametersItems = [
-    { icon: Building2, label: "Clients", path: "/configuracion/clientes" },
+    { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
     { icon: Workflow, label: "Workflows", path: "/configuracion/workflows" },
     { icon: AlertCircle, label: "Issues", path: "/configuracion/incidencias" },

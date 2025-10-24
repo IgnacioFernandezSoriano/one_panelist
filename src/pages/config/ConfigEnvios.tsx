@@ -53,7 +53,7 @@ export default function ConfigEnvios() {
 
   const columns = [
     { key: "id", label: "ID" },
-    { key: "cliente_id", label: "Client ID" },
+    { key: "cliente_id", label: "Account ID" },
     { key: "panelista_origen_id", label: "Origin Panelist" },
     { key: "panelista_destino_id", label: "Dest. Panelist" },
     { key: "nodo_origen", label: "Origin Node" },

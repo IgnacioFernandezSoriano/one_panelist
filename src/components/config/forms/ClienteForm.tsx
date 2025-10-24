@@ -68,12 +68,12 @@ export function ClienteForm({ onSuccess, onCancel, initialData }: ClienteFormPro
 
     if (error) {
       toast({
-        title: `Error ${isEditing ? "updating" : "creating"} client`,
+        title: `Error ${isEditing ? "updating" : "creating"} account`,
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: `Client ${isEditing ? "updated" : "created"} successfully` });
+      toast({ title: `Account ${isEditing ? "updated" : "created"} successfully` });
       onSuccess();
     }
     setIsSubmitting(false);
@@ -191,7 +191,7 @@ export function ClienteForm({ onSuccess, onCancel, initialData }: ClienteFormPro
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Client" : "Create Client")}
+          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Account" : "Create Account")}
         </Button>
       </div>
     </form>

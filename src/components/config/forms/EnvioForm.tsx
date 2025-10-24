@@ -131,7 +131,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Cliente */}
         <div className="space-y-2">
-          <Label htmlFor="cliente">Cliente *</Label>
+          <Label htmlFor="cliente">Account *</Label>
           <Popover open={openCliente} onOpenChange={setOpenCliente}>
             <PopoverTrigger asChild>
               <Button
@@ -140,14 +140,14 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                 aria-expanded={openCliente}
                 className="w-full justify-between"
               >
-                {selectedCliente ? `${selectedCliente.codigo} - ${selectedCliente.nombre}` : "Seleccionar cliente..."}
+                {selectedCliente ? `${selectedCliente.codigo} - ${selectedCliente.nombre}` : "Seleccionar cuenta..."}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
-                <CommandInput placeholder="Buscar cliente..." />
-                <CommandEmpty>No se encontró el cliente.</CommandEmpty>
+                <CommandInput placeholder="Buscar cuenta..." />
+                <CommandEmpty>No se encontró la cuenta.</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-auto">
                   {clientes.map((cliente) => (
                     <CommandItem

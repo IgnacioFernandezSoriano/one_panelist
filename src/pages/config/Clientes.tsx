@@ -28,7 +28,7 @@ export default function ConfigClientes() {
 
     if (error) {
       toast({
-        title: "Error loading clients",
+        title: "Error loading accounts",
         description: error.message,
         variant: "destructive",
       });
@@ -46,12 +46,12 @@ export default function ConfigClientes() {
 
     if (error) {
       toast({
-        title: "Error deleting client",
+        title: "Error deleting account",
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "Client deleted successfully" });
+      toast({ title: "Account deleted successfully" });
       loadData();
     }
   };
@@ -77,8 +77,8 @@ export default function ConfigClientes() {
     tableName: "clientes",
     expectedColumns: ["codigo", "nombre", "pais", "estado"],
     exampleData: [
-      ["CLI001", "Cliente A", "España", "activo"],
-      ["CLI002", "Cliente B", "México", "activo"],
+      ["CLI001", "Account A", "España", "activo"],
+      ["CLI002", "Account B", "México", "activo"],
     ],
   };
 
@@ -86,14 +86,14 @@ export default function ConfigClientes() {
     <AppLayout>
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Clients Configuration</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Accounts Configuration</h1>
           <p className="text-muted-foreground">
-            Manage client records in the system
+            Manage account records in the system
           </p>
         </div>
 
         <ConfigDataTable
-          title="Clients"
+          title="Accounts"
           data={data}
           columns={columns}
           onEdit={(item) => {
@@ -109,7 +109,7 @@ export default function ConfigClientes() {
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Client</DialogTitle>
+              <DialogTitle>Create New Account</DialogTitle>
             </DialogHeader>
             <ClienteForm
               onSuccess={() => {
@@ -124,7 +124,7 @@ export default function ConfigClientes() {
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Client</DialogTitle>
+              <DialogTitle>Edit Account</DialogTitle>
             </DialogHeader>
             <ClienteForm
               initialData={selectedItem}
