@@ -5,10 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface WorkflowFormProps {
   onSuccess: () => void;
@@ -91,7 +92,14 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+        <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+        <AlertDescription className="text-sm text-blue-800 dark:text-blue-200">
+          Configure workflow parameters to automate notifications and escalations for each account's postal service.
+        </AlertDescription>
+      </Alert>
+
       <div className="space-y-2">
         <Label htmlFor="cliente_id">Account *</Label>
         <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
@@ -147,6 +155,9 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
             </Command>
           </PopoverContent>
         </Popover>
+        <p className="text-xs text-muted-foreground">
+          Select the account for which this workflow configuration will apply
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -155,7 +166,11 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
           id="servicio_postal"
           value={formData.servicio_postal}
           onChange={(e) => setFormData({ ...formData, servicio_postal: e.target.value })}
+          placeholder="e.g., Correos, DHL, FedEx"
         />
+        <p className="text-xs text-muted-foreground">
+          (Optional) Name of the postal service or courier used by this account
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -169,62 +184,99 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
             <SelectItem value="calendario">Calendar Days</SelectItem>
           </SelectContent>
         </Select>
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium">Business Days:</span> Excludes weekends and holidays | <span className="font-medium">Calendar Days:</span> Counts all days
+        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="dias_verificacion_recepcion">Verification Days *</Label>
-          <Input
-            id="dias_verificacion_recepcion"
-            type="number"
-            value={formData.dias_verificacion_recepcion}
-            onChange={(e) => setFormData({ ...formData, dias_verificacion_recepcion: e.target.value })}
-            required
-          />
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="dias_verificacion_recepcion">Verification Days *</Label>
+            <Input
+              id="dias_verificacion_recepcion"
+              type="number"
+              min="1"
+              value={formData.dias_verificacion_recepcion}
+              onChange={(e) => setFormData({ ...formData, dias_verificacion_recepcion: e.target.value })}
+              required
+              placeholder="e.g., 3"
+            />
+            <p className="text-xs text-muted-foreground">
+              Days to wait before requesting panelist to verify reception
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dias_recordatorio">Reminder Days *</Label>
+            <Input
+              id="dias_recordatorio"
+              type="number"
+              min="1"
+              value={formData.dias_recordatorio}
+              onChange={(e) => setFormData({ ...formData, dias_recordatorio: e.target.value })}
+              required
+              placeholder="e.g., 2"
+            />
+            <p className="text-xs text-muted-foreground">
+              Days after verification before sending a reminder
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dias_escalamiento">Escalation Days *</Label>
+            <Input
+              id="dias_escalamiento"
+              type="number"
+              min="1"
+              value={formData.dias_escalamiento}
+              onChange={(e) => setFormData({ ...formData, dias_escalamiento: e.target.value })}
+              required
+              placeholder="e.g., 5"
+            />
+            <p className="text-xs text-muted-foreground">
+              Days after reminder before escalating to supervisor
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dias_declarar_extravio">Loss Declaration Days *</Label>
+            <Input
+              id="dias_declarar_extravio"
+              type="number"
+              min="1"
+              value={formData.dias_declarar_extravio}
+              onChange={(e) => setFormData({ ...formData, dias_declarar_extravio: e.target.value })}
+              required
+              placeholder="e.g., 15"
+            />
+            <p className="text-xs text-muted-foreground">
+              Days after escalation before declaring shipment as lost
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dias_segunda_verificacion">2nd Verification Days</Label>
+            <Input
+              id="dias_segunda_verificacion"
+              type="number"
+              min="1"
+              value={formData.dias_segunda_verificacion}
+              onChange={(e) => setFormData({ ...formData, dias_segunda_verificacion: e.target.value })}
+              placeholder="e.g., 7"
+            />
+            <p className="text-xs text-muted-foreground">
+              (Optional) Days for a second verification attempt
+            </p>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="dias_recordatorio">Reminder Days *</Label>
-          <Input
-            id="dias_recordatorio"
-            type="number"
-            value={formData.dias_recordatorio}
-            onChange={(e) => setFormData({ ...formData, dias_recordatorio: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="dias_escalamiento">Escalation Days *</Label>
-          <Input
-            id="dias_escalamiento"
-            type="number"
-            value={formData.dias_escalamiento}
-            onChange={(e) => setFormData({ ...formData, dias_escalamiento: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="dias_declarar_extravio">Loss Declaration Days *</Label>
-          <Input
-            id="dias_declarar_extravio"
-            type="number"
-            value={formData.dias_declarar_extravio}
-            onChange={(e) => setFormData({ ...formData, dias_declarar_extravio: e.target.value })}
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="dias_segunda_verificacion">2nd Verification Days</Label>
-          <Input
-            id="dias_segunda_verificacion"
-            type="number"
-            value={formData.dias_segunda_verificacion}
-            onChange={(e) => setFormData({ ...formData, dias_segunda_verificacion: e.target.value })}
-          />
-        </div>
+        <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800">
+          <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+          <AlertDescription className="text-xs text-amber-800 dark:text-amber-200">
+            <span className="font-semibold">Workflow Timeline Example:</span> Day 0 → Shipment created | Day 3 → Verification request | Day 5 → Reminder | Day 10 → Escalation | Day 25 → Loss declaration
+          </AlertDescription>
+        </Alert>
       </div>
 
       <div className="flex gap-2 justify-end">
