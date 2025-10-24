@@ -807,7 +807,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_next_product_code: {
+        Args: { p_cliente_id: number }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "gestor" | "coordinador" | "administrador"

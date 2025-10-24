@@ -17,7 +17,6 @@ interface QuickCreateProductoProps {
 export function QuickCreateProducto({ open, onOpenChange, onSuccess, clienteId }: QuickCreateProductoProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    codigo_producto: "",
     nombre_producto: "",
     descripcion: "",
   });
@@ -31,9 +30,10 @@ export function QuickCreateProducto({ open, onOpenChange, onSuccess, clienteId }
       const { data, error } = await supabase
         .from("productos_cliente")
         .insert([{
-          ...formData,
+          nombre_producto: formData.nombre_producto,
+          descripcion: formData.descripcion || null,
           cliente_id: clienteId
-        }])
+        }] as any)
         .select()
         .single();
 
@@ -46,7 +46,7 @@ export function QuickCreateProducto({ open, onOpenChange, onSuccess, clienteId }
 
       onSuccess(data);
       onOpenChange(false);
-      setFormData({ codigo_producto: "", nombre_producto: "", descripcion: "" });
+      setFormData({ nombre_producto: "", descripcion: "" });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -65,15 +65,6 @@ export function QuickCreateProducto({ open, onOpenChange, onSuccess, clienteId }
           <DialogTitle>Create New Product</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="codigo_producto">Product Code *</Label>
-            <Input
-              id="codigo_producto"
-              value={formData.codigo_producto}
-              onChange={(e) => setFormData({ ...formData, codigo_producto: e.target.value })}
-              required
-            />
-          </div>
           <div className="space-y-2">
             <Label htmlFor="nombre_producto">Product Name *</Label>
             <Input

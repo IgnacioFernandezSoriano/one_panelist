@@ -78,8 +78,8 @@ export default function Productos() {
 
   const csvConfig = {
     tableName: "productos_cliente",
-    expectedColumns: ["cliente_id", "codigo_producto", "nombre_producto", "descripcion", "estado"],
-    exampleData: [["1", "PROD001", "Standard Package", "Standard postal package", "activo"]],
+    expectedColumns: ["cliente_id", "nombre_producto", "descripcion", "estado"],
+    exampleData: [["1", "Standard Package", "Standard postal package", "activo"]],
   };
 
   return (

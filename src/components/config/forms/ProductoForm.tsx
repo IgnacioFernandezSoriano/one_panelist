@@ -26,7 +26,6 @@ interface ProductoFormProps {
 export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormProps) => {
   const [formData, setFormData] = useState({
     cliente_id: initialData?.cliente_id || "",
-    codigo_producto: initialData?.codigo_producto || "",
     nombre_producto: initialData?.nombre_producto || "",
     descripcion: initialData?.descripcion || "",
     estado: initialData?.estado || "activo",
@@ -57,7 +56,6 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
     try {
       const dataToSave = {
         cliente_id: parseInt(formData.cliente_id),
-        codigo_producto: formData.codigo_producto,
         nombre_producto: formData.nombre_producto,
         descripcion: formData.descripcion || null,
         estado: formData.estado,
@@ -80,7 +78,7 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
       } else {
         const { error } = await supabase
           .from("productos_cliente")
-          .insert(dataToSave);
+          .insert([dataToSave] as any);
 
         if (error) throw error;
 
@@ -152,14 +150,15 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="codigo_producto">Product Code *</Label>
+        <Label>Product Code</Label>
         <Input
-          id="codigo_producto"
-          value={formData.codigo_producto}
-          onChange={(e) => setFormData({ ...formData, codigo_producto: e.target.value })}
-          required
-          maxLength={50}
+          value={initialData?.codigo_producto || "Auto-generated"}
+          disabled
+          className="bg-muted"
         />
+        <p className="text-xs text-muted-foreground">
+          Code will be auto-generated (3 digits)
+        </p>
       </div>
 
       <div className="space-y-2">
