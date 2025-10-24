@@ -18,6 +18,7 @@ interface Envio {
   fecha_programada: string;
   nodo_origen: string;
   nodo_destino: string;
+  carrier_name?: string;
 }
 
 export default function Envios() {
@@ -55,7 +56,8 @@ export default function Envios() {
     e.id.toString().includes(searchTerm) ||
     e.tipo_producto.toLowerCase().includes(searchTerm.toLowerCase()) ||
     e.nodo_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.nodo_destino.toLowerCase().includes(searchTerm.toLowerCase())
+    e.nodo_destino.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (e.carrier_name && e.carrier_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const getEstadoBadge = (estado: string) => {
@@ -89,7 +91,7 @@ export default function Envios() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Search by ID, product type, or node..."
+              placeholder="Search by ID, product type, carrier, or node..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -123,11 +125,17 @@ export default function Envios() {
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                       <div>
                         <span className="text-muted-foreground">Type:</span>
                         <p className="font-medium capitalize">{envio.tipo_producto}</p>
                       </div>
+                      {envio.carrier_name && (
+                        <div>
+                          <span className="text-muted-foreground">Carrier:</span>
+                          <p className="font-medium">{envio.carrier_name}</p>
+                        </div>
+                      )}
                       <div>
                         <span className="text-muted-foreground">Origin:</span>
                         <p className="font-medium">{envio.nodo_origen}</p>

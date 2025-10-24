@@ -54,6 +54,7 @@ export default function ConfigEnvios() {
   const columns = [
     { key: "id", label: "ID" },
     { key: "cliente_id", label: "Account ID" },
+    { key: "carrier_name", label: "Carrier" },
     { key: "panelista_origen_id", label: "Origin Panelist" },
     { key: "panelista_destino_id", label: "Dest. Panelist" },
     { key: "nodo_origen", label: "Origin Node" },
@@ -66,11 +67,11 @@ export default function ConfigEnvios() {
   const csvConfig = {
     tableName: "envios",
     expectedColumns: [
-      "cliente_id", "nodo_origen", "nodo_destino", "fecha_programada",
+      "cliente_id", "carrier_id", "nodo_origen", "nodo_destino", "fecha_programada",
       "tipo_producto", "estado", "motivo_creacion"
     ],
     exampleData: [
-      ["1", "MAD", "BCN", "2024-01-15", "paquete", "PENDIENTE", "inicial"],
+      ["1", "1", "MAD", "BCN", "2024-01-15", "paquete", "PENDIENTE", "inicial"],
     ],
   };
 

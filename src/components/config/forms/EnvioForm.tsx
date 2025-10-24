@@ -22,15 +22,18 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientes, setClientes] = useState<any[]>([]);
   const [nodos, setNodos] = useState<any[]>([]);
+  const [carriers, setCarriers] = useState<any[]>([]);
   const [openCliente, setOpenCliente] = useState(false);
   const [openNodoOrigen, setOpenNodoOrigen] = useState(false);
   const [openNodoDestino, setOpenNodoDestino] = useState(false);
+  const [openCarrier, setOpenCarrier] = useState(false);
   const [fechaProgramada, setFechaProgramada] = useState<Date | undefined>(
     initialData?.fecha_programada ? new Date(initialData.fecha_programada) : undefined
   );
   
   const [formData, setFormData] = useState({
     cliente_id: initialData?.cliente_id || "",
+    carrier_id: initialData?.carrier_id || "",
     nodo_origen: initialData?.nodo_origen || "",
     nodo_destino: initialData?.nodo_destino || "",
     tipo_producto: initialData?.tipo_producto || "",
@@ -45,6 +48,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
   useEffect(() => {
     loadClientes();
     loadNodos();
+    loadCarriers();
   }, []);
 
   const loadClientes = async () => {
@@ -71,6 +75,18 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     }
   };
 
+  const loadCarriers = async () => {
+    const { data, error } = await supabase
+      .from("carriers")
+      .select("id, carrier_code, legal_name, commercial_name")
+      .eq("status", "active")
+      .order("carrier_code");
+
+    if (!error && data) {
+      setCarriers(data);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -89,6 +105,8 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
       ...formData,
       fecha_programada: format(fechaProgramada, "yyyy-MM-dd"),
       cliente_id: parseInt(formData.cliente_id),
+      carrier_id: formData.carrier_id ? parseInt(formData.carrier_id) : null,
+      carrier_name: formData.carrier_id ? carriers.find(c => c.id.toString() === formData.carrier_id)?.commercial_name || carriers.find(c => c.id.toString() === formData.carrier_id)?.legal_name : null,
     };
 
     try {
@@ -165,6 +183,70 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                         )}
                       />
                       {cliente.codigo} - {cliente.nombre}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Carrier */}
+        <div className="space-y-2">
+          <Label htmlFor="carrier">Carrier</Label>
+          <Popover open={openCarrier} onOpenChange={setOpenCarrier}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={openCarrier}
+                className="w-full justify-between"
+              >
+                {formData.carrier_id 
+                  ? (() => {
+                      const carrier = carriers.find(c => c.id.toString() === formData.carrier_id);
+                      return carrier ? `${carrier.carrier_code} - ${carrier.commercial_name || carrier.legal_name}` : "Seleccionar carrier...";
+                    })()
+                  : "Seleccionar carrier..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput placeholder="Buscar carrier..." />
+                <CommandEmpty>No se encontró el carrier.</CommandEmpty>
+                <CommandGroup className="max-h-64 overflow-auto">
+                  <CommandItem
+                    value=""
+                    onSelect={() => {
+                      setFormData({ ...formData, carrier_id: "" });
+                      setOpenCarrier(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        !formData.carrier_id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    (Ninguno)
+                  </CommandItem>
+                  {carriers.map((carrier) => (
+                    <CommandItem
+                      key={carrier.id}
+                      value={`${carrier.carrier_code} ${carrier.commercial_name || carrier.legal_name}`}
+                      onSelect={() => {
+                        setFormData({ ...formData, carrier_id: carrier.id.toString() });
+                        setOpenCarrier(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          formData.carrier_id === carrier.id.toString() ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {carrier.carrier_code} - {carrier.commercial_name || carrier.legal_name}
                     </CommandItem>
                   ))}
                 </CommandGroup>

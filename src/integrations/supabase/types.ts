@@ -261,6 +261,8 @@ export type Database = {
       }
       envios: {
         Row: {
+          carrier_id: number | null
+          carrier_name: string | null
           cliente_id: number
           estado: Database["public"]["Enums"]["estado_envio"]
           fecha_creacion: string
@@ -281,6 +283,8 @@ export type Database = {
           tipo_producto: string
         }
         Insert: {
+          carrier_id?: number | null
+          carrier_name?: string | null
           cliente_id: number
           estado?: Database["public"]["Enums"]["estado_envio"]
           fecha_creacion?: string
@@ -301,6 +305,8 @@ export type Database = {
           tipo_producto: string
         }
         Update: {
+          carrier_id?: number | null
+          carrier_name?: string | null
           cliente_id?: number
           estado?: Database["public"]["Enums"]["estado_envio"]
           fecha_creacion?: string
@@ -321,6 +327,13 @@ export type Database = {
           tipo_producto?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "envios_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "envios_cliente_id_fkey"
             columns: ["cliente_id"]
