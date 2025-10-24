@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Upload } from "lucide-react";
+import { Plus, Search, Upload, FileDown } from "lucide-react";
+import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -104,6 +105,80 @@ export default function Envios() {
     }
   };
 
+  const exportTopologyCSV = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("nodos")
+        .select(`
+          codigo,
+          pais,
+          estado,
+          panelista_id,
+          ciudades!inner (
+            codigo,
+            nombre,
+            clasificacion,
+            regiones!inner (
+              codigo,
+              nombre,
+              clientes!inner (
+                codigo,
+                nombre
+              )
+            )
+          )
+        `)
+        .eq("estado", "activo")
+        .order("codigo");
+
+      if (error) throw error;
+
+      const csvData = data.map(nodo => ({
+        cliente_codigo: nodo.ciudades.regiones.clientes.codigo,
+        cliente_nombre: nodo.ciudades.regiones.clientes.nombre,
+        region_codigo: nodo.ciudades.regiones.codigo,
+        region_nombre: nodo.ciudades.regiones.nombre,
+        ciudad_codigo: nodo.ciudades.codigo,
+        ciudad_nombre: nodo.ciudades.nombre,
+        ciudad_clasificacion: nodo.ciudades.clasificacion || '',
+        nodo_codigo: nodo.codigo,
+        nodo_pais: nodo.pais,
+        nodo_estado: nodo.estado,
+        tiene_panelista_activo: nodo.panelista_id ? 'SI' : 'NO',
+        cartas_semana: ''
+      }));
+
+      const csv = Papa.unparse(csvData, {
+        quotes: true,
+        header: true
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      const fecha = format(new Date(), 'yyyy-MM-dd');
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `topologia_nodos_${fecha}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Export successful",
+        description: `Topology CSV exported with ${csvData.length} nodes`,
+      });
+
+    } catch (error: any) {
+      toast({
+        title: "Export error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredEnvios = envios.filter((e) => {
     const searchLower = searchTerm.toLowerCase();
     return (
@@ -149,6 +224,10 @@ export default function Envios() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={exportTopologyCSV}>
+              <FileDown className="w-4 h-4" />
+              Export Topology CSV
+            </Button>
             <Button variant="outline" className="gap-2" onClick={() => setImportDialogOpen(true)}>
               <Upload className="w-4 h-4" />
               Import CSV
