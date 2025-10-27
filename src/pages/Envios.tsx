@@ -5,13 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Search, Upload, FileDown } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle } from "lucide-react";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { CSVImporter } from "@/components/import/CSVImporter";
 
 interface Envio {
@@ -60,6 +71,9 @@ export default function Envios() {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -277,6 +291,116 @@ export default function Envios() {
     return variants[estado] || { variant: "secondary" };
   };
 
+  const toggleSelection = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredEnvios.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredEnvios.map(e => e.id));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    try {
+      const { error } = await supabase
+        .from("envios")
+        .delete()
+        .in("id", selectedIds);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deleted successfully",
+        description: `${selectedIds.length} record(s) deleted`,
+      });
+
+      setSelectedIds([]);
+      loadEnvios();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const handleDuplicateSelected = async () => {
+    try {
+      const selectedEnvios = envios.filter(e => selectedIds.includes(e.id));
+      
+      const duplicates = selectedEnvios.map(envio => ({
+        cliente_id: envio.cliente_id,
+        nodo_origen: envio.nodo_origen,
+        nodo_destino: envio.nodo_destino,
+        fecha_programada: envio.fecha_programada,
+        fecha_limite: envio.fecha_limite,
+        tipo_producto: envio.tipo_producto,
+        estado: "PENDING" as const,
+        carrier_id: envio.carrier_id,
+        carrier_name: envio.carrier_name,
+        producto_id: envio.producto_id,
+        panelista_origen_id: envio.panelista_origen_id,
+        panelista_destino_id: envio.panelista_destino_id,
+        motivo_creacion: "programado",
+      }));
+
+      const { error } = await supabase
+        .from("envios")
+        .insert(duplicates);
+
+      if (error) throw error;
+
+      toast({
+        title: "Duplicated successfully",
+        description: `${selectedIds.length} record(s) duplicated`,
+      });
+
+      setSelectedIds([]);
+      loadEnvios();
+    } catch (error: any) {
+      toast({
+        title: "Error duplicating",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelSelected = async () => {
+    try {
+      const { error } = await supabase
+        .from("envios")
+        .update({ estado: "CANCELLED" })
+        .in("id", selectedIds);
+
+      if (error) throw error;
+
+      toast({
+        title: "Updated successfully",
+        description: `${selectedIds.length} record(s) marked as cancelled`,
+      });
+
+      setSelectedIds([]);
+      loadEnvios();
+    } catch (error: any) {
+      toast({
+        title: "Error updating",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setCancelDialogOpen(false);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-8">
@@ -322,6 +446,54 @@ export default function Envios() {
           </p>
         </Card>
 
+        {selectedIds.length > 0 && (
+          <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="font-medium text-foreground">
+                  {selectedIds.length} selected
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleSelectAll}
+                >
+                  {selectedIds.length === filteredEnvios.length ? "Deselect all" : "Select all"}
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={handleDuplicateSelected}
+                >
+                  <Copy className="w-4 h-4" />
+                  Duplicate
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setCancelDialogOpen(true)}
+                >
+                  <XCircle className="w-4 h-4" />
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading allocation plans...</p>
@@ -334,7 +506,12 @@ export default function Envios() {
           <div className="grid gap-4">
             {filteredEnvios.map((envio) => (
               <Card key={envio.id} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start gap-4">
+                  <Checkbox
+                    checked={selectedIds.includes(envio.id)}
+                    onCheckedChange={() => toggleSelection(envio.id)}
+                    className="mt-1"
+                  />
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
                       <h3 className="text-lg font-semibold text-foreground">
@@ -423,6 +600,40 @@ export default function Envios() {
             ))}
           </div>
         )}
+
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete selected records?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. {selectedIds.length} record(s) will be permanently deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Mark as cancelled?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {selectedIds.length} record(s) will be marked as CANCELLED.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleCancelSelected}>
+                Mark as Cancelled
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
           <DialogContent className="max-w-2xl">
