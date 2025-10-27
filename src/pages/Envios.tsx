@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical } from "lucide-react";
+import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -81,6 +83,16 @@ export default function Envios() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
+  const [advancedSearchOpen, setAdvancedSearchOpen] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    carrier: "",
+    product: "",
+    type: "",
+    origin: "",
+    destination: "",
+    panelist: "",
+    status: ""
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -266,7 +278,9 @@ export default function Envios() {
 
   const filteredEnvios = envios.filter((e) => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    
+    // Basic text search
+    const matchesBasicSearch = !searchTerm || (
       e.id.toString().includes(searchTerm) ||
       e.tipo_producto.toLowerCase().includes(searchLower) ||
       e.estado.toLowerCase().includes(searchLower) ||
@@ -285,7 +299,61 @@ export default function Envios() {
       (e.panelista_destino?.nombre_completo && e.panelista_destino.nombre_completo.toLowerCase().includes(searchLower)) ||
       (e.panelista_destino?.nodo_asignado && e.panelista_destino.nodo_asignado.toLowerCase().includes(searchLower))
     );
+
+    // Advanced filters
+    const matchesCarrier = !advancedFilters.carrier || 
+      e.carrier_id?.toString() === advancedFilters.carrier ||
+      e.carrier_name === advancedFilters.carrier;
+    
+    const matchesProduct = !advancedFilters.product || 
+      e.producto_id?.toString() === advancedFilters.product;
+    
+    const matchesType = !advancedFilters.type || 
+      e.tipo_producto.toLowerCase() === advancedFilters.type.toLowerCase();
+    
+    const matchesOrigin = !advancedFilters.origin || 
+      e.nodo_origen === advancedFilters.origin;
+    
+    const matchesDestination = !advancedFilters.destination || 
+      e.nodo_destino === advancedFilters.destination;
+    
+    const matchesPanelist = !advancedFilters.panelist || 
+      e.panelista_origen?.nombre_completo === advancedFilters.panelist ||
+      e.panelista_destino?.nombre_completo === advancedFilters.panelist;
+    
+    const matchesStatus = !advancedFilters.status || 
+      e.estado === advancedFilters.status;
+
+    return matchesBasicSearch && matchesCarrier && matchesProduct && 
+           matchesType && matchesOrigin && matchesDestination && 
+           matchesPanelist && matchesStatus;
   });
+
+  // Get unique values for filters
+  const uniqueCarriers = Array.from(new Set(envios.map(e => e.carriers?.legal_name || e.carrier_name).filter(Boolean)));
+  const uniqueProducts = Array.from(new Set(envios.map(e => e.productos_cliente?.nombre_producto).filter(Boolean)));
+  const uniqueTypes = Array.from(new Set(envios.map(e => e.tipo_producto).filter(Boolean)));
+  const uniqueOrigins = Array.from(new Set(envios.map(e => e.nodo_origen).filter(Boolean))).sort();
+  const uniqueDestinations = Array.from(new Set(envios.map(e => e.nodo_destino).filter(Boolean))).sort();
+  const uniquePanelists = Array.from(new Set([
+    ...envios.map(e => e.panelista_origen?.nombre_completo),
+    ...envios.map(e => e.panelista_destino?.nombre_completo)
+  ].filter(Boolean)));
+  const uniqueStatuses = Array.from(new Set(envios.map(e => e.estado).filter(Boolean)));
+
+  const hasActiveFilters = Object.values(advancedFilters).some(v => v !== "");
+
+  const clearAdvancedFilters = () => {
+    setAdvancedFilters({
+      carrier: "",
+      product: "",
+      type: "",
+      origin: "",
+      destination: "",
+      panelist: "",
+      status: ""
+    });
+  };
 
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; className?: string }> = {
@@ -518,9 +586,75 @@ export default function Envios() {
               className="pl-10"
             />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Search across all fields: accounts, products, carriers, panelists, nodes, and tracking labels
-          </p>
+          <div className="flex items-center justify-between mt-3">
+            <p className="text-xs text-muted-foreground">
+              Search across all fields: accounts, products, carriers, panelists, nodes, and tracking labels
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => setAdvancedSearchOpen(true)}
+            >
+              <Filter className="w-4 h-4" />
+              Advanced Search
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="ml-1">
+                  {Object.values(advancedFilters).filter(v => v).length}
+                </Badge>
+              )}
+            </Button>
+          </div>
+          {hasActiveFilters && (
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
+              <span className="text-xs font-medium text-muted-foreground">Active filters:</span>
+              {advancedFilters.carrier && (
+                <Badge variant="secondary" className="gap-1">
+                  Carrier: {uniqueCarriers.find(c => c === advancedFilters.carrier)}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, carrier: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.product && (
+                <Badge variant="secondary" className="gap-1">
+                  Product: {uniqueProducts.find(p => p === advancedFilters.product)}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, product: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.type && (
+                <Badge variant="secondary" className="gap-1">
+                  Type: {advancedFilters.type}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, type: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.origin && (
+                <Badge variant="secondary" className="gap-1">
+                  Origin: {advancedFilters.origin}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, origin: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.destination && (
+                <Badge variant="secondary" className="gap-1">
+                  Destination: {advancedFilters.destination}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, destination: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.panelist && (
+                <Badge variant="secondary" className="gap-1">
+                  Panelist: {uniquePanelists.find(p => p === advancedFilters.panelist)}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, panelist: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.status && (
+                <Badge variant="secondary" className="gap-1">
+                  Status: {advancedFilters.status}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, status: ""})} />
+                </Badge>
+              )}
+              <Button variant="ghost" size="sm" onClick={clearAdvancedFilters}>
+                Clear all
+              </Button>
+            </div>
+          )}
         </Card>
 
         {filteredEnvios.length > 0 && (
@@ -749,6 +883,169 @@ export default function Envios() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog open={advancedSearchOpen} onOpenChange={setAdvancedSearchOpen}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Advanced Search</DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+              <div className="space-y-2">
+                <Label>Carrier</Label>
+                <Select
+                  value={advancedFilters.carrier}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, carrier: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All carriers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All carriers</SelectItem>
+                    {uniqueCarriers.map((carrier) => (
+                      <SelectItem key={carrier} value={carrier}>
+                        {carrier}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Product</Label>
+                <Select
+                  value={advancedFilters.product}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, product: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All products" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All products</SelectItem>
+                    {uniqueProducts.map((product) => (
+                      <SelectItem key={product} value={product}>
+                        {product}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select
+                  value={advancedFilters.type}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, type: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All types" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All types</SelectItem>
+                    {uniqueTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={advancedFilters.status}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, status: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All statuses</SelectItem>
+                    {uniqueStatuses.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Origin Node</Label>
+                <Select
+                  value={advancedFilters.origin}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, origin: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All origins" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All origins</SelectItem>
+                    {uniqueOrigins.map((origin) => (
+                      <SelectItem key={origin} value={origin}>
+                        {origin}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Destination Node</Label>
+                <Select
+                  value={advancedFilters.destination}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, destination: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All destinations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All destinations</SelectItem>
+                    {uniqueDestinations.map((dest) => (
+                      <SelectItem key={dest} value={dest}>
+                        {dest}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2 md:col-span-2">
+                <Label>Panelist (Origin or Destination)</Label>
+                <Select
+                  value={advancedFilters.panelist}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, panelist: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All panelists" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All panelists</SelectItem>
+                    {uniquePanelists.map((panelist) => (
+                      <SelectItem key={panelist} value={panelist}>
+                        {panelist}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex justify-between pt-4 border-t">
+              <Button variant="outline" onClick={clearAdvancedFilters}>
+                Clear Filters
+              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setAdvancedSearchOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => setAdvancedSearchOpen(false)}>
+                  Apply Filters
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
           <DialogContent className="max-w-2xl">
