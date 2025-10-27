@@ -893,14 +893,14 @@ export default function Envios() {
               <div className="space-y-2">
                 <Label>Carrier</Label>
                 <Select
-                  value={advancedFilters.carrier}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, carrier: value})}
+                  value={advancedFilters.carrier || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, carrier: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All carriers" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All carriers</SelectItem>
+                    <SelectItem value="ALL">All carriers</SelectItem>
                     {uniqueCarriers.map((carrier) => (
                       <SelectItem key={carrier} value={carrier}>
                         {carrier}
@@ -913,14 +913,14 @@ export default function Envios() {
               <div className="space-y-2">
                 <Label>Product</Label>
                 <Select
-                  value={advancedFilters.product}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, product: value})}
+                  value={advancedFilters.product || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, product: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All products" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All products</SelectItem>
+                    <SelectItem value="ALL">All products</SelectItem>
                     {uniqueProducts.map((product) => (
                       <SelectItem key={product} value={product}>
                         {product}
@@ -933,14 +933,14 @@ export default function Envios() {
               <div className="space-y-2">
                 <Label>Type</Label>
                 <Select
-                  value={advancedFilters.type}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, type: value})}
+                  value={advancedFilters.type || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, type: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="ALL">All types</SelectItem>
                     {uniqueTypes.map((type) => (
                       <SelectItem key={type} value={type}>
                         {type}
@@ -953,14 +953,14 @@ export default function Envios() {
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                  value={advancedFilters.status}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, status: value})}
+                  value={advancedFilters.status || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, status: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All statuses</SelectItem>
+                    <SelectItem value="ALL">All statuses</SelectItem>
                     {uniqueStatuses.map((status) => (
                       <SelectItem key={status} value={status}>
                         {status}
@@ -973,14 +973,14 @@ export default function Envios() {
               <div className="space-y-2">
                 <Label>Origin Node</Label>
                 <Select
-                  value={advancedFilters.origin}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, origin: value})}
+                  value={advancedFilters.origin || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, origin: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All origins" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All origins</SelectItem>
+                    <SelectItem value="ALL">All origins</SelectItem>
                     {uniqueOrigins.map((origin) => (
                       <SelectItem key={origin} value={origin}>
                         {origin}
@@ -993,14 +993,14 @@ export default function Envios() {
               <div className="space-y-2">
                 <Label>Destination Node</Label>
                 <Select
-                  value={advancedFilters.destination}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, destination: value})}
+                  value={advancedFilters.destination || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, destination: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All destinations" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All destinations</SelectItem>
+                    <SelectItem value="ALL">All destinations</SelectItem>
                     {uniqueDestinations.map((dest) => (
                       <SelectItem key={dest} value={dest}>
                         {dest}
@@ -1013,14 +1013,14 @@ export default function Envios() {
               <div className="space-y-2 md:col-span-2">
                 <Label>Panelist (Origin or Destination)</Label>
                 <Select
-                  value={advancedFilters.panelist}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, panelist: value})}
+                  value={advancedFilters.panelist || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, panelist: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="All panelists" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All panelists</SelectItem>
+                    <SelectItem value="ALL">All panelists</SelectItem>
                     {uniquePanelists.map((panelist) => (
                       <SelectItem key={panelist} value={panelist}>
                         {panelist}
