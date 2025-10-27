@@ -278,6 +278,7 @@ export type Database = {
           fecha_notificacion: string | null
           fecha_programada: string
           fecha_recepcion_real: string | null
+          fecha_ultima_modificacion: string
           id: number
           motivo_creacion: string
           nodo_destino: string
@@ -301,6 +302,7 @@ export type Database = {
           fecha_notificacion?: string | null
           fecha_programada: string
           fecha_recepcion_real?: string | null
+          fecha_ultima_modificacion?: string
           id?: number
           motivo_creacion: string
           nodo_destino: string
@@ -324,6 +326,7 @@ export type Database = {
           fecha_notificacion?: string | null
           fecha_programada?: string
           fecha_recepcion_real?: string | null
+          fecha_ultima_modificacion?: string
           id?: number
           motivo_creacion?: string
           nodo_destino?: string
