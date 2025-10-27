@@ -817,69 +817,74 @@ export default function Envios() {
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
                       {envio.clientes && (
-                        <div>
-                          <span className="text-muted-foreground">Account:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground text-xs">Account:</span>
                           <p className="font-medium">{envio.clientes.codigo}</p>
-                          <p className="text-xs text-muted-foreground truncate">{envio.clientes.nombre}</p>
+                          <span className="text-muted-foreground">•</span>
+                          <p className="text-xs text-muted-foreground">{envio.clientes.nombre}</p>
                         </div>
                       )}
                       
                       {envio.productos_cliente && (
-                        <div>
-                          <span className="text-muted-foreground">Product:</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground text-xs">Product:</span>
                           <p className="font-medium">{envio.productos_cliente.codigo_producto}</p>
-                          <p className="text-xs text-muted-foreground truncate">{envio.productos_cliente.nombre_producto}</p>
+                          <span className="text-muted-foreground">•</span>
+                          <p className="text-xs text-muted-foreground">{envio.productos_cliente.nombre_producto}</p>
                         </div>
                       )}
                       
-                      <div>
-                        <span className="text-muted-foreground">Type:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground text-xs">Type:</span>
                         <p className="font-medium capitalize">{envio.tipo_producto}</p>
                       </div>
                       
                       {(envio.carriers || envio.carrier_name) && (
-                        <div>
-                          <span className="text-muted-foreground">Carrier:</span>
-                          <p className="font-medium">
-                            {envio.carriers?.carrier_code || envio.carrier_name}
-                          </p>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground text-xs">Carrier:</span>
+                          <p className="font-medium">{envio.carriers?.carrier_code || envio.carrier_name}</p>
                           {envio.carriers?.legal_name && (
-                            <p className="text-xs text-muted-foreground truncate">{envio.carriers.legal_name}</p>
+                            <>
+                              <span className="text-muted-foreground">•</span>
+                              <p className="text-xs text-muted-foreground">{envio.carriers.legal_name}</p>
+                            </>
                           )}
                         </div>
                       )}
                       
-                      <div>
-                        <span className="text-muted-foreground">Origin:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground text-xs">Origin:</span>
                         <p className="font-medium">{envio.nodo_origen}</p>
                         {envio.panelista_origen && (
-                          <p className="text-xs text-muted-foreground truncate">{envio.panelista_origen.nombre_completo}</p>
+                          <>
+                            <span className="text-muted-foreground">•</span>
+                            <p className="text-xs text-muted-foreground">{envio.panelista_origen.nombre_completo}</p>
+                          </>
                         )}
                       </div>
                       
-                      <div>
-                        <span className="text-muted-foreground">Destination:</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground text-xs">Destination:</span>
                         <p className="font-medium">{envio.nodo_destino}</p>
                         {envio.panelista_destino && (
-                          <p className="text-xs text-muted-foreground truncate">{envio.panelista_destino.nombre_completo}</p>
+                          <>
+                            <span className="text-muted-foreground">•</span>
+                            <p className="text-xs text-muted-foreground">{envio.panelista_destino.nombre_completo}</p>
+                          </>
                         )}
                       </div>
                       
-                      <div>
-                        <span className="text-muted-foreground">Scheduled:</span>
-                        <p className="font-medium">
-                          {format(new Date(envio.fecha_programada), "dd MMM yyyy", { locale: enUS })}
-                        </p>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground text-xs">Scheduled:</span>
+                        <p className="font-medium">{format(new Date(envio.fecha_programada), "dd MMM yyyy", { locale: enUS })}</p>
                       </div>
                       
                       {envio.fecha_limite && (
-                        <div>
-                          <span className="text-muted-foreground">Due date:</span>
-                          <p className="font-medium">
-                            {format(new Date(envio.fecha_limite), "dd MMM yyyy", { locale: enUS })}
-                          </p>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-muted-foreground text-xs">Due:</span>
+                          <p className="font-medium">{format(new Date(envio.fecha_limite), "dd MMM yyyy", { locale: enUS })}</p>
                         </div>
                       )}
                     </div>
