@@ -6,7 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle } from "lucide-react";
+import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -74,6 +80,7 @@ export default function Envios() {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -401,6 +408,76 @@ export default function Envios() {
     }
   };
 
+  const handleDuplicateOne = async (id: number) => {
+    try {
+      const envio = envios.find(e => e.id === id);
+      if (!envio) return;
+
+      const duplicate = {
+        cliente_id: envio.cliente_id,
+        nodo_origen: envio.nodo_origen,
+        nodo_destino: envio.nodo_destino,
+        fecha_programada: envio.fecha_programada,
+        fecha_limite: envio.fecha_limite,
+        tipo_producto: envio.tipo_producto,
+        estado: "PENDING" as const,
+        carrier_id: envio.carrier_id,
+        carrier_name: envio.carrier_name,
+        producto_id: envio.producto_id,
+        panelista_origen_id: envio.panelista_origen_id,
+        panelista_destino_id: envio.panelista_destino_id,
+        motivo_creacion: "programado",
+      };
+
+      const { error } = await supabase
+        .from("envios")
+        .insert([duplicate]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Duplicated successfully",
+        description: "Record has been duplicated",
+      });
+
+      loadEnvios();
+    } catch (error: any) {
+      toast({
+        title: "Error duplicating",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteOne = async () => {
+    if (!deleteItemId) return;
+
+    try {
+      const { error } = await supabase
+        .from("envios")
+        .delete()
+        .eq("id", deleteItemId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Deleted successfully",
+        description: "Record has been deleted",
+      });
+
+      loadEnvios();
+    } catch (error: any) {
+      toast({
+        title: "Error deleting",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteItemId(null);
+    }
+  };
+
   return (
     <AppLayout>
       <div className="p-8">
@@ -446,50 +523,41 @@ export default function Envios() {
           </p>
         </Card>
 
-        {selectedIds.length > 0 && (
-          <Card className="p-4 mb-6 bg-primary/5 border-primary/20">
+        {filteredEnvios.length > 0 && (
+          <Card className="p-4 mb-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <span className="font-medium text-foreground">
-                  {selectedIds.length} selected
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  checked={selectedIds.length === filteredEnvios.length && filteredEnvios.length > 0}
+                  onCheckedChange={toggleSelectAll}
+                />
+                <span className="text-sm text-muted-foreground">
+                  Select all {filteredEnvios.length} record(s)
+                  {selectedIds.length > 0 && ` (${selectedIds.length} selected)`}
                 </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleSelectAll}
-                >
-                  {selectedIds.length === filteredEnvios.length ? "Deselect all" : "Select all"}
-                </Button>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={handleDuplicateSelected}
-                >
-                  <Copy className="w-4 h-4" />
-                  Duplicate
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => setCancelDialogOpen(true)}
-                >
-                  <XCircle className="w-4 h-4" />
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => setDeleteDialogOpen(true)}
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </Button>
-              </div>
+              {selectedIds.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={handleDuplicateSelected}
+                  >
+                    <Copy className="w-4 h-4" />
+                    Duplicate
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </Button>
+                </div>
+              )}
             </div>
           </Card>
         )}
@@ -594,7 +662,37 @@ export default function Envios() {
                     </div>
                   </div>
 
-                  <Button variant="outline" size="sm">View Details</Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => navigate(`/envios/${envio.id}`)}
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleDuplicateOne(envio.id)}>
+                          <Copy className="w-4 h-4 mr-2" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setDeleteItemId(envio.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </Card>
             ))}
@@ -612,6 +710,23 @@ export default function Envios() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={deleteItemId !== null} onOpenChange={() => setDeleteItemId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete record?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This record will be permanently deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteOne} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                 Delete
               </AlertDialogAction>
             </AlertDialogFooter>
