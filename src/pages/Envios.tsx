@@ -282,10 +282,10 @@ export default function Envios() {
     // Basic text search
     const matchesBasicSearch = !searchTerm || (
       e.id.toString().includes(searchTerm) ||
-      e.tipo_producto.toLowerCase().includes(searchLower) ||
-      e.estado.toLowerCase().includes(searchLower) ||
-      e.nodo_origen.toLowerCase().includes(searchLower) ||
-      e.nodo_destino.toLowerCase().includes(searchLower) ||
+      (e.tipo_producto && e.tipo_producto.toLowerCase().includes(searchLower)) ||
+      (e.estado && e.estado.toLowerCase().includes(searchLower)) ||
+      (e.nodo_origen && e.nodo_origen.toLowerCase().includes(searchLower)) ||
+      (e.nodo_destino && e.nodo_destino.toLowerCase().includes(searchLower)) ||
       (e.numero_etiqueta && e.numero_etiqueta.toLowerCase().includes(searchLower)) ||
       (e.carrier_name && e.carrier_name.toLowerCase().includes(searchLower)) ||
       (e.carriers?.legal_name && e.carriers.legal_name.toLowerCase().includes(searchLower)) ||
@@ -303,13 +303,14 @@ export default function Envios() {
     // Advanced filters
     const matchesCarrier = !advancedFilters.carrier || 
       e.carrier_id?.toString() === advancedFilters.carrier ||
-      e.carrier_name === advancedFilters.carrier;
+      e.carrier_name === advancedFilters.carrier ||
+      e.carriers?.legal_name === advancedFilters.carrier;
     
     const matchesProduct = !advancedFilters.product || 
-      e.producto_id?.toString() === advancedFilters.product;
+      e.productos_cliente?.nombre_producto === advancedFilters.product;
     
     const matchesType = !advancedFilters.type || 
-      e.tipo_producto.toLowerCase() === advancedFilters.type.toLowerCase();
+      (e.tipo_producto && e.tipo_producto.toLowerCase() === advancedFilters.type.toLowerCase());
     
     const matchesOrigin = !advancedFilters.origin || 
       e.nodo_origen === advancedFilters.origin;
