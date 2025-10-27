@@ -6,9 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X } from "lucide-react";
+import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,8 +95,15 @@ export default function Envios() {
     origin: "",
     destination: "",
     panelist: "",
-    status: ""
+    status: "",
+    fechaProgramadaDesde: undefined as Date | undefined,
+    fechaProgramadaHasta: undefined as Date | undefined,
+    fechaEnvioDesde: undefined as Date | undefined,
+    fechaEnvioHasta: undefined as Date | undefined
   });
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [panelistSearchOpen, setPanelistSearchOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -324,10 +335,25 @@ export default function Envios() {
     
     const matchesStatus = !advancedFilters.status || 
       e.estado === advancedFilters.status;
+    
+    // Date filters
+    const matchesFechaProgramadaDesde = !advancedFilters.fechaProgramadaDesde ||
+      new Date(e.fecha_programada) >= advancedFilters.fechaProgramadaDesde;
+    
+    const matchesFechaProgramadaHasta = !advancedFilters.fechaProgramadaHasta ||
+      new Date(e.fecha_programada) <= advancedFilters.fechaProgramadaHasta;
+    
+    const matchesFechaEnvioDesde = !advancedFilters.fechaEnvioDesde ||
+      (e.fecha_envio_real && new Date(e.fecha_envio_real) >= advancedFilters.fechaEnvioDesde);
+    
+    const matchesFechaEnvioHasta = !advancedFilters.fechaEnvioHasta ||
+      (e.fecha_envio_real && new Date(e.fecha_envio_real) <= advancedFilters.fechaEnvioHasta);
 
     return matchesBasicSearch && matchesCarrier && matchesProduct && 
            matchesType && matchesOrigin && matchesDestination && 
-           matchesPanelist && matchesStatus;
+           matchesPanelist && matchesStatus && 
+           matchesFechaProgramadaDesde && matchesFechaProgramadaHasta &&
+           matchesFechaEnvioDesde && matchesFechaEnvioHasta;
   });
 
   // Get unique values for filters
@@ -339,10 +365,15 @@ export default function Envios() {
   const uniquePanelists = Array.from(new Set([
     ...envios.map(e => e.panelista_origen?.nombre_completo),
     ...envios.map(e => e.panelista_destino?.nombre_completo)
-  ].filter(Boolean)));
+  ].filter(Boolean))).sort((a, b) => {
+    // Sort by last name (assuming format "FirstName LastName")
+    const lastNameA = a.split(' ').slice(-1)[0].toLowerCase();
+    const lastNameB = b.split(' ').slice(-1)[0].toLowerCase();
+    return lastNameA.localeCompare(lastNameB);
+  });
   const uniqueStatuses = Array.from(new Set(envios.map(e => e.estado).filter(Boolean)));
 
-  const hasActiveFilters = Object.values(advancedFilters).some(v => v !== "");
+  const hasActiveFilters = Object.values(advancedFilters).some(v => v !== "" && v !== undefined);
 
   const clearAdvancedFilters = () => {
     setAdvancedFilters({
@@ -352,9 +383,24 @@ export default function Envios() {
       origin: "",
       destination: "",
       panelist: "",
-      status: ""
+      status: "",
+      fechaProgramadaDesde: undefined,
+      fechaProgramadaHasta: undefined,
+      fechaEnvioDesde: undefined,
+      fechaEnvioHasta: undefined
     });
   };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredEnvios.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedEnvios = filteredEnvios.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, advancedFilters, itemsPerPage]);
 
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; className?: string }> = {
@@ -374,10 +420,13 @@ export default function Envios() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === filteredEnvios.length) {
-      setSelectedIds([]);
+    if (selectedIds.length === paginatedEnvios.length && paginatedEnvios.length > 0) {
+      // Deselect all items on current page
+      setSelectedIds(prev => prev.filter(id => !paginatedEnvios.find(e => e.id === id)));
     } else {
-      setSelectedIds(filteredEnvios.map(e => e.id));
+      // Select all items on current page
+      const pageIds = paginatedEnvios.map(e => e.id);
+      setSelectedIds(prev => [...new Set([...prev, ...pageIds])]);
     }
   };
 
@@ -651,6 +700,30 @@ export default function Envios() {
                   <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, status: ""})} />
                 </Badge>
               )}
+              {advancedFilters.fechaProgramadaDesde && (
+                <Badge variant="secondary" className="gap-1">
+                  Scheduled from: {format(advancedFilters.fechaProgramadaDesde, "dd MMM yyyy")}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, fechaProgramadaDesde: undefined})} />
+                </Badge>
+              )}
+              {advancedFilters.fechaProgramadaHasta && (
+                <Badge variant="secondary" className="gap-1">
+                  Scheduled until: {format(advancedFilters.fechaProgramadaHasta, "dd MMM yyyy")}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, fechaProgramadaHasta: undefined})} />
+                </Badge>
+              )}
+              {advancedFilters.fechaEnvioDesde && (
+                <Badge variant="secondary" className="gap-1">
+                  Sent from: {format(advancedFilters.fechaEnvioDesde, "dd MMM yyyy")}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, fechaEnvioDesde: undefined})} />
+                </Badge>
+              )}
+              {advancedFilters.fechaEnvioHasta && (
+                <Badge variant="secondary" className="gap-1">
+                  Sent until: {format(advancedFilters.fechaEnvioHasta, "dd MMM yyyy")}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, fechaEnvioHasta: undefined})} />
+                </Badge>
+              )}
               <Button variant="ghost" size="sm" onClick={clearAdvancedFilters}>
                 Clear all
               </Button>
@@ -663,13 +736,27 @@ export default function Envios() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Checkbox
-                  checked={selectedIds.length === filteredEnvios.length && filteredEnvios.length > 0}
+                  checked={selectedIds.length === paginatedEnvios.length && paginatedEnvios.length > 0}
                   onCheckedChange={toggleSelectAll}
                 />
                 <span className="text-sm text-muted-foreground">
-                  Select all {filteredEnvios.length} record(s)
+                  Showing {startIndex + 1}-{Math.min(endIndex, filteredEnvios.length)} of {filteredEnvios.length} record(s)
                   {selectedIds.length > 0 && ` (${selectedIds.length} selected)`}
                 </span>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={(value) => setItemsPerPage(parseInt(value))}
+                >
+                  <SelectTrigger className="w-[120px] h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10 per page</SelectItem>
+                    <SelectItem value="25">25 per page</SelectItem>
+                    <SelectItem value="50">50 per page</SelectItem>
+                    <SelectItem value="100">100 per page</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               {selectedIds.length > 0 && (
                 <div className="flex gap-2">
@@ -706,8 +793,9 @@ export default function Envios() {
             <p className="text-muted-foreground">No allocation plans found</p>
           </Card>
         ) : (
-          <div className="grid gap-4">
-            {filteredEnvios.map((envio) => (
+          <>
+            <div className="grid gap-4">
+              {paginatedEnvios.map((envio) => (
               <Card key={envio.id} className="p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start gap-4">
                   <Checkbox
@@ -831,7 +919,34 @@ export default function Envios() {
                 </div>
               </Card>
             ))}
-          </div>
+            </div>
+
+            {totalPages > 1 && (
+              <Card className="p-4 mt-6">
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </>
         )}
 
         <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -1013,22 +1128,170 @@ export default function Envios() {
 
               <div className="space-y-2 md:col-span-2">
                 <Label>Panelist (Origin or Destination)</Label>
-                <Select
-                  value={advancedFilters.panelist || "ALL"}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, panelist: value === "ALL" ? "" : value})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="All panelists" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All panelists</SelectItem>
-                    {uniquePanelists.map((panelist) => (
-                      <SelectItem key={panelist} value={panelist}>
-                        {panelist}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={panelistSearchOpen} onOpenChange={setPanelistSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={panelistSearchOpen}
+                      className="w-full justify-between"
+                    >
+                      {advancedFilters.panelist || "All panelists"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[400px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search panelist..." />
+                      <CommandList>
+                        <CommandEmpty>No panelist found.</CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="ALL"
+                            onSelect={() => {
+                              setAdvancedFilters({...advancedFilters, panelist: ""});
+                              setPanelistSearchOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                !advancedFilters.panelist ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            All panelists
+                          </CommandItem>
+                          {uniquePanelists.map((panelist) => (
+                            <CommandItem
+                              key={panelist}
+                              value={panelist}
+                              onSelect={(value) => {
+                                setAdvancedFilters({...advancedFilters, panelist: value === advancedFilters.panelist ? "" : value});
+                                setPanelistSearchOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  advancedFilters.panelist === panelist ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {panelist}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Scheduled Date From</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !advancedFilters.fechaProgramadaDesde && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {advancedFilters.fechaProgramadaDesde ? format(advancedFilters.fechaProgramadaDesde, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={advancedFilters.fechaProgramadaDesde}
+                      onSelect={(date) => setAdvancedFilters({...advancedFilters, fechaProgramadaDesde: date})}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Scheduled Date Until</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !advancedFilters.fechaProgramadaHasta && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {advancedFilters.fechaProgramadaHasta ? format(advancedFilters.fechaProgramadaHasta, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={advancedFilters.fechaProgramadaHasta}
+                      onSelect={(date) => setAdvancedFilters({...advancedFilters, fechaProgramadaHasta: date})}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Sent Date From</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !advancedFilters.fechaEnvioDesde && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {advancedFilters.fechaEnvioDesde ? format(advancedFilters.fechaEnvioDesde, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={advancedFilters.fechaEnvioDesde}
+                      onSelect={(date) => setAdvancedFilters({...advancedFilters, fechaEnvioDesde: date})}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Sent Date Until</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !advancedFilters.fechaEnvioHasta && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {advancedFilters.fechaEnvioHasta ? format(advancedFilters.fechaEnvioHasta, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={advancedFilters.fechaEnvioHasta}
+                      onSelect={(date) => setAdvancedFilters({...advancedFilters, fechaEnvioHasta: date})}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 
