@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           authorization_date: string | null
           carrier_code: string | null
+          cliente_id: number | null
           commercial_name: string | null
           created_at: string | null
           declared_coverage: string | null
@@ -48,6 +49,7 @@ export type Database = {
         Insert: {
           authorization_date?: string | null
           carrier_code?: string | null
+          cliente_id?: number | null
           commercial_name?: string | null
           created_at?: string | null
           declared_coverage?: string | null
@@ -78,6 +80,7 @@ export type Database = {
         Update: {
           authorization_date?: string | null
           carrier_code?: string | null
+          cliente_id?: number | null
           commercial_name?: string | null
           created_at?: string | null
           declared_coverage?: string | null
@@ -105,7 +108,15 @@ export type Database = {
           updated_at?: string | null
           website?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "carriers_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ciudades: {
         Row: {
@@ -394,6 +405,7 @@ export type Database = {
       historial_incidencias: {
         Row: {
           accion: string
+          cliente_id: number | null
           comentario: string | null
           estado_anterior: string | null
           estado_nuevo: string | null
@@ -404,6 +416,7 @@ export type Database = {
         }
         Insert: {
           accion: string
+          cliente_id?: number | null
           comentario?: string | null
           estado_anterior?: string | null
           estado_nuevo?: string | null
@@ -414,6 +427,7 @@ export type Database = {
         }
         Update: {
           accion?: string
+          cliente_id?: number | null
           comentario?: string | null
           estado_anterior?: string | null
           estado_nuevo?: string | null
@@ -423,6 +437,13 @@ export type Database = {
           usuario_id?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "historial_incidencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "historial_incidencias_incidencia_id_fkey"
             columns: ["incidencia_id"]
@@ -474,6 +495,7 @@ export type Database = {
       }
       incidencias: {
         Row: {
+          cliente_id: number | null
           datos_adicionales: Json | null
           descripcion: string
           envio_id: number | null
@@ -489,6 +511,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["tipo_incidencia"]
         }
         Insert: {
+          cliente_id?: number | null
           datos_adicionales?: Json | null
           descripcion: string
           envio_id?: number | null
@@ -504,6 +527,7 @@ export type Database = {
           tipo: Database["public"]["Enums"]["tipo_incidencia"]
         }
         Update: {
+          cliente_id?: number | null
           datos_adicionales?: Json | null
           descripcion?: string
           envio_id?: number | null
@@ -519,6 +543,13 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["tipo_incidencia"]
         }
         Relationships: [
+          {
+            foreignKeyName: "incidencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "incidencias_envio_id_fkey"
             columns: ["envio_id"]
@@ -546,6 +577,7 @@ export type Database = {
         Row: {
           ciudad: string
           ciudad_id: number | null
+          cliente_id: number | null
           codigo: string
           estado: string
           pais: string
@@ -555,6 +587,7 @@ export type Database = {
         Insert: {
           ciudad: string
           ciudad_id?: number | null
+          cliente_id?: number | null
           codigo: string
           estado?: string
           pais: string
@@ -564,6 +597,7 @@ export type Database = {
         Update: {
           ciudad?: string
           ciudad_id?: number | null
+          cliente_id?: number | null
           codigo?: string
           estado?: string
           pais?: string
@@ -592,11 +626,19 @@ export type Database = {
             referencedRelation: "regiones"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "nodos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
         ]
       }
       panelistas: {
         Row: {
           ciudad_id: number | null
+          cliente_id: number | null
           dias_comunicacion: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
@@ -619,6 +661,7 @@ export type Database = {
         }
         Insert: {
           ciudad_id?: number | null
+          cliente_id?: number | null
           dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
@@ -641,6 +684,7 @@ export type Database = {
         }
         Update: {
           ciudad_id?: number | null
+          cliente_id?: number | null
           dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle?: string
           direccion_ciudad?: string
@@ -667,6 +711,13 @@ export type Database = {
             columns: ["ciudad_id"]
             isOneToOne: false
             referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panelistas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
             referencedColumns: ["id"]
           },
           {
@@ -923,8 +974,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuarios: {
         Row: {
+          cliente_id: number | null
           email: string
           estado: string
           fecha_creacion: string
@@ -933,11 +1014,11 @@ export type Database = {
           idioma_preferido: string
           nombre_completo: string
           password_hash: string
-          rol: Database["public"]["Enums"]["app_role"]
           telefono: string | null
           whatsapp_telegram_cuenta: string | null
         }
         Insert: {
+          cliente_id?: number | null
           email: string
           estado?: string
           fecha_creacion?: string
@@ -946,11 +1027,11 @@ export type Database = {
           idioma_preferido?: string
           nombre_completo: string
           password_hash: string
-          rol: Database["public"]["Enums"]["app_role"]
           telefono?: string | null
           whatsapp_telegram_cuenta?: string | null
         }
         Update: {
+          cliente_id?: number | null
           email?: string
           estado?: string
           fecha_creacion?: string
@@ -959,11 +1040,17 @@ export type Database = {
           idioma_preferido?: string
           nombre_completo?: string
           password_hash?: string
-          rol?: Database["public"]["Enums"]["app_role"]
           telefono?: string | null
           whatsapp_telegram_cuenta?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "usuarios_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "usuarios_idioma_preferido_fkey"
             columns: ["idioma_preferido"]
@@ -982,9 +1069,18 @@ export type Database = {
         Args: { p_cliente_id: number }
         Returns: string
       }
+      get_current_user_id: { Args: never; Returns: number }
+      get_user_cliente_id: { Args: never; Returns: number }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: number
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "gestor" | "coordinador" | "administrador"
+      app_role: "superadmin" | "admin" | "coordinator" | "manager"
       dias_comunicacion: "dias_laborables" | "fines_semana" | "ambos"
       estado_envio: "PENDING" | "NOTIFIED" | "SENT" | "RECEIVED" | "CANCELLED"
       estado_general: "activo" | "inactivo" | "suspendido"
@@ -1134,7 +1230,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["gestor", "coordinador", "administrador"],
+      app_role: ["superadmin", "admin", "coordinator", "manager"],
       dias_comunicacion: ["dias_laborables", "fines_semana", "ambos"],
       estado_envio: ["PENDING", "NOTIFIED", "SENT", "RECEIVED", "CANCELLED"],
       estado_general: ["activo", "inactivo", "suspendido"],
