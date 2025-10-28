@@ -336,42 +336,6 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
-            {/* Super Admin Menu - Only visible to superadmins (First section) */}
-            {isSuperAdmin() && (
-              <SidebarMenuItem>
-                <Collapsible open={superAdminOpen} onOpenChange={setSuperAdminOpen}>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton isActive={location.pathname.startsWith("/configuracion/clientes") || location.pathname.startsWith("/configuracion/idiomas") || location.pathname.startsWith("/configuracion/traducciones")}>
-                      <Shield className="w-5 h-5" />
-                      {sidebarOpen && <span>Super Admin</span>}
-                      {sidebarOpen && (superAdminOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarGroup>
-                      <SidebarGroupContent>
-                        <SidebarMenu>
-                          {superAdminItems.map((item) => {
-                            const isActive = location.pathname === item.path;
-                            return (
-                              <SidebarMenuItem key={item.path}>
-                                <SidebarMenuButton asChild isActive={isActive} className="pl-8">
-                                  <Link to={item.path}>
-                                    <item.icon className="w-4 h-4" />
-                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                  </Link>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            );
-                          })}
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    </SidebarGroup>
-                  </CollapsibleContent>
-                </Collapsible>
-              </SidebarMenuItem>
-            )}
-
             {/* Configuration Collapsible - Admin & Super Admin only */}
             {hasAnyRole(['superadmin', 'admin']) && (
               <SidebarMenuItem>
@@ -450,6 +414,42 @@ const AppSidebarContent = () => {
                       <SidebarGroupContent>
                         <SidebarMenu>
                           {administrationItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton asChild isActive={isActive} className="pl-8">
+                                  <Link to={item.path}>
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarMenuItem>
+            )}
+
+            {/* Super Admin Menu - Only visible to superadmins (Last section) */}
+            {isSuperAdmin() && (
+              <SidebarMenuItem>
+                <Collapsible open={superAdminOpen} onOpenChange={setSuperAdminOpen}>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={location.pathname.startsWith("/configuracion/clientes") || location.pathname.startsWith("/configuracion/idiomas") || location.pathname.startsWith("/configuracion/traducciones")}>
+                      <Shield className="w-5 h-5" />
+                      {sidebarOpen && <span>Super Admin</span>}
+                      {sidebarOpen && (superAdminOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarGroup>
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {superAdminItems.map((item) => {
                             const isActive = location.pathname === item.path;
                             return (
                               <SidebarMenuItem key={item.path}>
