@@ -36,6 +36,16 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
     (initialData?.roles?.[0] as AppRole) || "manager"
   );
 
+  // Clear cliente_id when superadmin role is selected
+  useEffect(() => {
+    if (selectedRole === 'superadmin') {
+      setFormData(prev => ({ ...prev, cliente_id: null }));
+    } else if (!formData.cliente_id && currentUserClienteId) {
+      // Set current user's cliente_id for non-superadmin roles
+      setFormData(prev => ({ ...prev, cliente_id: currentUserClienteId }));
+    }
+  }, [selectedRole, currentUserClienteId]);
+
   useEffect(() => {
     const loadLanguages = async () => {
       const { data, error } = await supabase
@@ -86,13 +96,24 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
     setIsSubmitting(true);
 
     try {
+      // Validate cliente_id is required for non-superadmin users
+      if (selectedRole !== 'superadmin' && !formData.cliente_id) {
+        toast({
+          title: "Error",
+          description: "Client is required for non-superadmin users",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       // Create or update user
       let userId = initialData?.id;
       
       const userData = {
         nombre_completo: formData.nombre_completo,
         email: formData.email,
-        cliente_id: formData.cliente_id,
+        cliente_id: selectedRole === 'superadmin' ? null : formData.cliente_id,
         telefono: formData.telefono,
         whatsapp_telegram_cuenta: formData.whatsapp_telegram_cuenta,
         estado: formData.estado,
@@ -207,26 +228,37 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
         />
       </div>
 
-      {isSuperAdmin() && (
-        <div className="space-y-2">
-          <Label htmlFor="cliente_id">Client *</Label>
-          <Select 
-            value={formData.cliente_id?.toString() || ""} 
-            onValueChange={(value) => setFormData({ ...formData, cliente_id: parseInt(value) })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select a client" />
-            </SelectTrigger>
-            <SelectContent>
-              {clientes.map((cliente) => (
-                <SelectItem key={cliente.id} value={cliente.id.toString()}>
-                  {cliente.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      <div className="space-y-2">
+        <Label htmlFor="cliente_id">
+          Client {selectedRole !== 'superadmin' && '*'}
+        </Label>
+        <Select 
+          value={formData.cliente_id?.toString() || ""} 
+          onValueChange={(value) => setFormData({ ...formData, cliente_id: parseInt(value) })}
+          disabled={!isSuperAdmin() || selectedRole === 'superadmin'}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={selectedRole === 'superadmin' ? "No client (Global)" : "Select a client"} />
+          </SelectTrigger>
+          <SelectContent>
+            {clientes.map((cliente) => (
+              <SelectItem key={cliente.id} value={cliente.id.toString()}>
+                {cliente.nombre}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {selectedRole !== 'superadmin' && (
+          <p className="text-xs text-muted-foreground">
+            Users must be assigned to a client account to ensure data isolation
+          </p>
+        )}
+        {selectedRole === 'superadmin' && (
+          <p className="text-xs text-muted-foreground">
+            Superadmins have global access and don't need a specific client
+          </p>
+        )}
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="role">Role *</Label>
