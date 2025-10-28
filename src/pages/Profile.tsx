@@ -39,6 +39,42 @@ export default function Profile() {
     },
   });
 
+  // Fetch user role
+  const { data: userRoles } = useQuery({
+    queryKey: ['current-user-roles', usuario?.id],
+    queryFn: async () => {
+      if (!usuario?.id) return null;
+
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', usuario.id);
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Priority order: superadmin > admin > manager > coordinator
+        const rolePriority: Record<string, number> = {
+          'superadmin': 4,
+          'admin': 3,
+          'manager': 2,
+          'coordinator': 1
+        };
+        
+        const highestRole = data.reduce((highest, current) => {
+          return (rolePriority[current.role] || 0) > (rolePriority[highest.role] || 0)
+            ? current
+            : highest;
+        });
+        
+        return highestRole.role;
+      }
+      
+      return null;
+    },
+    enabled: !!usuario?.id,
+  });
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -260,6 +296,17 @@ export default function Profile() {
             <div className="space-y-2">
               <Label>{t('label.email')}</Label>
               <Input value={usuario?.email || ''} disabled />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('profile.role')}</Label>
+              <Input 
+                value={userRoles ? t(`role.${userRoles}`) : '-'} 
+                disabled 
+                className="font-medium"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t('profile.your_role')}
+              </p>
             </div>
           </CardContent>
         </Card>
