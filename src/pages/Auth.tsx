@@ -15,6 +15,7 @@ function AuthContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -88,6 +89,77 @@ function AuthContent() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: t('auth.reset_email_sent'),
+        description: t('auth.reset_email_sent_description'),
+      });
+      
+      setShowForgotPassword(false);
+      setEmail("");
+    } catch (error: any) {
+      toast({
+        title: t('auth.error_reset_password'),
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (showForgotPassword) {
+    return (
+      <AuthLayout
+        title={t('auth.forgot_password_title')}
+        subtitle={t('auth.forgot_password_description')}
+      >
+        <form onSubmit={handleForgotPassword} className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="forgot-email">{t('label.email')}</Label>
+            <Input
+              id="forgot-email"
+              type="email"
+              placeholder="email@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+            />
+          </div>
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t('auth.send_reset_link')}
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={() => {
+              setShowForgotPassword(false);
+              setEmail("");
+            }}
+            disabled={loading}
+          >
+            {t('auth.back_to_signin')}
+          </Button>
+        </form>
+      </AuthLayout>
+    );
+  }
+
   return (
     <AuthLayout
       title={t('auth.title')}
@@ -131,6 +203,16 @@ function AuthContent() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t('auth.sign_in')}
+            </Button>
+
+            <Button
+              type="button"
+              variant="link"
+              className="w-full text-sm"
+              onClick={() => setShowForgotPassword(true)}
+              disabled={loading}
+            >
+              {t('auth.forgot_password')}
             </Button>
           </form>
         </TabsContent>
