@@ -66,7 +66,7 @@ const AppSidebarContent = () => {
   const [superAdminOpen, setSuperAdminOpen] = useState(false);
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
   const [topologyOpen, setTopologyOpen] = useState(false);
-  const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin, hasAnyRole } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -307,101 +307,103 @@ const AppSidebarContent = () => {
               </Collapsible>
             </SidebarMenuItem>
 
-            {/* Configuration Collapsible */}
-            <SidebarMenuItem>
-              <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton>
-                    <Settings className="w-5 h-5" />
-                    {sidebarOpen && <span>Configuration</span>}
-                    {sidebarOpen && (configOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroup>
-                    {sidebarOpen && (
-                      <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                        Solution Parameters
-                      </SidebarGroupLabel>
-                    )}
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {solutionParametersItems.map((item) => {
-                          const isActive = location.pathname === item.path;
-                          return (
-                            <SidebarMenuItem key={item.path}>
-                              <SidebarMenuButton asChild isActive={isActive} className="pl-8">
-                                <Link to={item.path}>
-                                  <item.icon className="w-4 h-4" />
-                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
+            {/* Configuration Collapsible - Admin & Super Admin only */}
+            {hasAnyRole(['superadmin', 'admin']) && (
+              <SidebarMenuItem>
+                <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <Settings className="w-5 h-5" />
+                      {sidebarOpen && <span>Configuration</span>}
+                      {sidebarOpen && (configOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarGroup>
+                      {sidebarOpen && (
+                        <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                          Solution Parameters
+                        </SidebarGroupLabel>
+                      )}
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {solutionParametersItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton asChild isActive={isActive} className="pl-8">
+                                  <Link to={item.path}>
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
 
-                  {sidebarOpen && <Separator className="my-2" />}
+                    {sidebarOpen && <Separator className="my-2" />}
 
-                  <SidebarGroup>
-                    {sidebarOpen && (
-                      <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                        Measurement Topology
-                      </SidebarGroupLabel>
-                    )}
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {measurementTopologyItems.map((item) => {
-                          const isActive = location.pathname === item.path;
-                          return (
-                            <SidebarMenuItem key={item.path}>
-                              <SidebarMenuButton asChild isActive={isActive} className="pl-8">
-                                <Link to={item.path}>
-                                  <item.icon className="w-4 h-4" />
-                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
+                    <SidebarGroup>
+                      {sidebarOpen && (
+                        <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                          Measurement Topology
+                        </SidebarGroupLabel>
+                      )}
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {measurementTopologyItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton asChild isActive={isActive} className="pl-8">
+                                  <Link to={item.path}>
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
 
-                  {sidebarOpen && <Separator className="my-2" />}
+                    {sidebarOpen && <Separator className="my-2" />}
 
-                  <SidebarGroup>
-                    {sidebarOpen && (
-                      <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                        Administration
-                      </SidebarGroupLabel>
-                    )}
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {administrationItems.map((item) => {
-                          const isActive = location.pathname === item.path;
-                          return (
-                            <SidebarMenuItem key={item.path}>
-                              <SidebarMenuButton asChild isActive={isActive} className="pl-8">
-                                <Link to={item.path}>
-                                  <item.icon className="w-4 h-4" />
-                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                </CollapsibleContent>
-              </Collapsible>
-            </SidebarMenuItem>
+                    <SidebarGroup>
+                      {sidebarOpen && (
+                        <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                          Administration
+                        </SidebarGroupLabel>
+                      )}
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {administrationItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton asChild isActive={isActive} className="pl-8">
+                                  <Link to={item.path}>
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarMenuItem>
+            )}
 
             {/* Super Admin Menu - Only visible to superadmins */}
-            {isSuperAdmin && (
+            {isSuperAdmin() && (
               <SidebarMenuItem>
                 <Collapsible open={superAdminOpen} onOpenChange={setSuperAdminOpen}>
                   <CollapsibleTrigger asChild>

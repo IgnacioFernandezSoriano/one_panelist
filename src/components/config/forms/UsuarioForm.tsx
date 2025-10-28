@@ -223,9 +223,11 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
           </SelectTrigger>
           <SelectContent>
             {isSuperAdmin() && (
-              <SelectItem value="superadmin">Super Admin</SelectItem>
+              <>
+                <SelectItem value="superadmin">Super Admin</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+              </>
             )}
-            <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="coordinator">Coordinator</SelectItem>
             <SelectItem value="manager">Manager</SelectItem>
           </SelectContent>

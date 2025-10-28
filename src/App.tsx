@@ -90,18 +90,62 @@ const App = () => {
               </RoleGuard>
             } />
             
-            {/* Standard Config Routes */}
-            <Route path="/configuracion/regiones" element={<ConfigRegiones />} />
-            <Route path="/configuracion/ciudades" element={<ConfigCiudades />} />
-            <Route path="/configuracion/nodos" element={<ConfigNodos />} />
-            <Route path="/configuracion/productos" element={<ConfigProductos />} />
-            <Route path="/configuracion/plantillas" element={<ConfigPlantillas />} />
-            <Route path="/configuracion/panelistas" element={<ConfigPanelistas />} />
-            <Route path="/configuracion/envios" element={<ConfigEnvios />} />
-            <Route path="/configuracion/carriers" element={<ConfigCarriers />} />
-            <Route path="/configuracion/workflows" element={<ConfigWorkflows />} />
-            <Route path="/configuracion/incidencias" element={<ConfigIncidencias />} />
-            <Route path="/configuracion/tipos-materiales" element={<ConfigTiposMateriales />} />
+            {/* Standard Config Routes - Admin & Super Admin only */}
+            <Route path="/configuracion/regiones" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigRegiones />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/ciudades" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigCiudades />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/nodos" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigNodos />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/productos" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigProductos />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/plantillas" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigPlantillas />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/panelistas" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigPanelistas />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/envios" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigEnvios />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/carriers" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigCarriers />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/workflows" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigWorkflows />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/incidencias" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigIncidencias />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/tipos-materiales" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigTiposMateriales />
+              </RoleGuard>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
