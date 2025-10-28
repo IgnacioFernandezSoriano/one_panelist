@@ -60,7 +60,7 @@ export default function ConfigNodos() {
 
     if (error) {
       toast({
-        title: "Error loading nodes",
+        title: t('toast.error_loading_nodes'),
         description: error.message,
         variant: "destructive",
       });
@@ -103,12 +103,12 @@ export default function ConfigNodos() {
 
     if (error) {
       toast({
-        title: "Error deleting node",
+        title: t('toast.error_deleting_node'),
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "Node deleted successfully" });
+      toast({ title: t('toast.node_deleted') });
       loadData();
     }
   };
@@ -137,7 +137,7 @@ export default function ConfigNodos() {
       if (!clienteData || !regionData || !ciudadData) {
         toast({
           title: "Error",
-          description: "Could not retrieve node information",
+          description: t('toast.error_retrieve_info'),
           variant: "destructive",
         });
         return;
@@ -183,12 +183,12 @@ export default function ConfigNodos() {
 
       if (insertError) {
         toast({
-          title: "Error duplicating node",
+          title: "Error",
           description: insertError.message,
           variant: "destructive",
         });
       } else {
-        toast({ title: "Node duplicated successfully" });
+        toast({ title: t('toast.node_duplicated') });
         loadData();
       }
     } catch (error: any) {
@@ -438,7 +438,7 @@ export default function ConfigNodos() {
         <Dialog open={editPanelistaDialogOpen} onOpenChange={setEditPanelistaDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit Panelist</DialogTitle>
+              <DialogTitle>{t('panelist.edit_title')}</DialogTitle>
             </DialogHeader>
             <PanelistaForm
               initialData={selectedPanelista}
@@ -446,7 +446,7 @@ export default function ConfigNodos() {
                 setEditPanelistaDialogOpen(false);
                 setSelectedPanelista(null);
                 loadData();
-                toast({ title: "Panelist updated successfully" });
+                toast({ title: t('toast.panelist_updated') });
               }}
               onCancel={() => {
                 setEditPanelistaDialogOpen(false);
