@@ -91,27 +91,36 @@ export const CSVImporter = ({
             }
           });
 
-          // Insert data in batches
+          // Append data to existing records (insert without deleting)
           if (successfulRows.length > 0) {
-            // @ts-ignore - Dynamic table name prevents proper type inference
-            const { data, error } = await (supabase.from as any)(tableName).insert(successfulRows);
+            try {
+              // @ts-ignore - Dynamic table name prevents proper type inference
+              const { data, error } = await (supabase.from as any)(tableName).insert(successfulRows);
 
-            if (error) {
+              if (error) {
+                // If there are duplicate key errors, show specific message
+                if (error.code === '23505') {
+                  errors.push(`Some records already exist and were skipped (duplicate constraint)`);
+                } else {
+                  throw error;
+                }
+              }
+
+              setImportResult({
+                success: successfulRows.length - (error ? 1 : 0),
+                errors: errors.length + (error ? 1 : 0),
+                messages: errors,
+              });
+
+              toast({
+                title: "Data appended successfully",
+                description: `Added ${successfulRows.length} new records to existing data`,
+              });
+
+              onImportComplete?.();
+            } catch (error: any) {
               throw error;
             }
-
-            setImportResult({
-              success: successfulRows.length,
-              errors: errors.length,
-              messages: errors,
-            });
-
-            toast({
-              title: "Import completed",
-              description: `Successfully imported ${successfulRows.length} records`,
-            });
-
-            onImportComplete?.();
           } else {
             toast({
               title: "No valid data",
@@ -145,10 +154,10 @@ export const CSVImporter = ({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="w-5 h-5" />
-          {tableLabel} - CSV Import
+          {tableLabel} - CSV Import (Append Mode)
         </CardTitle>
         <CardDescription>
-          Upload a CSV file to import data. Download the template to see the expected format.
+          Upload a CSV file to add new records to the existing data. Existing records will NOT be deleted. Download the template to see the expected format.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
