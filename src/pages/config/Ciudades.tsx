@@ -98,13 +98,13 @@ export default function Ciudades() {
   };
 
   const columns = [
-    { key: "codigo", label: "Code" },
-    { key: "nombre", label: "Name" },
-    { key: "cliente_nombre", label: "Account" },
-    { key: "region_nombre", label: "Region" },
+    { key: "codigo", label: t('cities.code') },
+    { key: "nombre", label: t('cities.name') },
+    { key: "cliente_nombre", label: t('cities.account') },
+    { key: "region_nombre", label: t('cities.region') },
     { 
       key: "clasificacion", 
-      label: "Classification",
+      label: t('cities.classification'),
       render: (item: any) => {
         const getClassificationColor = (clasificacion: string) => {
           switch (clasificacion?.toUpperCase()) {
@@ -127,14 +127,14 @@ export default function Ciudades() {
         );
       }
     },
-    { key: "pais", label: "Country" },
+    { key: "pais", label: t('cities.country') },
     { 
       key: "estado", 
-      label: "Status",
+      label: t('cities.status'),
       render: (item: any) => item.estado === "activo" ? (
-        <Badge variant="default" className="bg-success text-white">Active</Badge>
+        <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>
       ) : (
-        <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>
+        <Badge variant="destructive" className="bg-destructive text-white">{t('status.inactive')}</Badge>
       )
     },
   ];
@@ -155,20 +155,20 @@ export default function Ciudades() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/configuracion/regiones">Regions</Link>
+                <Link to="/configuracion/regiones">{t('breadcrumb.regions')}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Cities</BreadcrumbPage>
+              <BreadcrumbPage>{t('breadcrumb.cities')}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Cities Configuration</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('cities.title')}</h1>
           <p className="text-muted-foreground">
-            Manage cities catalog with GPS positioning
+            {t('cities.description')}
           </p>
         </div>
 
@@ -190,19 +190,19 @@ export default function Ciudades() {
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
                 onClick={() => setSearchTerm("")}
               >
-                Clear
+                {t('common.clear')}
               </Button>
             )}
           </div>
           {searchTerm && (
             <p className="text-sm text-muted-foreground mt-2">
-              {filteredData.length} {filteredData.length === 1 ? 'city' : 'cities'} found
+              {filteredData.length} {filteredData.length === 1 ? t('common.city') : t('common.cities')} {t('common.found')}
             </p>
           )}
         </div>
 
         <ConfigDataTable
-          title="Cities"
+          title={t('breadcrumb.cities')}
           data={filteredData}
           columns={columns}
           onEdit={(item) => {
@@ -218,7 +218,7 @@ export default function Ciudades() {
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New City</DialogTitle>
+              <DialogTitle>{t('cities.create_title')}</DialogTitle>
             </DialogHeader>
             <CiudadForm
               onSuccess={() => {
@@ -233,7 +233,7 @@ export default function Ciudades() {
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Edit City</DialogTitle>
+              <DialogTitle>{t('cities.edit_title')}</DialogTitle>
             </DialogHeader>
             <CiudadForm
               initialData={selectedItem}
