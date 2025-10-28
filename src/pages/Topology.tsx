@@ -140,13 +140,12 @@ export default function Topology() {
     }
   };
 
-  const toggleItem = (key: string, level: 'cliente' | 'region' | 'ciudad') => {
+  const toggleItem = (key: string, level: 'cliente' | 'region' | 'ciudad', parentClienteId?: number, parentRegionId?: number) => {
     const isOpening = !openItems[key];
+    const newOpenItems = { ...openItems };
     
     if (!isOpening) {
       // When closing, also close all children
-      const newOpenItems = { ...openItems };
-      
       if (level === 'cliente') {
         // Close all regions, cities, and nodes under this account
         const clienteId = parseInt(key.split('-')[1]);
@@ -168,10 +167,55 @@ export default function Topology() {
       }
       
       newOpenItems[key] = false;
-      setOpenItems(newOpenItems);
     } else {
-      setOpenItems((prev) => ({ ...prev, [key]: true }));
+      // When opening, close all siblings at the same level
+      if (level === 'cliente') {
+        // Close all other accounts
+        clientes.forEach((cliente) => {
+          const clienteKey = `cliente-${cliente.id}`;
+          if (clienteKey !== key) {
+            delete newOpenItems[clienteKey];
+            // Close all children of closed accounts
+            const clientRegions = getRegionsByCliente(cliente.id);
+            clientRegions.forEach((region) => {
+              delete newOpenItems[`region-${region.id}`];
+              const regionCities = getCiudadesByRegion(region.id);
+              regionCities.forEach((ciudad) => {
+                delete newOpenItems[`ciudad-${ciudad.id}`];
+              });
+            });
+          }
+        });
+      } else if (level === 'region' && parentClienteId) {
+        // Close all other regions of the same account
+        const clientRegions = getRegionsByCliente(parentClienteId);
+        clientRegions.forEach((region) => {
+          const regionKey = `region-${region.id}`;
+          if (regionKey !== key) {
+            delete newOpenItems[regionKey];
+            // Close all cities under closed regions
+            const regionCities = getCiudadesByRegion(region.id);
+            regionCities.forEach((ciudad) => {
+              delete newOpenItems[`ciudad-${ciudad.id}`];
+            });
+          }
+        });
+      } else if (level === 'ciudad' && parentRegionId) {
+        // Close all other cities of the same region
+        const regionCities = getCiudadesByRegion(parentRegionId);
+        regionCities.forEach((ciudad) => {
+          const ciudadKey = `ciudad-${ciudad.id}`;
+          if (ciudadKey !== key) {
+            delete newOpenItems[ciudadKey];
+          }
+        });
+      }
+      
+      // Open the selected item
+      newOpenItems[key] = true;
     }
+    
+    setOpenItems(newOpenItems);
   };
 
   const openSpecificItem = (key: string, level: 'region' | 'ciudad', parentClienteId?: number, parentRegionId?: number) => {
@@ -359,7 +403,7 @@ export default function Topology() {
 
                       {getRegionsByCliente(cliente.id).map((region) => (
                         <Card key={region.id} className="bg-muted/30">
-                          <Collapsible open={openItems[`region-${region.id}`]} onOpenChange={() => toggleItem(`region-${region.id}`, 'region')}>
+                          <Collapsible open={openItems[`region-${region.id}`]} onOpenChange={() => toggleItem(`region-${region.id}`, 'region', cliente.id)}>
                             <CardHeader className="pb-3">
                               <div className="flex items-center justify-between">
                                 <CollapsibleTrigger className="flex items-center gap-3 hover:opacity-70 transition-opacity flex-1">
@@ -414,7 +458,7 @@ export default function Topology() {
 
                                   {getCiudadesByRegion(region.id).map((ciudad) => (
                                     <Card key={ciudad.id} className="bg-background">
-                                      <Collapsible open={openItems[`ciudad-${ciudad.id}`]} onOpenChange={() => toggleItem(`ciudad-${ciudad.id}`, 'ciudad')}>
+                                      <Collapsible open={openItems[`ciudad-${ciudad.id}`]} onOpenChange={() => toggleItem(`ciudad-${ciudad.id}`, 'ciudad', undefined, region.id)}>
                                         <CardHeader className="pb-3">
                                           <div className="flex items-center justify-between">
                                             <CollapsibleTrigger className="flex items-center gap-3 hover:opacity-70 transition-opacity flex-1">
