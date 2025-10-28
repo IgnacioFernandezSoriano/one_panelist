@@ -4,13 +4,20 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CiudadForm } from "@/components/config/forms/CiudadForm";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Search } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Ciudades() {
+  const { t } = useTranslation();
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -45,9 +52,32 @@ export default function Ciudades() {
         region_nombre: c.regiones?.nombre
       })) || [];
       setData(formattedData);
+      setFilteredData(formattedData);
     }
     setIsLoading(false);
   };
+
+  // Filter data based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredData(data);
+      return;
+    }
+
+    const lowercaseSearch = searchTerm.toLowerCase();
+    const filtered = data.filter((city: any) => {
+      return (
+        city.codigo?.toLowerCase().includes(lowercaseSearch) ||
+        city.nombre?.toLowerCase().includes(lowercaseSearch) ||
+        city.cliente_nombre?.toLowerCase().includes(lowercaseSearch) ||
+        city.region_nombre?.toLowerCase().includes(lowercaseSearch) ||
+        city.clasificacion?.toLowerCase().includes(lowercaseSearch) ||
+        city.pais?.toLowerCase().includes(lowercaseSearch)
+      );
+    });
+
+    setFilteredData(filtered);
+  }, [searchTerm, data]);
 
   const handleDelete = async (item: any) => {
     const { error } = await supabase
@@ -118,9 +148,38 @@ export default function Ciudades() {
           </p>
         </div>
 
+        {/* Search Filter */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder={t('common.search_cities')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
+                onClick={() => setSearchTerm("")}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          {searchTerm && (
+            <p className="text-sm text-muted-foreground mt-2">
+              {filteredData.length} {filteredData.length === 1 ? 'city' : 'cities'} found
+            </p>
+          )}
+        </div>
+
         <ConfigDataTable
           title="Cities"
-          data={data}
+          data={filteredData}
           columns={columns}
           onEdit={(item) => {
             setSelectedItem(item);
