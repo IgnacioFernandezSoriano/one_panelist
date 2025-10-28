@@ -382,51 +382,51 @@ export default function ConfigNodos() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Full Name</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.full_name')}</p>
                     <p className="text-foreground">{selectedPanelista.nombre_completo}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Email</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.email')}</p>
                     <p className="text-foreground">{selectedPanelista.email || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.phone')}</p>
                     <p className="text-foreground">{selectedPanelista.telefono}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Assigned Node</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.assigned_node')}</p>
                     <p className="text-foreground">{selectedPanelista.nodo_asignado || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Preferred Platform</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.preferred_platform')}</p>
                     <p className="text-foreground capitalize">{selectedPanelista.plataforma_preferida}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Communication Days</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.communication_days')}</p>
                     <p className="text-foreground capitalize">{selectedPanelista.dias_comunicacion?.replace('_', ' ')}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Language</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.language')}</p>
                     <p className="text-foreground uppercase">{selectedPanelista.idioma}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Status</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.status')}</p>
                     <p className="text-foreground capitalize">{selectedPanelista.estado}</p>
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Address</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('panelist.address')}</p>
                   <p className="text-foreground">
                     {selectedPanelista.direccion_calle}, {selectedPanelista.direccion_ciudad}, {selectedPanelista.direccion_codigo_postal}, {selectedPanelista.direccion_pais}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Schedule</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.schedule')}</p>
                     <p className="text-foreground">{selectedPanelista.horario_inicio} - {selectedPanelista.horario_fin}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Time Zone</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('panelist.timezone')}</p>
                     <p className="text-foreground">{selectedPanelista.zona_horaria}</p>
                   </div>
                 </div>
