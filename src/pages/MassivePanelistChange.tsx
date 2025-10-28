@@ -70,6 +70,9 @@ export default function MassivePanelistChange() {
       
       console.log('Panelistas loaded - Original:', data?.length, 'Unique:', uniquePanelistas.length);
       
+      // Sort by name for better UX
+      uniquePanelistas.sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo));
+      
       setPanelistas(uniquePanelistas);
     } catch (error: any) {
       toast({
@@ -111,24 +114,39 @@ export default function MassivePanelistChange() {
     }
 
     try {
+      const fromDate = format(dateFrom, 'yyyy-MM-dd');
+      const toDate = format(dateTo, 'yyyy-MM-dd');
+      
+      console.log('=== VALIDATION DEBUG ===');
+      console.log('Current Panelist ID:', currentPanelist);
+      console.log('Date Range:', fromDate, 'to', toDate);
+      console.log('Panelist Data:', currentPanelistData);
+      
       // Count affected records - both origin and destination
       const { count: countOrigen, error: errorOrigen } = await supabase
         .from("envios")
         .select("id", { count: "exact", head: true })
         .eq("panelista_origen_id", parseInt(currentPanelist))
-        .gte("fecha_programada", format(dateFrom, "yyyy-MM-dd"))
-        .lte("fecha_programada", format(dateTo, "yyyy-MM-dd"));
+        .gte("fecha_programada", fromDate)
+        .lte("fecha_programada", toDate);
+
+      if (errorOrigen) throw errorOrigen;
+      console.log('Origin Count:', countOrigen);
 
       const { count: countDestino, error: errorDestino } = await supabase
         .from("envios")
         .select("id", { count: "exact", head: true })
         .eq("panelista_destino_id", parseInt(currentPanelist))
-        .gte("fecha_programada", format(dateFrom, "yyyy-MM-dd"))
-        .lte("fecha_programada", format(dateTo, "yyyy-MM-dd"));
+        .gte("fecha_programada", fromDate)
+        .lte("fecha_programada", toDate);
 
-      if (errorOrigen || errorDestino) throw errorOrigen || errorDestino;
+      if (errorDestino) throw errorDestino;
+      console.log('Destination Count:', countDestino);
       
       const totalCount = (countOrigen || 0) + (countDestino || 0);
+      console.log('Total Affected:', totalCount);
+      console.log('=== END DEBUG ===');
+      
       setAffectedCount(totalCount);
       
       if (totalCount === 0) {
@@ -142,6 +160,7 @@ export default function MassivePanelistChange() {
 
       return true;
     } catch (error: any) {
+      console.error('Error validating:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -245,7 +264,7 @@ export default function MassivePanelistChange() {
                     className="w-full justify-between"
                   >
                     {currentPanelistData
-                      ? `${currentPanelistData.nombre_completo}${currentPanelistData.nodo_asignado ? ` (${currentPanelistData.nodo_asignado})` : ""}`
+                      ? `${currentPanelistData.nombre_completo} (ID: ${currentPanelistData.id}) ${currentPanelistData.nodo_asignado ? `- ${currentPanelistData.nodo_asignado}` : ""}`
                       : "Select current panelist..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -271,10 +290,12 @@ export default function MassivePanelistChange() {
                                 currentPanelist === panelista.id.toString() ? "opacity-100" : "opacity-0"
                               )}
                             />
-                            {panelista.nombre_completo}
-                            {panelista.nodo_asignado && (
-                              <span className="ml-2 text-muted-foreground">({panelista.nodo_asignado})</span>
-                            )}
+                            <div className="flex flex-col">
+                              <span className="font-medium">{panelista.nombre_completo} (ID: {panelista.id})</span>
+                              <span className="text-sm text-muted-foreground">
+                                {panelista.nodo_asignado || 'No node assigned'}
+                              </span>
+                            </div>
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -303,7 +324,7 @@ export default function MassivePanelistChange() {
                       className="flex-1 justify-between"
                     >
                       {newPanelistData
-                        ? `${newPanelistData.nombre_completo}${newPanelistData.nodo_asignado ? ` (${newPanelistData.nodo_asignado})` : ""}`
+                        ? `${newPanelistData.nombre_completo} (ID: ${newPanelistData.id}) ${newPanelistData.nodo_asignado ? `- ${newPanelistData.nodo_asignado}` : ""}`
                         : "Select new panelist (optional)..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -331,10 +352,12 @@ export default function MassivePanelistChange() {
                                     newPanelist === panelista.id.toString() ? "opacity-100" : "opacity-0"
                                   )}
                                 />
-                                {panelista.nombre_completo}
-                                {panelista.nodo_asignado && (
-                                  <span className="ml-2 text-muted-foreground">({panelista.nodo_asignado})</span>
-                                )}
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{panelista.nombre_completo} (ID: {panelista.id})</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    {panelista.nodo_asignado || 'No node assigned'}
+                                  </span>
+                                </div>
                               </CommandItem>
                             ))}
                         </CommandGroup>
