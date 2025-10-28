@@ -128,20 +128,33 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
         userId = data.id;
       }
 
-      // Update role
+      // Update role safely (avoid deleting own role first)
       if (userId) {
-        // Delete existing roles
-        await supabase
+        // Get existing role record
+        const { data: existing, error: existingErr } = await supabase
           .from('user_roles')
-          .delete()
-          .eq('user_id', userId);
-        
-        // Insert new role
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ user_id: userId, role: selectedRole });
-        
-        if (roleError) throw roleError;
+          .select('id, role')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+        if (existingErr) throw existingErr;
+
+        if (existing) {
+          // Only update if changed
+          if (existing.role !== selectedRole) {
+            const { error: updateRoleErr } = await supabase
+              .from('user_roles')
+              .update({ role: selectedRole })
+              .eq('id', existing.id);
+            if (updateRoleErr) throw updateRoleErr;
+          }
+        } else {
+          // No existing role, insert new
+          const { error: insertRoleErr } = await supabase
+            .from('user_roles')
+            .insert({ user_id: userId, role: selectedRole });
+          if (insertRoleErr) throw insertRoleErr;
+        }
       }
 
       toast({ 
