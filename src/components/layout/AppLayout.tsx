@@ -53,8 +53,7 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
-// Temporarily comment out until types are synced
-// import { useUserRole } from "@/hooks/useUserRole";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -67,8 +66,7 @@ const AppSidebarContent = () => {
   const [superAdminOpen, setSuperAdminOpen] = useState(false);
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
   const [topologyOpen, setTopologyOpen] = useState(false);
-  // Temporarily set as false until types sync - will be replaced with useUserRole
-  const isSuperAdmin = false; // const { isSuperAdmin } = useUserRole();
+  const { isSuperAdmin } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
 
