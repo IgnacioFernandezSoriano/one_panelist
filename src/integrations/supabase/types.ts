@@ -1032,6 +1032,7 @@ export type Database = {
       }
       usuarios: {
         Row: {
+          avatar_url: string | null
           cliente_id: number | null
           email: string
           estado: string
@@ -1045,6 +1046,7 @@ export type Database = {
           whatsapp_telegram_cuenta: string | null
         }
         Insert: {
+          avatar_url?: string | null
           cliente_id?: number | null
           email: string
           estado?: string
@@ -1058,6 +1060,7 @@ export type Database = {
           whatsapp_telegram_cuenta?: string | null
         }
         Update: {
+          avatar_url?: string | null
           cliente_id?: number | null
           email?: string
           estado?: string

@@ -3,6 +3,8 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   Sidebar,
   SidebarContent,
@@ -56,22 +58,43 @@ interface AppLayoutProps {
 const AppSidebarContent = () => {
   const { open: sidebarOpen } = useSidebar();
   const [user, setUser] = useState<User | null>(null);
+  const [usuario, setUsuario] = useState<any>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [superAdminOpen, setSuperAdminOpen] = useState(false);
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
   const [topologyOpen, setTopologyOpen] = useState(false);
   const { isSuperAdmin, hasAnyRole } = useUserRole();
   const { canAccessMenuItem } = useMenuPermissions();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        // Fetch usuario data
+        supabase
+          .from('usuarios')
+          .select('*')
+          .eq('email', session.user.email)
+          .single()
+          .then(({ data }) => setUsuario(data));
+      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        supabase
+          .from('usuarios')
+          .select('*')
+          .eq('email', session.user.email)
+          .single()
+          .then(({ data }) => setUsuario(data));
+      } else {
+        setUsuario(null);
+      }
     });
 
     return () => subscription.unsubscribe();
