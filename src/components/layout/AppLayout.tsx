@@ -2,6 +2,14 @@ import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { 
   Sidebar,
   SidebarContent,
@@ -39,7 +47,8 @@ import {
   RefreshCw,
   Upload,
   UserX,
-  PackageSearch
+  PackageSearch,
+  Languages
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -117,6 +126,8 @@ const AppSidebarContent = () => {
   const administrationItems = [
     { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
+    { icon: Languages, label: "Translations", path: "/configuracion/traducciones" },
+    { icon: Languages, label: "Languages", path: "/configuracion/idiomas" },
   ];
 
   return (
@@ -410,6 +421,7 @@ const AppSidebarContent = () => {
 export const AppLayout = ({ children }: AppLayoutProps) => {
   const [user, setUser] = useState<User | null>(null);
   const navigate = useNavigate();
+  const { currentLanguage, changeLanguage, availableLanguages } = useTranslation();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -439,8 +451,26 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         </Sidebar>
 
         <div className="flex-1 flex flex-col">
-          <header className="h-12 flex items-center border-b px-4">
+          <header className="h-12 flex items-center justify-between border-b px-4">
             <SidebarTrigger />
+            
+            <div className="flex items-center gap-4">
+              <Select value={currentLanguage} onValueChange={changeLanguage}>
+                <SelectTrigger className="w-[140px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableLanguages.map((lang) => (
+                    <SelectItem key={lang.codigo} value={lang.codigo}>
+                      <span className="flex items-center gap-2">
+                        <span>{lang.bandera_emoji}</span>
+                        <span>{lang.nombre_nativo}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </header>
 
           <main className="flex-1 overflow-auto">

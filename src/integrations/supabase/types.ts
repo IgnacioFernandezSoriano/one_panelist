@@ -439,6 +439,39 @@ export type Database = {
           },
         ]
       }
+      idiomas_disponibles: {
+        Row: {
+          activo: boolean
+          bandera_emoji: string | null
+          codigo: string
+          es_default: boolean
+          fecha_creacion: string
+          id: number
+          nombre_ingles: string
+          nombre_nativo: string
+        }
+        Insert: {
+          activo?: boolean
+          bandera_emoji?: string | null
+          codigo: string
+          es_default?: boolean
+          fecha_creacion?: string
+          id?: number
+          nombre_ingles: string
+          nombre_nativo: string
+        }
+        Update: {
+          activo?: boolean
+          bandera_emoji?: string | null
+          codigo?: string
+          es_default?: boolean
+          fecha_creacion?: string
+          id?: number
+          nombre_ingles?: string
+          nombre_nativo?: string
+        }
+        Relationships: []
+      }
       incidencias: {
         Row: {
           datos_adicionales: Json | null
@@ -854,6 +887,39 @@ export type Database = {
           id?: number
           nombre?: string
           unidad_medida?: string
+        }
+        Relationships: []
+      }
+      traducciones: {
+        Row: {
+          categoria: string | null
+          clave: string
+          descripcion: string | null
+          fecha_creacion: string
+          fecha_modificacion: string
+          id: number
+          idioma: string
+          texto: string
+        }
+        Insert: {
+          categoria?: string | null
+          clave: string
+          descripcion?: string | null
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          idioma: string
+          texto: string
+        }
+        Update: {
+          categoria?: string | null
+          clave?: string
+          descripcion?: string | null
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          idioma?: string
+          texto?: string
         }
         Relationships: []
       }

@@ -28,6 +28,8 @@ import ConfigCarriers from "./pages/config/Carriers";
 import ConfigWorkflows from "./pages/config/Workflows";
 import ConfigIncidencias from "./pages/config/ConfigIncidencias";
 import ConfigTiposMateriales from "./pages/config/TiposMateriales";
+import ConfigTraducciones from "./pages/config/Traducciones";
+import ConfigIdiomas from "./pages/config/Idiomas";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
@@ -71,6 +73,8 @@ const App = () => {
             <Route path="/configuracion/workflows" element={<ConfigWorkflows />} />
             <Route path="/configuracion/incidencias" element={<ConfigIncidencias />} />
             <Route path="/configuracion/tipos-materiales" element={<ConfigTiposMateriales />} />
+            <Route path="/configuracion/traducciones" element={<ConfigTraducciones />} />
+            <Route path="/configuracion/idiomas" element={<ConfigIdiomas />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
