@@ -60,6 +60,7 @@ const AppSidebarContent = () => {
   const { open: sidebarOpen } = useSidebar();
   const [user, setUser] = useState<User | null>(null);
   const [usuario, setUsuario] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [superAdminOpen, setSuperAdminOpen] = useState(false);
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
@@ -70,31 +71,58 @@ const AppSidebarContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const fetchUserData = async (email: string) => {
+    // Fetch usuario data
+    const { data: usuarioData } = await supabase
+      .from('usuarios')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (usuarioData) {
+      setUsuario(usuarioData);
+      
+      // Fetch user roles
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', usuarioData.id);
+      
+      if (rolesData && rolesData.length > 0) {
+        // Priority order: superadmin > admin > manager > coordinator
+        const rolePriority: Record<string, number> = {
+          'superadmin': 4,
+          'admin': 3,
+          'manager': 2,
+          'coordinator': 1
+        };
+        
+        const highestRole = rolesData.reduce((highest, current) => {
+          return (rolePriority[current.role] || 0) > (rolePriority[highest.role] || 0)
+            ? current
+            : highest;
+        });
+        
+        setUserRole(highestRole.role);
+      }
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Fetch usuario data
-        supabase
-          .from('usuarios')
-          .select('*')
-          .eq('email', session.user.email)
-          .single()
-          .then(({ data }) => setUsuario(data));
+        fetchUserData(session.user.email!);
       }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
-        supabase
-          .from('usuarios')
-          .select('*')
-          .eq('email', session.user.email)
-          .single()
-          .then(({ data }) => setUsuario(data));
+        fetchUserData(session.user.email!);
       } else {
         setUsuario(null);
+        setUserRole(null);
       }
     });
 
@@ -499,7 +527,16 @@ const AppSidebarContent = () => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>{t('profile.my_account')}</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{t('profile.my_account')}</p>
+                {userRole && (
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {t(`role.${userRole}`)}
+                  </p>
+                )}
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate('/profile')}>
               <UserIcon className="w-4 h-4 mr-2" />
