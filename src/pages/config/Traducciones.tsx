@@ -152,7 +152,10 @@ export default function Traducciones() {
         try {
           const { error } = await supabase
             .from('traducciones')
-            .upsert(translations);
+            .upsert(translations, {
+              onConflict: 'clave,idioma',
+              ignoreDuplicates: false
+            });
           
           if (error) throw error;
           
