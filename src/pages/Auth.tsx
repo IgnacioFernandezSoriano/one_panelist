@@ -8,10 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useTranslation } from "@/hooks/useTranslation";
+import { AuthTranslationProvider, useAuthTranslation } from "@/hooks/useAuthTranslation";
 
-export default function Auth() {
-  const { t } = useTranslation();
+function AuthContent() {
+  const { t } = useAuthTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -175,5 +175,13 @@ export default function Auth() {
         </TabsContent>
       </Tabs>
     </AuthLayout>
+  );
+}
+
+export default function Auth() {
+  return (
+    <AuthTranslationProvider>
+      <AuthContent />
+    </AuthTranslationProvider>
   );
 }

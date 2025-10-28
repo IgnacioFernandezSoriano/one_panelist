@@ -1,5 +1,13 @@
 import { ReactNode } from "react";
-import { Package } from "lucide-react";
+import { Package, Languages } from "lucide-react";
+import { useAuthTranslation } from "@/hooks/useAuthTranslation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -8,8 +16,12 @@ interface AuthLayoutProps {
 }
 
 export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
+  const { currentLanguage, availableLanguages, changeLanguage } = useAuthTranslation();
+  
+  const currentLang = availableLanguages.find(lang => lang.codigo === currentLanguage);
+
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative">
       {/* Left Side - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary-glow items-center justify-center p-12">
         <div className="max-w-md text-center">
@@ -23,6 +35,35 @@ export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             Comprehensive postal quality management system
           </p>
         </div>
+      </div>
+
+      {/* Language Selector - Fixed Position */}
+      <div className="fixed top-4 right-4 z-50">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Languages className="w-4 h-4" />
+              <span className="text-sm font-medium">
+                {currentLang?.bandera_emoji} {currentLanguage.toUpperCase()}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {availableLanguages.map((lang) => (
+              <DropdownMenuItem
+                key={lang.codigo}
+                onClick={() => changeLanguage(lang.codigo)}
+                className="gap-2 cursor-pointer"
+              >
+                <span>{lang.bandera_emoji}</span>
+                <span>{lang.nombre_nativo}</span>
+                {lang.codigo === currentLanguage && (
+                  <span className="ml-auto text-primary">✓</span>
+                )}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Right Side - Auth Form */}
