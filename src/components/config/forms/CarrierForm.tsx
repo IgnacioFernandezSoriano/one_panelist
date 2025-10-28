@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,8 @@ interface CarrierFormProps {
 
 export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [accountName, setAccountName] = useState<string>("");
+  const [isLoadingAccount, setIsLoadingAccount] = useState(true);
   const { toast } = useToast();
   const isEditing = !!initialData;
   
@@ -22,6 +24,54 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
     operator_type: initialData?.operator_type || "licensed_postal",
     status: initialData?.status || "active",
   });
+
+  // Load account name
+  useEffect(() => {
+    const loadAccountName = async () => {
+      try {
+        if (isEditing && initialData?.cliente_id) {
+          // When editing, get the account name from the carrier's cliente_id
+          const { data: clienteData } = await supabase
+            .from("clientes")
+            .select("nombre")
+            .eq("id", initialData.cliente_id)
+            .single();
+          
+          if (clienteData) {
+            setAccountName(clienteData.nombre);
+          }
+        } else {
+          // When creating, get the account name from the current user
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: userData } = await supabase
+              .from("usuarios")
+              .select("cliente_id")
+              .eq("email", user.email)
+              .single();
+
+            if (userData?.cliente_id) {
+              const { data: clienteData } = await supabase
+                .from("clientes")
+                .select("nombre")
+                .eq("id", userData.cliente_id)
+                .single();
+              
+              if (clienteData) {
+                setAccountName(clienteData.nombre);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error loading account name:", error);
+      } finally {
+        setIsLoadingAccount(false);
+      }
+    };
+
+    loadAccountName();
+  }, [isEditing, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +140,16 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="account">Account</Label>
+        <Input
+          id="account"
+          value={isLoadingAccount ? "Loading..." : accountName}
+          disabled
+          className="bg-muted"
+        />
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="commercial_name">Commercial Name *</Label>
         <Input
