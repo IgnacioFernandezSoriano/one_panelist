@@ -201,12 +201,12 @@ export default function ConfigNodos() {
   };
 
   const columns = [
-    { key: "codigo", label: "Code" },
-    { key: "ciudad", label: "City" },
-    { key: "pais", label: "Country" },
+    { key: "codigo", label: t('nodes.code') },
+    { key: "ciudad", label: t('nodes.city') },
+    { key: "pais", label: t('nodes.country') },
     { 
       key: "panelista_nombre", 
-      label: "Panelist",
+      label: t('nodes.panelist'),
       render: (item: any) => {
         if (!item.panelista_nombre) return "-";
         return (
@@ -232,11 +232,11 @@ export default function ConfigNodos() {
     },
     { 
       key: "estado", 
-      label: "Status",
+      label: t('nodes.status'),
       render: (item: any) => item.estado === "activo" ? (
-        <Badge variant="default" className="bg-success text-white">Active</Badge>
+        <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>
       ) : (
-        <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>
+        <Badge variant="destructive" className="bg-destructive text-white">{t('status.inactive')}</Badge>
       )
     },
   ];
@@ -257,26 +257,26 @@ export default function ConfigNodos() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/configuracion/regiones">Regions</Link>
+                <Link to="/configuracion/regiones">{t('breadcrumb.regions')}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link to="/configuracion/ciudades">Cities</Link>
+                <Link to="/configuracion/ciudades">{t('breadcrumb.cities')}</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbPage>Nodes</BreadcrumbPage>
+              <BreadcrumbPage>{t('breadcrumb.nodes')}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Nodes Configuration</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('nodes.title')}</h1>
           <p className="text-muted-foreground">
-            Manage node locations in the system
+            {t('nodes.description')}
           </p>
         </div>
 
@@ -298,19 +298,19 @@ export default function ConfigNodos() {
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
                 onClick={() => setSearchTerm("")}
               >
-                Clear
+                {t('common.clear')}
               </Button>
             )}
           </div>
           {searchTerm && (
             <p className="text-sm text-muted-foreground mt-2">
-              {filteredData.length} {filteredData.length === 1 ? 'node' : 'nodes'} found
+              {filteredData.length} {filteredData.length === 1 ? t('common.node') : t('common.nodes')} {t('common.found')}
             </p>
           )}
         </div>
 
         <ConfigDataTable
-          title="Nodes"
+          title={t('breadcrumb.nodes')}
           data={filteredData}
           columns={columns}
           onEdit={(item) => {
@@ -327,7 +327,7 @@ export default function ConfigNodos() {
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New Node</DialogTitle>
+              <DialogTitle>{t('nodes.create_title')}</DialogTitle>
             </DialogHeader>
             <NodoForm
               onSuccess={() => {
@@ -342,7 +342,7 @@ export default function ConfigNodos() {
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit Node</DialogTitle>
+              <DialogTitle>{t('nodes.edit_title')}</DialogTitle>
             </DialogHeader>
             <NodoForm
               initialData={selectedItem}
@@ -363,7 +363,7 @@ export default function ConfigNodos() {
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle className="flex items-center justify-between">
-                Panelist Information
+                {t('panelist.information')}
                 <Button
                   variant="outline"
                   size="sm"
@@ -374,7 +374,7 @@ export default function ConfigNodos() {
                   }}
                 >
                   <Pencil className="h-4 w-4" />
-                  Edit
+                  {t('action.edit')}
                 </Button>
               </DialogTitle>
             </DialogHeader>
