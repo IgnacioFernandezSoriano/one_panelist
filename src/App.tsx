@@ -38,6 +38,7 @@ import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,7 @@ const App = () => {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/panelistas" element={<Panelistas />} />
             <Route path="/envios" element={<Envios />} />

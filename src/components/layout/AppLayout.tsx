@@ -44,7 +44,8 @@ import {
   UserX,
   PackageSearch,
   Languages,
-  Shield
+  Shield,
+  User as UserIcon
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -472,23 +473,45 @@ const AppSidebarContent = () => {
         </SidebarGroup>
       </SidebarContent>
 
+      {/* User Profile Dropdown */}
       <div className="mt-auto p-4 border-t border-sidebar-border">
-        <div className="flex items-center justify-between">
-          {sidebarOpen && (
-            <div className="text-sm">
-              <p className="font-medium text-sidebar-foreground">{user?.email}</p>
-              <p className="text-xs text-sidebar-foreground/60">Administrator</p>
-            </div>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleLogout}
-            className="text-sidebar-foreground hover:text-destructive"
-          >
-            <LogOut className="w-5 h-5" />
-          </Button>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start h-auto p-2">
+              <div className="flex items-center gap-3 w-full">
+                <Avatar className="w-10 h-10">
+                  <AvatarImage src={usuario?.avatar_url || undefined} />
+                  <AvatarFallback>
+                    {usuario?.nombre_completo?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                {sidebarOpen && (
+                  <div className="flex-1 text-left overflow-hidden">
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">
+                      {usuario?.nombre_completo || user?.email}
+                    </p>
+                    <p className="text-xs text-sidebar-foreground/60 truncate">
+                      {user?.email}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>{t('profile.my_account')}</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <UserIcon className="w-4 h-4 mr-2" />
+              {t('profile.title')}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+              <LogOut className="w-4 h-4 mr-2" />
+              {t('menu.logout')}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </>
   );
