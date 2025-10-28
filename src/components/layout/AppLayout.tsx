@@ -521,6 +521,11 @@ const AppSidebarContent = () => {
                     <p className="text-xs text-sidebar-foreground/60 truncate">
                       {user?.email}
                     </p>
+                    {userRole && (
+                      <p className="text-xs text-sidebar-foreground/50 truncate font-medium">
+                        {t(`role.${userRole}`)}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
