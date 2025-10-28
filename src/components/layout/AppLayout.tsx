@@ -2,6 +2,19 @@ import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { 
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Package, 
@@ -31,7 +44,8 @@ interface AppLayoutProps {
   children: ReactNode;
 }
 
-export const AppLayout = ({ children }: AppLayoutProps) => {
+const AppSidebarContent = () => {
+  const { open: sidebarOpen } = useSidebar();
   const [user, setUser] = useState<User | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const navigate = useNavigate();
@@ -40,23 +54,16 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (!session) {
-        navigate("/auth");
-      }
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setUser(session?.user ?? null);
-      if (!session) {
-        navigate("/auth");
-      }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
-    // Auto-open config menu if on a config route
     if (location.pathname.startsWith("/configuracion/")) {
       setConfigOpen(true);
     }
@@ -76,7 +83,6 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     { icon: GitBranch, label: "Topology", path: "/topology" },
   ];
 
-  // Solution Parameters section
   const solutionParametersItems = [
     { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
@@ -86,163 +92,195 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     { icon: AlertCircle, label: "Issues", path: "/configuracion/incidencias" },
   ];
 
-  // Measurement Topology section
   const measurementTopologyItems = [
     { icon: MapPin, label: "Regions", path: "/configuracion/regiones" },
     { icon: MapPin, label: "Cities", path: "/configuracion/ciudades" },
     { icon: MapPin, label: "Nodes", path: "/configuracion/nodos" },
   ];
 
-  // Data Import at the end
   const dataImportItem = { icon: Database, label: "Data Import", path: "/import" };
 
-  if (!user) return null;
-
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Sidebar */}
-      <aside className="w-64 bg-sidebar border-r border-sidebar-border">
-        <div className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <Package className="w-6 h-6 text-primary-foreground" />
-            </div>
+    <>
+      <div className="p-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+            <Package className="w-6 h-6 text-primary-foreground" />
+          </div>
+          {sidebarOpen && (
             <div>
               <h1 className="font-bold text-sidebar-foreground">ONE</h1>
               <p className="text-xs text-sidebar-foreground/60">Postal Quality</p>
             </div>
-          </div>
+          )}
         </div>
+      </div>
 
-        <nav className="px-3 space-y-1">
-          {mainMenuItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent"
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarMenu>
+            {mainMenuItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton asChild isActive={isActive}>
+                    <Link to={item.path}>
+                      <item.icon className="w-5 h-5" />
+                      {sidebarOpen && <span>{item.label}</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
 
-          {/* Configuration Collapsible Menu */}
-          <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
-            <CollapsibleTrigger className="flex items-center justify-between w-full gap-3 px-3 py-2 rounded-lg transition-colors text-sidebar-foreground hover:bg-sidebar-accent">
-              <div className="flex items-center gap-3">
-                <Settings className="w-5 h-5" />
-                <span className="font-medium">Configuration</span>
-              </div>
-              {configOpen ? (
-                <ChevronDown className="w-4 h-4" />
-              ) : (
-                <ChevronRight className="w-4 h-4" />
-              )}
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-1 space-y-1">
-              {/* Solution Parameters Section */}
-              <div className="pl-10 pr-3 py-2">
-                <p className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                  Solution Parameters
-                </p>
-              </div>
-              {solutionParametersItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent"
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
-                );
-              })}
+            <SidebarMenuItem>
+              <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton>
+                    <Settings className="w-5 h-5" />
+                    {sidebarOpen && <span>Configuration</span>}
+                    {sidebarOpen && (configOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroup>
+                    {sidebarOpen && (
+                      <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                        Solution Parameters
+                      </SidebarGroupLabel>
+                    )}
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {solutionParametersItems.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton asChild isActive={isActive} className="pl-8">
+                                <Link to={item.path}>
+                                  <item.icon className="w-4 h-4" />
+                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
 
-              {/* Separator */}
-              <div className="px-10 py-2">
-                <Separator className="bg-sidebar-border" />
-              </div>
+                  {sidebarOpen && <Separator className="my-2" />}
 
-              {/* Measurement Topology Section */}
-              <div className="pl-10 pr-3 py-2">
-                <p className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                  Measurement Topology
-                </p>
-              </div>
-              {measurementTopologyItems.map((item) => {
-                const isActive = location.pathname === item.path;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg transition-colors ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent"
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4" />
-                    <span className="text-sm font-medium">{item.label}</span>
-                  </Link>
-                );
-              })}
+                  <SidebarGroup>
+                    {sidebarOpen && (
+                      <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                        Measurement Topology
+                      </SidebarGroupLabel>
+                    )}
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {measurementTopologyItems.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton asChild isActive={isActive} className="pl-8">
+                                <Link to={item.path}>
+                                  <item.icon className="w-4 h-4" />
+                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
 
-              {/* Separator */}
-              <div className="px-10 py-2">
-                <Separator className="bg-sidebar-border" />
-              </div>
+                  {sidebarOpen && <Separator className="my-2" />}
 
-              {/* Data Import */}
-              <Link
-                to={dataImportItem.path}
-                className={`flex items-center gap-3 pl-10 pr-3 py-2 rounded-lg transition-colors ${
-                  location.pathname === dataImportItem.path
-                    ? "bg-primary text-primary-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent"
-                }`}
-              >
-                <dataImportItem.icon className="w-4 h-4" />
-                <span className="text-sm font-medium">{dataImportItem.label}</span>
-              </Link>
-            </CollapsibleContent>
-          </Collapsible>
-        </nav>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton asChild isActive={location.pathname === dataImportItem.path} className="pl-8">
+                            <Link to={dataImportItem.path}>
+                              <dataImportItem.icon className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">{dataImportItem.label}</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </CollapsibleContent>
+              </Collapsible>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
+      </SidebarContent>
 
-        <div className="absolute bottom-0 left-0 right-0 w-64 p-4 border-t border-sidebar-border">
-          <div className="flex items-center justify-between">
+      <div className="mt-auto p-4 border-t border-sidebar-border">
+        <div className="flex items-center justify-between">
+          {sidebarOpen && (
             <div className="text-sm">
-              <p className="font-medium text-sidebar-foreground">{user.email}</p>
+              <p className="font-medium text-sidebar-foreground">{user?.email}</p>
               <p className="text-xs text-sidebar-foreground/60">Administrator</p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="text-sidebar-foreground hover:text-destructive"
-            >
-              <LogOut className="w-5 h-5" />
-            </Button>
-          </div>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleLogout}
+            className="text-sidebar-foreground hover:text-destructive"
+          >
+            <LogOut className="w-5 h-5" />
+          </Button>
         </div>
-      </aside>
+      </div>
+    </>
+  );
+};
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
-    </div>
+export const AppLayout = ({ children }: AppLayoutProps) => {
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+      if (!session) {
+        navigate("/auth");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  if (!user) return null;
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <Sidebar collapsible="icon">
+          <AppSidebarContent />
+        </Sidebar>
+
+        <div className="flex-1 flex flex-col">
+          <header className="h-12 flex items-center border-b px-4">
+            <SidebarTrigger />
+          </header>
+
+          <main className="flex-1 overflow-auto">
+            {children}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };
