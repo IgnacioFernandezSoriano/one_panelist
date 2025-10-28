@@ -46,9 +46,8 @@ export default function MassivePanelistChange() {
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
   
-  // Combobox states
-  const [currentPanelistOpen, setCurrentPanelistOpen] = useState(false);
-  const [newPanelistOpen, setNewPanelistOpen] = useState(false);
+  // Combobox state - only one can be open at a time
+  const [openCombo, setOpenCombo] = useState<"current" | "new" | null>(null);
 
   useEffect(() => {
     loadPanelistas();
@@ -64,10 +63,12 @@ export default function MassivePanelistChange() {
 
       if (error) throw error;
       
-      // Remove duplicates based on id
-      const uniquePanelistas = data?.filter((panelista, index, self) =>
-        index === self.findIndex((p) => p.id === panelista.id)
-      ) || [];
+      // Remove duplicates using Map for more robust deduplication
+      const uniquePanelistas = Array.from(
+        new Map((data ?? []).map(p => [p.id, p])).values()
+      );
+      
+      console.log('Panelistas loaded - Original:', data?.length, 'Unique:', uniquePanelistas.length);
       
       setPanelistas(uniquePanelistas);
     } catch (error: any) {
@@ -232,12 +233,15 @@ export default function MassivePanelistChange() {
             {/* Current Panelist Selector */}
             <div className="space-y-2">
               <Label>Current Panelist (to replace)</Label>
-              <Popover open={currentPanelistOpen} onOpenChange={setCurrentPanelistOpen}>
+              <Popover 
+                open={openCombo === "current"} 
+                onOpenChange={(open) => setOpenCombo(open ? "current" : null)}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     role="combobox"
-                    aria-expanded={currentPanelistOpen}
+                    aria-expanded={openCombo === "current"}
                     className="w-full justify-between"
                   >
                     {currentPanelistData
@@ -258,7 +262,7 @@ export default function MassivePanelistChange() {
                             value={`${panelista.nombre_completo} ${panelista.nodo_asignado || ""}`}
                             onSelect={() => {
                               setCurrentPanelist(panelista.id.toString());
-                              setCurrentPanelistOpen(false);
+                              setOpenCombo(null);
                             }}
                           >
                             <Check
@@ -287,12 +291,15 @@ export default function MassivePanelistChange() {
             <div className="space-y-2">
               <Label>New Panelist (replacement)</Label>
               <div className="flex gap-2">
-                <Popover open={newPanelistOpen} onOpenChange={setNewPanelistOpen}>
+                <Popover 
+                  open={openCombo === "new"} 
+                  onOpenChange={(open) => setOpenCombo(open ? "new" : null)}
+                >
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
                       role="combobox"
-                      aria-expanded={newPanelistOpen}
+                      aria-expanded={openCombo === "new"}
                       className="flex-1 justify-between"
                     >
                       {newPanelistData
@@ -315,7 +322,7 @@ export default function MassivePanelistChange() {
                                 value={`${panelista.nombre_completo} ${panelista.nodo_asignado || ""}`}
                                 onSelect={() => {
                                   setNewPanelist(panelista.id.toString());
-                                  setNewPanelistOpen(false);
+                                  setOpenCombo(null);
                                 }}
                               >
                                 <Check
