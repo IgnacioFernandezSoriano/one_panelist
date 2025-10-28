@@ -102,7 +102,31 @@ export default function Ciudades() {
     { key: "nombre", label: "Name" },
     { key: "cliente_nombre", label: "Account" },
     { key: "region_nombre", label: "Region" },
-    { key: "clasificacion", label: "Classification" },
+    { 
+      key: "clasificacion", 
+      label: "Classification",
+      render: (item: any) => {
+        const getClassificationColor = (clasificacion: string) => {
+          switch (clasificacion?.toUpperCase()) {
+            case 'A':
+              return 'bg-green-500 text-white';
+            case 'B':
+              return 'bg-blue-500 text-white';
+            case 'C':
+              return 'bg-yellow-500 text-white';
+            case 'D':
+              return 'bg-orange-500 text-white';
+            default:
+              return 'bg-gray-500 text-white';
+          }
+        };
+        return (
+          <Badge className={getClassificationColor(item.clasificacion)}>
+            {item.clasificacion}
+          </Badge>
+        );
+      }
+    },
     { key: "pais", label: "Country" },
     { 
       key: "estado", 
