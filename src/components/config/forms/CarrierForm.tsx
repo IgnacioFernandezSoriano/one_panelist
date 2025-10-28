@@ -15,6 +15,9 @@ interface CarrierFormProps {
 export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [accountName, setAccountName] = useState<string>("");
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [availableAccounts, setAvailableAccounts] = useState<any[]>([]);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
   const [isLoadingAccount, setIsLoadingAccount] = useState(true);
   const { toast } = useToast();
   const isEditing = !!initialData;
@@ -25,52 +28,80 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
     status: initialData?.status || "active",
   });
 
-  // Load account name
+  // Load account info and check if user is superadmin
   useEffect(() => {
-    const loadAccountName = async () => {
+    const loadAccountInfo = async () => {
       try {
-        if (isEditing && initialData?.cliente_id) {
-          // When editing, get the account name from the carrier's cliente_id
-          const { data: clienteData } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get user data
+        const { data: userData } = await supabase
+          .from("usuarios")
+          .select("id, cliente_id")
+          .eq("email", user.email)
+          .single();
+
+        if (!userData) return;
+
+        // Check if user is superadmin
+        const { data: rolesData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userData.id);
+
+        const isSuperadminUser = rolesData?.some(r => r.role === "superadmin") || false;
+        setIsSuperadmin(isSuperadminUser);
+
+        if (isSuperadminUser) {
+          // Load all accounts for superadmin
+          const { data: accounts } = await supabase
             .from("clientes")
-            .select("nombre")
-            .eq("id", initialData.cliente_id)
-            .single();
-          
-          if (clienteData) {
-            setAccountName(clienteData.nombre);
+            .select("id, nombre")
+            .eq("estado", "activo")
+            .order("nombre");
+
+          setAvailableAccounts(accounts || []);
+
+          if (isEditing && initialData?.cliente_id) {
+            setSelectedAccountId(initialData.cliente_id);
+          } else if (userData.cliente_id) {
+            setSelectedAccountId(userData.cliente_id);
           }
         } else {
-          // When creating, get the account name from the current user
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const { data: userData } = await supabase
-              .from("usuarios")
-              .select("cliente_id")
-              .eq("email", user.email)
+          // For regular users, just show their account
+          if (isEditing && initialData?.cliente_id) {
+            const { data: clienteData } = await supabase
+              .from("clientes")
+              .select("nombre")
+              .eq("id", initialData.cliente_id)
               .single();
-
-            if (userData?.cliente_id) {
-              const { data: clienteData } = await supabase
-                .from("clientes")
-                .select("nombre")
-                .eq("id", userData.cliente_id)
-                .single();
-              
-              if (clienteData) {
-                setAccountName(clienteData.nombre);
-              }
+            
+            if (clienteData) {
+              setAccountName(clienteData.nombre);
             }
+            setSelectedAccountId(initialData.cliente_id);
+          } else if (userData?.cliente_id) {
+            const { data: clienteData } = await supabase
+              .from("clientes")
+              .select("nombre")
+              .eq("id", userData.cliente_id)
+              .single();
+            
+            if (clienteData) {
+              setAccountName(clienteData.nombre);
+            }
+            setSelectedAccountId(userData.cliente_id);
           }
         }
       } catch (error) {
-        console.error("Error loading account name:", error);
+        console.error("Error loading account info:", error);
       } finally {
         setIsLoadingAccount(false);
       }
     };
 
-    loadAccountName();
+    loadAccountInfo();
   }, [isEditing, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,39 +109,29 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
     setIsSubmitting(true);
 
     try {
+      if (!selectedAccountId) {
+        throw new Error("Account is required");
+      }
+
       let dataToSave: any = {
         commercial_name: formData.commercial_name,
         operator_type: formData.operator_type,
         status: formData.status,
+        cliente_id: selectedAccountId,
       };
 
-      // If creating, add cliente_id and required fields
+      // If creating, add required fields
       if (!isEditing) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error("User not authenticated");
-        }
-
-        const { data: userData } = await supabase
-          .from("usuarios")
-          .select("cliente_id")
-          .eq("email", user.email)
-          .single();
-
-        if (!userData?.cliente_id) {
-          throw new Error("User has no associated account");
-        }
-
         dataToSave = {
           ...dataToSave,
-          cliente_id: userData.cliente_id,
-          legal_name: formData.commercial_name, // Use commercial name as legal name
-          regulatory_status: "authorized", // Default value
+          legal_name: formData.commercial_name,
+          regulatory_status: "authorized",
         };
       }
 
       let error;
       if (isEditing) {
+        // When editing, allow superadmins to change the account
         const result = await supabase
           .from("carriers")
           .update(dataToSave)
@@ -141,13 +162,32 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="account">Account</Label>
-        <Input
-          id="account"
-          value={isLoadingAccount ? "Loading..." : accountName}
-          disabled
-          className="bg-muted"
-        />
+        <Label htmlFor="account">Account *</Label>
+        {isSuperadmin ? (
+          <Select
+            value={selectedAccountId?.toString()}
+            onValueChange={(value) => setSelectedAccountId(parseInt(value))}
+            disabled={isLoadingAccount}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={isLoadingAccount ? "Loading..." : "Select an account"} />
+            </SelectTrigger>
+            <SelectContent>
+              {availableAccounts.map((account) => (
+                <SelectItem key={account.id} value={account.id.toString()}>
+                  {account.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="account"
+            value={isLoadingAccount ? "Loading..." : accountName}
+            disabled
+            className="bg-muted"
+          />
+        )}
       </div>
 
       <div className="space-y-2">
