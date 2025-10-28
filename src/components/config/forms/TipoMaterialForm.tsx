@@ -15,7 +15,13 @@ interface TipoMaterialFormProps {
 
 export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMaterialFormProps) {
   const [submitting, setSubmitting] = useState(false);
+  const [accountName, setAccountName] = useState<string>("");
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [availableAccounts, setAvailableAccounts] = useState<any[]>([]);
+  const [isSuperadmin, setIsSuperadmin] = useState(false);
+  const [isLoadingAccount, setIsLoadingAccount] = useState(true);
   const { toast } = useToast();
+  const isEditing = !!initialData;
 
   const [formData, setFormData] = useState({
     codigo: initialData?.codigo || "",
@@ -24,6 +30,82 @@ export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMater
     unidad_medida: initialData?.unidad_medida || "unidad",
     estado: initialData?.estado || "activo",
   });
+
+  // Load account info and check if user is superadmin
+  useEffect(() => {
+    const loadAccountInfo = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Get user data
+        const { data: userData } = await supabase
+          .from("usuarios")
+          .select("id, cliente_id")
+          .eq("email", user.email)
+          .single();
+
+        if (!userData) return;
+
+        // Check if user is superadmin
+        const { data: rolesData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userData.id);
+
+        const isSuperadminUser = rolesData?.some(r => r.role === "superadmin") || false;
+        setIsSuperadmin(isSuperadminUser);
+
+        if (isSuperadminUser) {
+          // Load all accounts for superadmin
+          const { data: accounts } = await supabase
+            .from("clientes")
+            .select("id, nombre")
+            .eq("estado", "activo")
+            .order("nombre");
+
+          setAvailableAccounts(accounts || []);
+
+          if (isEditing && initialData?.cliente_id) {
+            setSelectedAccountId(initialData.cliente_id);
+          } else if (userData.cliente_id) {
+            setSelectedAccountId(userData.cliente_id);
+          }
+        } else {
+          // For regular users, just show their account
+          if (isEditing && initialData?.cliente_id) {
+            const { data: clienteData } = await supabase
+              .from("clientes")
+              .select("nombre")
+              .eq("id", initialData.cliente_id)
+              .single();
+            
+            if (clienteData) {
+              setAccountName(clienteData.nombre);
+            }
+            setSelectedAccountId(initialData.cliente_id);
+          } else if (userData?.cliente_id) {
+            const { data: clienteData } = await supabase
+              .from("clientes")
+              .select("nombre")
+              .eq("id", userData.cliente_id)
+              .single();
+            
+            if (clienteData) {
+              setAccountName(clienteData.nombre);
+            }
+            setSelectedAccountId(userData.cliente_id);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading account info:", error);
+      } finally {
+        setIsLoadingAccount(false);
+      }
+    };
+
+    loadAccountInfo();
+  }, [isEditing, initialData]);
 
   useEffect(() => {
     if (initialData) {
@@ -42,7 +124,14 @@ export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMater
     setSubmitting(true);
 
     try {
-      const dataToSave = { ...formData };
+      if (!selectedAccountId) {
+        throw new Error("Account is required");
+      }
+
+      let dataToSave: any = {
+        ...formData,
+        cliente_id: selectedAccountId,
+      };
       
       if (initialData?.id) {
         // Editing - keep existing code
@@ -93,6 +182,35 @@ export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMater
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="account">Account *</Label>
+        {isSuperadmin ? (
+          <Select
+            value={selectedAccountId?.toString()}
+            onValueChange={(value) => setSelectedAccountId(parseInt(value))}
+            disabled={isLoadingAccount}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={isLoadingAccount ? "Loading..." : "Select an account"} />
+            </SelectTrigger>
+            <SelectContent>
+              {availableAccounts.map((account) => (
+                <SelectItem key={account.id} value={account.id.toString()}>
+                  {account.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Input
+            id="account"
+            value={isLoadingAccount ? "Loading..." : accountName}
+            disabled
+            className="bg-muted"
+          />
+        )}
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="codigo">Code</Label>
         <Input

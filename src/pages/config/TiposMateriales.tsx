@@ -23,11 +23,20 @@ export default function TiposMateriales() {
     try {
       const { data, error } = await supabase
         .from("tipos_material")
-        .select("*")
+        .select(`
+          *,
+          clientes:cliente_id (nombre)
+        `)
         .order("codigo", { ascending: true });
 
       if (error) throw error;
-      setMateriales(data || []);
+      
+      const formattedData = data?.map(m => ({
+        ...m,
+        account_name: m.clientes?.nombre
+      })) || [];
+      
+      setMateriales(formattedData);
     } catch (error: any) {
       toast({
         title: "Error loading material types",
@@ -64,6 +73,7 @@ export default function TiposMateriales() {
   };
 
   const columns = [
+    { key: "account_name", label: "Account" },
     { key: "codigo", label: "Code" },
     { key: "nombre", label: "Name" },
     { key: "unidad_medida", label: "Unit of Measure" },

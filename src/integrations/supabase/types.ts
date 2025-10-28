@@ -937,6 +937,7 @@ export type Database = {
       }
       tipos_material: {
         Row: {
+          cliente_id: number
           codigo: string
           descripcion: string | null
           estado: string
@@ -947,6 +948,7 @@ export type Database = {
           unidad_medida: string
         }
         Insert: {
+          cliente_id: number
           codigo: string
           descripcion?: string | null
           estado?: string
@@ -957,6 +959,7 @@ export type Database = {
           unidad_medida?: string
         }
         Update: {
+          cliente_id?: number
           codigo?: string
           descripcion?: string | null
           estado?: string
@@ -966,7 +969,15 @@ export type Database = {
           nombre?: string
           unidad_medida?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tipos_material_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       traducciones: {
         Row: {
