@@ -25,7 +25,12 @@ export default function ConfigUsuarios() {
     setIsLoading(true);
     const { data: usuarios, error } = await supabase
       .from("usuarios")
-      .select("*")
+      .select(`
+        *,
+        user_roles (
+          role
+        )
+      `)
       .order("id", { ascending: true });
 
     if (error) {
@@ -35,7 +40,12 @@ export default function ConfigUsuarios() {
         variant: "destructive",
       });
     } else {
-      setData(usuarios || []);
+      // Transform data to include role
+      const transformedData = (usuarios || []).map(usuario => ({
+        ...usuario,
+        rol: usuario.user_roles?.[0]?.role || '-'
+      }));
+      setData(transformedData);
     }
     setIsLoading(false);
   };
@@ -62,7 +72,35 @@ export default function ConfigUsuarios() {
     { key: "id", label: "ID" },
     { key: "nombre_completo", label: t("label.name") },
     { key: "email", label: t("label.email") },
-    { key: "rol", label: t("config.users.role") },
+    { 
+      key: "rol", 
+      label: t("config.users.role"),
+      render: (item: any) => {
+        if (!item.rol || item.rol === '-') {
+          return <Badge variant="outline">-</Badge>;
+        }
+        
+        const roleColors: Record<string, string> = {
+          'superadmin': 'bg-purple-500 text-white',
+          'admin': 'bg-blue-500 text-white',
+          'manager': 'bg-green-500 text-white',
+          'coordinator': 'bg-yellow-500 text-white'
+        };
+        
+        const roleLabels: Record<string, string> = {
+          'superadmin': t('role.superadmin'),
+          'admin': t('role.admin'),
+          'manager': t('role.manager'),
+          'coordinator': t('role.coordinator')
+        };
+        
+        return (
+          <Badge className={roleColors[item.rol] || 'bg-gray-500 text-white'}>
+            {roleLabels[item.rol] || item.rol}
+          </Badge>
+        );
+      }
+    },
     { key: "idioma_preferido", label: t("label.language") },
     { 
       key: "estado", 
