@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UsuarioForm } from "@/components/config/forms/UsuarioForm";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function ConfigUsuarios() {
   const [data, setData] = useState([]);
@@ -14,6 +15,7 @@ export default function ConfigUsuarios() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadData();
@@ -28,7 +30,7 @@ export default function ConfigUsuarios() {
 
     if (error) {
       toast({
-        title: "Error loading users",
+        title: t("message.error.load"),
         description: error.message,
         variant: "destructive",
       });
@@ -46,32 +48,32 @@ export default function ConfigUsuarios() {
 
     if (error) {
       toast({
-        title: "Error deleting user",
+        title: t("message.error.delete"),
         description: error.message,
         variant: "destructive",
       });
     } else {
-      toast({ title: "User deleted successfully" });
+      toast({ title: t("message.success.deleted") });
       loadData();
     }
   };
 
   const columns = [
     { key: "id", label: "ID" },
-    { key: "nombre_completo", label: "Full Name" },
-    { key: "email", label: "Email" },
-    { key: "rol", label: "Role" },
-    { key: "idioma_preferido", label: "Language" },
+    { key: "nombre_completo", label: t("label.name") },
+    { key: "email", label: t("label.email") },
+    { key: "rol", label: t("config.users.role") },
+    { key: "idioma_preferido", label: t("label.language") },
     { 
       key: "estado", 
-      label: "Status",
+      label: t("label.status"),
       render: (item: any) => item.estado === "activo" ? (
-        <Badge variant="default" className="bg-success text-white">Active</Badge>
+        <Badge variant="default" className="bg-success text-white">{t("label.active")}</Badge>
       ) : (
-        <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>
+        <Badge variant="destructive" className="bg-destructive text-white">{t("label.inactive")}</Badge>
       )
     },
-    { key: "fecha_creacion", label: "Created" },
+    { key: "fecha_creacion", label: t("label.date") },
   ];
 
   const csvConfig = {
@@ -87,14 +89,14 @@ export default function ConfigUsuarios() {
     <AppLayout>
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Users Configuration</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t("config.users.title")}</h1>
           <p className="text-muted-foreground">
-            Manage system users and their roles
+            {t("config.users.subtitle")}
           </p>
         </div>
 
         <ConfigDataTable
-          title="Users"
+          title={t("menu.users")}
           data={data}
           columns={columns}
           onEdit={(item) => {
@@ -110,7 +112,7 @@ export default function ConfigUsuarios() {
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create New User</DialogTitle>
+              <DialogTitle>{t("action.add")} {t("menu.users")}</DialogTitle>
             </DialogHeader>
             <UsuarioForm
               onSuccess={() => {
@@ -125,7 +127,7 @@ export default function ConfigUsuarios() {
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Edit User</DialogTitle>
+              <DialogTitle>{t("action.edit")} {t("menu.users")}</DialogTitle>
             </DialogHeader>
             <UsuarioForm
               initialData={selectedItem}
