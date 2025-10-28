@@ -4,9 +4,11 @@ import { Card } from "@/components/ui/card";
 import { EnvioForm } from "@/components/config/forms/EnvioForm";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function NuevoEnvio() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <AppLayout>
@@ -18,14 +20,14 @@ export default function NuevoEnvio() {
             className="gap-2 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Allocation Plans
+            {t('button.back_to_allocation_plans')}
           </Button>
           
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            New Allocation Plan
+            {t('nuevo_envio.title')}
           </h1>
           <p className="text-muted-foreground">
-            Create a new shipment allocation plan
+            {t('nuevo_envio.subtitle')}
           </p>
         </div>
 

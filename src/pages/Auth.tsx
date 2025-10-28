@@ -8,8 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Auth() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,13 +31,13 @@ export default function Auth() {
       if (error) throw error;
 
       toast({
-        title: "Welcome!",
-        description: "You have successfully signed in",
+        title: t('auth.welcome'),
+        description: t('auth.signin_success'),
       });
       navigate("/dashboard");
     } catch (error: any) {
       toast({
-        title: "Error signing in",
+        title: t('auth.error_signin'),
         description: error.message,
         variant: "destructive",
       });
@@ -62,8 +64,8 @@ export default function Auth() {
       if (error) throw error;
 
       toast({
-        title: "Account created!",
-        description: "You can now sign in with your credentials",
+        title: t('auth.account_created'),
+        description: t('auth.can_signin'),
       });
       
       // Auto sign-in after signup since email confirmation is disabled
@@ -77,7 +79,7 @@ export default function Auth() {
       }
     } catch (error: any) {
       toast({
-        title: "Error creating account",
+        title: t('auth.error_creating_account'),
         description: error.message,
         variant: "destructive",
       });
@@ -88,19 +90,19 @@ export default function Auth() {
 
   return (
     <AuthLayout
-      title="Authentication"
-      subtitle="Sign in to your account or create a new one"
+      title={t('auth.title')}
+      subtitle={t('auth.subtitle')}
     >
       <Tabs defaultValue="signin" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="signin">Sign In</TabsTrigger>
-          <TabsTrigger value="signup">Sign Up</TabsTrigger>
+          <TabsTrigger value="signin">{t('auth.sign_in')}</TabsTrigger>
+          <TabsTrigger value="signup">{t('auth.sign_up')}</TabsTrigger>
         </TabsList>
         
         <TabsContent value="signin">
           <form onSubmit={handleSignIn} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="signin-email">Email Address</Label>
+              <Label htmlFor="signin-email">{t('label.email')}</Label>
               <Input
                 id="signin-email"
                 type="email"
@@ -113,7 +115,7 @@ export default function Auth() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="signin-password">Password</Label>
+              <Label htmlFor="signin-password">{t('label.password')}</Label>
               <Input
                 id="signin-password"
                 type="password"
@@ -128,7 +130,7 @@ export default function Auth() {
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
+              {t('auth.sign_in')}
             </Button>
           </form>
         </TabsContent>
@@ -136,7 +138,7 @@ export default function Auth() {
         <TabsContent value="signup">
           <form onSubmit={handleSignUp} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="signup-email">Email Address</Label>
+              <Label htmlFor="signup-email">{t('label.email')}</Label>
               <Input
                 id="signup-email"
                 type="email"
@@ -149,7 +151,7 @@ export default function Auth() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="signup-password">Password</Label>
+              <Label htmlFor="signup-password">{t('label.password')}</Label>
               <Input
                 id="signup-password"
                 type="password"
@@ -161,13 +163,13 @@ export default function Auth() {
                 minLength={6}
               />
               <p className="text-xs text-muted-foreground">
-                Password must be at least 6 characters
+                {t('auth.password_min_length')}
               </p>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Account
+              {t('auth.create_account')}
             </Button>
           </form>
         </TabsContent>

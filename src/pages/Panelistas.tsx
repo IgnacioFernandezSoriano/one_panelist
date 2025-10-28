@@ -10,6 +10,7 @@ import { Plus, Search, Edit, Trash2, ChevronDown, ChevronUp } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface Panelista {
   id: number;
@@ -34,6 +35,7 @@ interface Panelista {
 }
 
 export default function Panelistas() {
+  const { t } = useTranslation();
   const [panelistas, setPanelistas] = useState<Panelista[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -70,8 +72,8 @@ export default function Panelistas() {
       setPanelistas(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Could not load panelists",
+        title: t('message.error'),
+        description: t('panelistas.error_loading'),
         variant: "destructive",
       });
     } finally {
@@ -86,7 +88,7 @@ export default function Panelistas() {
   );
 
   const handleDelete = async (panelista: Panelista) => {
-    if (!confirm(`¿Está seguro de eliminar al panelista ${panelista.nombre_completo}?`)) {
+    if (!confirm(t('panelistas.confirm_delete', { name: panelista.nombre_completo }))) {
       return;
     }
 
@@ -99,14 +101,14 @@ export default function Panelistas() {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Panelist deleted successfully",
+        title: t('message.success'),
+        description: t('panelistas.deleted_successfully'),
       });
       loadPanelistas();
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Could not delete panelist: " + error.message,
+        title: t('message.error'),
+        description: t('panelistas.error_deleting') + ": " + error.message,
         variant: "destructive",
       });
     }
@@ -114,11 +116,11 @@ export default function Panelistas() {
 
   const getEstadoBadge = (estado: string) => {
     if (estado === "activo") {
-      return <Badge variant="default" className="bg-success text-white">Active</Badge>;
+      return <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>;
     } else if (estado === "suspendido") {
-      return <Badge variant="destructive" className="bg-destructive text-white">Suspended</Badge>;
+      return <Badge variant="destructive" className="bg-destructive text-white">{t('status.suspended')}</Badge>;
     } else {
-      return <Badge variant="destructive" className="bg-destructive text-white">Inactive</Badge>;
+      return <Badge variant="destructive" className="bg-destructive text-white">{t('status.inactive')}</Badge>;
     }
   };
 
@@ -127,14 +129,14 @@ export default function Panelistas() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Panelists</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('panelistas.title')}</h1>
             <p className="text-muted-foreground">
-              Manage panelists participating in the studies
+              {t('panelistas.subtitle')}
             </p>
           </div>
           <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
             <Plus className="w-4 h-4" />
-            New Panelist
+            {t('button.new_panelist')}
           </Button>
         </div>
 
@@ -142,7 +144,7 @@ export default function Panelistas() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Search by name, phone or city..."
+              placeholder={t('panelistas.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -152,11 +154,11 @@ export default function Panelistas() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading panelists...</p>
+            <p className="text-muted-foreground">{t('message.loading')}</p>
           </div>
         ) : filteredPanelistas.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No panelists found</p>
+            <p className="text-muted-foreground">{t('panelistas.no_data_found')}</p>
           </Card>
         ) : (
           <div className="grid gap-4">
@@ -175,15 +177,15 @@ export default function Panelistas() {
                         
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                           <div>
-                            <span className="text-muted-foreground">ID:</span>
+                            <span className="text-muted-foreground">{t('label.id')}:</span>
                             <p className="font-medium">{panelista.id}</p>
                           </div>
                           <div>
-                            <span className="text-muted-foreground">City:</span>
+                            <span className="text-muted-foreground">{t('label.city')}:</span>
                             <p className="font-medium">{panelista.direccion_ciudad}</p>
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Phone:</span>
+                            <span className="text-muted-foreground">{t('label.phone')}:</span>
                             <p className="font-medium">{panelista.telefono}</p>
                           </div>
                         </div>

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AlertCircle, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { NodoForm } from "@/components/config/forms/NodoForm";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface UnassignedNode {
   codigo: string;
@@ -25,6 +26,7 @@ interface UnassignedNode {
 }
 
 export default function UnassignedNodes() {
+  const { t } = useTranslation();
   const [unassignedNodes, setUnassignedNodes] = useState<UnassignedNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -107,7 +109,7 @@ export default function UnassignedNodes() {
       setUnassignedNodes(nodesWithStats);
     } catch (error: any) {
       toast({
-        title: "Error loading unassigned nodes",
+        title: t('message.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -139,7 +141,7 @@ export default function UnassignedNodes() {
       }
     } catch (error: any) {
       toast({
-        title: "Error loading node",
+        title: t('message.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -157,7 +159,7 @@ export default function UnassignedNodes() {
     return (
       <AppLayout>
         <div className="p-8">
-          <p className="text-muted-foreground">Loading unassigned nodes...</p>
+          <p className="text-muted-foreground">{t('message.loading')}</p>
         </div>
       </AppLayout>
     );
@@ -167,9 +169,9 @@ export default function UnassignedNodes() {
     <AppLayout>
       <div className="p-8 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Nodes Without Assigned Panelist</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('unassigned_nodes.title')}</h1>
           <p className="text-muted-foreground">
-            Nodes that don't have a panelist assigned and their impact on the allocation plan
+            {t('unassigned_nodes.subtitle')}
           </p>
         </div>
 
@@ -181,9 +183,9 @@ export default function UnassignedNodes() {
                   <AlertCircle className="w-8 h-8 text-success" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-2">All nodes have assigned panelists</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t('unassigned_nodes.all_assigned')}</h3>
                   <p className="text-muted-foreground">
-                    Great! There are no nodes without a panelist assignment.
+                    {t('unassigned_nodes.no_unassigned')}
                   </p>
                 </div>
               </div>
@@ -194,21 +196,21 @@ export default function UnassignedNodes() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-warning" />
-                {unassignedNodes.length} Node{unassignedNodes.length !== 1 ? "s" : ""} Without Panelist
+                {t('unassigned_nodes.count', { count: unassignedNodes.length.toString() })}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Node Code</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>City</TableHead>
-                    <TableHead>Country</TableHead>
-                    <TableHead className="text-center">Affected Events</TableHead>
-                    <TableHead>First Event Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>{t('label.node_code')}</TableHead>
+                    <TableHead>{t('label.status')}</TableHead>
+                    <TableHead>{t('label.region')}</TableHead>
+                    <TableHead>{t('label.city')}</TableHead>
+                    <TableHead>{t('label.country')}</TableHead>
+                    <TableHead className="text-center">{t('unassigned_nodes.affected_events')}</TableHead>
+                    <TableHead>{t('unassigned_nodes.first_event_date')}</TableHead>
+                    <TableHead className="text-right">{t('label.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -226,9 +228,9 @@ export default function UnassignedNodes() {
                       </TableCell>
                       <TableCell>
                         {node.estado === "activo" ? (
-                          <Badge variant="default" className="bg-success text-white">Active</Badge>
+                          <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>
                         ) : (
-                          <Badge variant="destructive">Inactive</Badge>
+                          <Badge variant="destructive">{t('status.inactive')}</Badge>
                         )}
                       </TableCell>
                       <TableCell>
@@ -260,7 +262,7 @@ export default function UnassignedNodes() {
                           size="sm"
                           onClick={() => handleNodeClick(node.codigo)}
                         >
-                          Assign Panelist
+                          {t('unassigned_nodes.assign_panelist')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -276,13 +278,13 @@ export default function UnassignedNodes() {
       <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Node - Assign Panelist</DialogTitle>
+            <DialogTitle>{t('unassigned_nodes.edit_node_title')}</DialogTitle>
           </DialogHeader>
           {selectedNode && (
             <NodoForm
               initialData={selectedNode}
               onSuccess={() => {
-                toast({ title: "Node updated successfully" });
+                toast({ title: t('message.success'), description: t('nodos.updated_successfully') });
                 handleDialogClose();
               }}
               onCancel={handleDialogClose}

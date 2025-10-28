@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Send, AlertCircle, CheckCircle, Clock, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface Stats {
   totalPanelistas: number;
@@ -15,6 +16,7 @@ interface Stats {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<Stats>({
     totalPanelistas: 0,
     panelistasActivos: 0,
@@ -57,33 +59,33 @@ export default function Dashboard() {
 
   const statCards = [
     {
-      title: "Total Panelists",
+      title: t('dashboard.total_panelists'),
       value: stats.totalPanelistas,
-      subtitle: `${stats.panelistasActivos} active`,
+      subtitle: t('dashboard.active_count', { count: stats.panelistasActivos.toString() }),
       icon: Users,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
-      title: "Total Allocation Plans",
+      title: t('dashboard.total_allocation_plans'),
       value: stats.totalEnvios,
-      subtitle: `${stats.enviosPendientes} pending`,
+      subtitle: t('dashboard.pending_count', { count: stats.enviosPendientes.toString() }),
       icon: Send,
       color: "text-accent",
       bgColor: "bg-accent/10",
     },
     {
-      title: "Received Allocations",
+      title: t('dashboard.received_allocations'),
       value: stats.enviosRecibidos,
-      subtitle: "Successfully completed",
+      subtitle: t('dashboard.successfully_completed'),
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10",
     },
     {
-      title: "Issues",
+      title: t('dashboard.issues'),
       value: stats.totalIncidencias,
-      subtitle: `${stats.incidenciasAbiertas} open`,
+      subtitle: t('dashboard.open_count', { count: stats.incidenciasAbiertas.toString() }),
       icon: AlertCircle,
       color: "text-warning",
       bgColor: "bg-warning/10",
@@ -94,9 +96,9 @@ export default function Dashboard() {
     <AppLayout>
       <div className="p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">{t('dashboard.title')}</h1>
           <p className="text-muted-foreground">
-            Overview of the postal quality management system
+            {t('dashboard.subtitle')}
           </p>
         </div>
 
@@ -124,21 +126,21 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
           <Card>
             <CardHeader>
-              <CardTitle>Allocation Plans by Status</CardTitle>
+              <CardTitle>{t('dashboard.allocation_plans_by_status')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Clock className="w-5 h-5 text-warning" />
-                    <span className="font-medium">Pending</span>
+                    <span className="font-medium">{t('status.pending')}</span>
                   </div>
                   <span className="text-2xl font-bold text-warning">{stats.enviosPendientes}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="w-5 h-5 text-success" />
-                    <span className="font-medium">Received</span>
+                    <span className="font-medium">{t('status.received')}</span>
                   </div>
                   <span className="text-2xl font-bold text-success">{stats.enviosRecibidos}</span>
                 </div>
@@ -148,21 +150,21 @@ export default function Dashboard() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Recent Issues</CardTitle>
+              <CardTitle>{t('dashboard.recent_issues')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="w-5 h-5 text-warning" />
-                    <span className="font-medium">Open</span>
+                    <span className="font-medium">{t('status.open')}</span>
                   </div>
                   <span className="text-2xl font-bold text-warning">{stats.incidenciasAbiertas}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <XCircle className="w-5 h-5 text-muted-foreground" />
-                    <span className="font-medium">Total</span>
+                    <span className="font-medium">{t('common.total')}</span>
                   </div>
                   <span className="text-2xl font-bold text-muted-foreground">{stats.totalIncidencias}</span>
                 </div>

@@ -7,11 +7,13 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function EditarEnvio() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [envio, setEnvio] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -36,8 +38,8 @@ export default function EditarEnvio() {
 
       if (!data) {
         toast({
-          title: "Error",
-          description: "Allocation plan not found",
+          title: t('message.error'),
+          description: t('editar_envio.not_found'),
           variant: "destructive",
         });
         navigate("/envios");
@@ -47,7 +49,7 @@ export default function EditarEnvio() {
       setEnvio(data);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: t('message.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -62,7 +64,7 @@ export default function EditarEnvio() {
       <AppLayout>
         <div className="p-8">
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="text-muted-foreground">{t('message.loading')}</p>
           </div>
         </div>
       </AppLayout>
@@ -79,14 +81,14 @@ export default function EditarEnvio() {
             className="gap-2 mb-4"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Allocation Plans
+            {t('button.back_to_allocation_plans')}
           </Button>
           
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Edit Allocation Plan #{id}
+            {t('editar_envio.title', { id: id || '' })}
           </h1>
           <p className="text-muted-foreground">
-            Update shipment allocation plan details
+            {t('editar_envio.subtitle')}
           </p>
         </div>
 

@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface Incidencia {
   id: number;
@@ -21,6 +22,7 @@ interface Incidencia {
 }
 
 export default function Incidencias() {
+  const { t } = useTranslation();
   const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -41,8 +43,8 @@ export default function Incidencias() {
       setIncidencias(data || []);
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: "Could not load issues",
+        title: t('message.error'),
+        description: t('incidencias.error_loading'),
         variant: "destructive",
       });
     } finally {
@@ -80,14 +82,14 @@ export default function Incidencias() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Issues</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('incidencias.title')}</h1>
             <p className="text-muted-foreground">
-              Manage reported issues and problems
+              {t('incidencias.subtitle')}
             </p>
           </div>
           <Button className="gap-2">
             <Plus className="w-4 h-4" />
-            New Issue
+            {t('button.new_issue')}
           </Button>
         </div>
 
@@ -95,7 +97,7 @@ export default function Incidencias() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Search by description or type..."
+              placeholder={t('incidencias.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -105,11 +107,11 @@ export default function Incidencias() {
 
         {loading ? (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading issues...</p>
+            <p className="text-muted-foreground">{t('message.loading')}</p>
           </div>
         ) : filteredIncidencias.length === 0 ? (
           <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No issues found</p>
+            <p className="text-muted-foreground">{t('incidencias.no_data_found')}</p>
           </Card>
         ) : (
           <div className="grid gap-4">
@@ -138,11 +140,11 @@ export default function Incidencias() {
 
                     <div className="flex gap-6 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Source:</span>
+                        <span className="text-muted-foreground">{t('label.source')}:</span>
                         <span className="ml-2 font-medium capitalize">{incidencia.origen}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Created:</span>
+                        <span className="text-muted-foreground">{t('label.created')}:</span>
                         <span className="ml-2 font-medium">
                           {format(new Date(incidencia.fecha_creacion), "dd MMM yyyy HH:mm", { locale: enUS })}
                         </span>
@@ -150,7 +152,7 @@ export default function Incidencias() {
                     </div>
                   </div>
 
-                  <Button variant="outline">View Details</Button>
+                  <Button variant="outline">{t('button.view_details')}</Button>
                 </div>
               </Card>
             ))}
