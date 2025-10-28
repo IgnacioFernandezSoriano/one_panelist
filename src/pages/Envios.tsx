@@ -75,6 +75,18 @@ interface Envio {
     nombre_completo: string;
     nodo_asignado?: string;
   };
+  nodo_origen_info?: {
+    region_id?: number;
+    ciudad_id?: number;
+    regiones?: { id: number; nombre: string; codigo: string; };
+    ciudades?: { id: number; nombre: string; codigo: string; };
+  };
+  nodo_destino_info?: {
+    region_id?: number;
+    ciudad_id?: number;
+    regiones?: { id: number; nombre: string; codigo: string; };
+    ciudades?: { id: number; nombre: string; codigo: string; };
+  };
 }
 
 export default function Envios() {
@@ -96,8 +108,10 @@ export default function Envios() {
     destination: "",
     panelist: "",
     status: "",
-    region: "",
-    ciudad: "",
+    regionOrigen: "",
+    regionDestino: "",
+    ciudadOrigen: "",
+    ciudadDestino: "",
     fechaProgramadaDesde: undefined as Date | undefined,
     fechaProgramadaHasta: undefined as Date | undefined,
     fechaEnvioDesde: undefined as Date | undefined,
@@ -154,6 +168,18 @@ export default function Envios() {
           panelista_destino:panelistas!panelista_destino_id (
             nombre_completo,
             nodo_asignado
+          ),
+          nodo_origen_info:nodos!envios_nodo_origen_fkey (
+            region_id,
+            ciudad_id,
+            regiones:region_id (id, nombre, codigo),
+            ciudades:ciudad_id (id, nombre, codigo)
+          ),
+          nodo_destino_info:nodos!envios_nodo_destino_fkey (
+            region_id,
+            ciudad_id,
+            regiones:region_id (id, nombre, codigo),
+            ciudades:ciudad_id (id, nombre, codigo)
           )
         `)
         .order("fecha_programada", { ascending: false });
@@ -355,13 +381,17 @@ export default function Envios() {
     const matchesStatus = !advancedFilters.status || 
       e.estado === advancedFilters.status;
     
-    const matchesRegion = !advancedFilters.region || 
-      e.nodo_origen.startsWith(advancedFilters.region) || 
-      e.nodo_destino.startsWith(advancedFilters.region);
+    const matchesRegionOrigen = !advancedFilters.regionOrigen || 
+      e.nodo_origen_info?.regiones?.id?.toString() === advancedFilters.regionOrigen;
     
-    const matchesCiudad = !advancedFilters.ciudad || 
-      e.nodo_origen === advancedFilters.ciudad || 
-      e.nodo_destino === advancedFilters.ciudad;
+    const matchesRegionDestino = !advancedFilters.regionDestino || 
+      e.nodo_destino_info?.regiones?.id?.toString() === advancedFilters.regionDestino;
+    
+    const matchesCiudadOrigen = !advancedFilters.ciudadOrigen || 
+      e.nodo_origen_info?.ciudades?.id?.toString() === advancedFilters.ciudadOrigen;
+    
+    const matchesCiudadDestino = !advancedFilters.ciudadDestino || 
+      e.nodo_destino_info?.ciudades?.id?.toString() === advancedFilters.ciudadDestino;
     
     // Date filters
     const matchesFechaProgramadaDesde = !advancedFilters.fechaProgramadaDesde ||
@@ -378,7 +408,8 @@ export default function Envios() {
 
     return matchesBasicSearch && matchesCarrier && matchesProduct && 
            matchesType && matchesOrigin && matchesDestination && 
-           matchesPanelist && matchesStatus && matchesRegion && matchesCiudad &&
+           matchesPanelist && matchesStatus && matchesRegionOrigen && matchesRegionDestino &&
+           matchesCiudadOrigen && matchesCiudadDestino &&
            matchesFechaProgramadaDesde && matchesFechaProgramadaHasta &&
            matchesFechaEnvioDesde && matchesFechaEnvioHasta;
   });
@@ -411,8 +442,10 @@ export default function Envios() {
       destination: "",
       panelist: "",
       status: "",
-      region: "",
-      ciudad: "",
+      regionOrigen: "",
+      regionDestino: "",
+      ciudadOrigen: "",
+      ciudadDestino: "",
       fechaProgramadaDesde: undefined,
       fechaProgramadaHasta: undefined,
       fechaEnvioDesde: undefined,
@@ -729,16 +762,28 @@ export default function Envios() {
                   <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, status: ""})} />
                 </Badge>
               )}
-              {advancedFilters.region && (
+              {advancedFilters.regionOrigen && (
                 <Badge variant="secondary" className="gap-1">
-                  Region: {regiones.find(r => r.codigo === advancedFilters.region)?.nombre}
-                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, region: ""})} />
+                  Origin Region: {regiones.find(r => r.id.toString() === advancedFilters.regionOrigen)?.nombre}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, regionOrigen: ""})} />
                 </Badge>
               )}
-              {advancedFilters.ciudad && (
+              {advancedFilters.regionDestino && (
                 <Badge variant="secondary" className="gap-1">
-                  City: {ciudades.find(c => c.codigo === advancedFilters.ciudad)?.nombre}
-                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, ciudad: ""})} />
+                  Dest. Region: {regiones.find(r => r.id.toString() === advancedFilters.regionDestino)?.nombre}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, regionDestino: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.ciudadOrigen && (
+                <Badge variant="secondary" className="gap-1">
+                  Origin City: {ciudades.find(c => c.id.toString() === advancedFilters.ciudadOrigen)?.nombre}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, ciudadOrigen: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.ciudadDestino && (
+                <Badge variant="secondary" className="gap-1">
+                  Dest. City: {ciudades.find(c => c.id.toString() === advancedFilters.ciudadDestino)?.nombre}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, ciudadDestino: ""})} />
                 </Badge>
               )}
               {advancedFilters.fechaProgramadaDesde && (
@@ -1233,18 +1278,18 @@ export default function Envios() {
               </div>
 
               <div className="space-y-2">
-                <Label>Region</Label>
+                <Label>Origin Region</Label>
                 <Select
-                  value={advancedFilters.region || "ALL"}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, region: value === "ALL" ? "" : value})}
+                  value={advancedFilters.regionOrigen || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, regionOrigen: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All regions" />
+                    <SelectValue placeholder="All origin regions" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">All regions</SelectItem>
+                    <SelectItem value="ALL">All origin regions</SelectItem>
                     {regiones.map((region) => (
-                      <SelectItem key={region.id} value={region.codigo}>
+                      <SelectItem key={region.id} value={region.id.toString()}>
                         {region.nombre}
                       </SelectItem>
                     ))}
@@ -1253,18 +1298,58 @@ export default function Envios() {
               </div>
 
               <div className="space-y-2">
-                <Label>City</Label>
+                <Label>Destination Region</Label>
                 <Select
-                  value={advancedFilters.ciudad || "ALL"}
-                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, ciudad: value === "ALL" ? "" : value})}
+                  value={advancedFilters.regionDestino || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, regionDestino: value === "ALL" ? "" : value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="All cities" />
+                    <SelectValue placeholder="All destination regions" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">All cities</SelectItem>
+                    <SelectItem value="ALL">All destination regions</SelectItem>
+                    {regiones.map((region) => (
+                      <SelectItem key={region.id} value={region.id.toString()}>
+                        {region.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Origin City</Label>
+                <Select
+                  value={advancedFilters.ciudadOrigen || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, ciudadOrigen: value === "ALL" ? "" : value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All origin cities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All origin cities</SelectItem>
                     {ciudades.map((ciudad) => (
-                      <SelectItem key={ciudad.id} value={ciudad.codigo}>
+                      <SelectItem key={ciudad.id} value={ciudad.id.toString()}>
+                        {ciudad.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Destination City</Label>
+                <Select
+                  value={advancedFilters.ciudadDestino || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, ciudadDestino: value === "ALL" ? "" : value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All destination cities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All destination cities</SelectItem>
+                    {ciudades.map((ciudad) => (
+                      <SelectItem key={ciudad.id} value={ciudad.id.toString()}>
                         {ciudad.nombre}
                       </SelectItem>
                     ))}
