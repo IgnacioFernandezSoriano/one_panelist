@@ -83,8 +83,6 @@ const AppSidebarContent = () => {
   ];
 
   const solutionParametersItems = [
-    { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
-    { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
     { icon: Box, label: "Products", path: "/configuracion/productos" },
     { icon: Truck, label: "Carriers", path: "/configuracion/carriers" },
     { icon: Workflow, label: "Workflows", path: "/configuracion/workflows" },
@@ -97,7 +95,10 @@ const AppSidebarContent = () => {
     { icon: MapPin, label: "Nodes", path: "/configuracion/nodos" },
   ];
 
-  const dataImportItem = { icon: Database, label: "Data Import", path: "/import" };
+  const administrationItems = [
+    { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
+    { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
+  ];
 
   return (
     <>
@@ -197,16 +198,26 @@ const AppSidebarContent = () => {
                   {sidebarOpen && <Separator className="my-2" />}
 
                   <SidebarGroup>
+                    {sidebarOpen && (
+                      <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                        Administration
+                      </SidebarGroupLabel>
+                    )}
                     <SidebarGroupContent>
                       <SidebarMenu>
-                        <SidebarMenuItem>
-                          <SidebarMenuButton asChild isActive={location.pathname === dataImportItem.path} className="pl-8">
-                            <Link to={dataImportItem.path}>
-                              <dataImportItem.icon className="w-4 h-4" />
-                              {sidebarOpen && <span className="text-sm">{dataImportItem.label}</span>}
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
+                        {administrationItems.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton asChild isActive={isActive} className="pl-8">
+                                <Link to={item.path}>
+                                  <item.icon className="w-4 h-4" />
+                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
                       </SidebarMenu>
                     </SidebarGroupContent>
                   </SidebarGroup>
