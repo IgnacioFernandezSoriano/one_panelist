@@ -23,8 +23,11 @@ export default function Carriers() {
     setIsLoading(true);
     const { data: carriers, error } = await supabase
       .from("carriers")
-      .select("*")
-      .order("legal_name", { ascending: true });
+      .select(`
+        *,
+        clientes:cliente_id (nombre)
+      `)
+      .order("commercial_name", { ascending: true });
 
     if (error) {
       toast({
@@ -33,7 +36,11 @@ export default function Carriers() {
         variant: "destructive",
       });
     } else {
-      setData(carriers || []);
+      const formattedData = carriers?.map(c => ({
+        ...c,
+        account_name: c.clientes?.nombre
+      })) || [];
+      setData(formattedData);
     }
     setIsLoading(false);
   };
@@ -56,21 +63,6 @@ export default function Carriers() {
     }
   };
 
-  const getRegulatoryStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; className: string }> = {
-      authorized: { variant: "default", className: "bg-success text-white" },
-      suspended: { variant: "secondary", className: "bg-orange-500 text-white" },
-      sanctioned: { variant: "destructive", className: "bg-red-700 text-white" },
-      revoked: { variant: "destructive", className: "bg-destructive text-white" },
-    };
-    const config = variants[status] || variants.authorized;
-    return (
-      <Badge variant={config.variant} className={config.className}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
-  };
-
   const getStatusBadge = (status: string) => {
     return status === "active" ? (
       <Badge variant="default" className="bg-success text-white">Active</Badge>
@@ -79,17 +71,26 @@ export default function Carriers() {
     );
   };
 
+  const getOperatorTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      designated_usp: "Designated USP",
+      licensed_postal: "Licensed Postal",
+      express_courier: "Express Courier",
+      ecommerce_parcel: "E-commerce Parcel",
+      exempt: "Exempt",
+      others: "Others"
+    };
+    return labels[type] || type;
+  };
+
   const columns = [
-    { key: "id", label: "ID" },
-    { key: "legal_name", label: "Legal Name" },
+    { key: "account_name", label: "Account" },
     { key: "commercial_name", label: "Commercial Name" },
-    { key: "operator_type", label: "Type" },
     { 
-      key: "regulatory_status", 
-      label: "Regulatory Status",
-      render: (item: any) => getRegulatoryStatusBadge(item.regulatory_status)
+      key: "operator_type", 
+      label: "Operator Type",
+      render: (item: any) => getOperatorTypeLabel(item.operator_type)
     },
-    { key: "geographic_scope", label: "Scope" },
     { 
       key: "status", 
       label: "Status",
@@ -100,17 +101,11 @@ export default function Carriers() {
   const csvConfig = {
     tableName: "carriers",
     expectedColumns: [
-      "legal_name", "commercial_name", "tax_id", "operator_type",
-      "license_number", "regulatory_status", "authorization_date", "license_expiration_date",
-      "legal_representative", "phone", "email", "website", "geographic_scope", "status", "carrier_code"
+      "cliente_id", "commercial_name", "operator_type", "status"
     ],
     exampleData: [
-      ["Sociedad Estatal Correos y Telégrafos", "Correos", "A83052407", "designated_usp", 
-       "LIC-2020-001", "authorized", "2020-01-01", "2030-12-31", "Juan García", 
-       "+34900123456", "info@correos.es", "https://www.correos.es", "national", "active", "CORREOS"],
-      ["DHL Express Spain S.L.", "DHL", "B12345678", "express_courier", 
-       "LIC-2019-050", "authorized", "2019-06-15", "2029-06-15", "María López", 
-       "+34900789012", "info@dhl.es", "https://www.dhl.es", "international", "active", "DHL"],
+      ["1", "Correos", "designated_usp", "active"],
+      ["1", "DHL", "express_courier", "active"],
     ],
   };
 
@@ -139,7 +134,7 @@ export default function Carriers() {
         />
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Create New Carrier</DialogTitle>
             </DialogHeader>
@@ -154,7 +149,7 @@ export default function Carriers() {
         </Dialog>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Edit Carrier</DialogTitle>
             </DialogHeader>
