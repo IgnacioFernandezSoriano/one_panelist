@@ -26,16 +26,8 @@ interface TranslationContextType {
 
 const TranslationContext = createContext<TranslationContextType | undefined>(undefined);
 
-const getDefaultLanguage = (): string => {
-  const stored = localStorage.getItem('app_language');
-  if (stored) return stored;
-  
-  const browserLang = navigator.language.split('-')[0];
-  return ['es', 'en', 'pt'].includes(browserLang) ? browserLang : 'es';
-};
-
 export function TranslationProvider({ children }: { children: ReactNode }) {
-  const [currentLanguage, setCurrentLanguage] = useState<string>(getDefaultLanguage());
+  const [currentLanguage, setCurrentLanguage] = useState<string>('es'); // Temporary initial value
   const [userLanguageLoaded, setUserLanguageLoaded] = useState(false);
   const queryClient = useQueryClient();
 
@@ -96,7 +88,6 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
 
   const changeLanguage = async (lang: string) => {
     setCurrentLanguage(lang);
-    localStorage.setItem('app_language', lang);
     
     // Update user's preferred language in database if authenticated
     const { data: { session } } = await supabase.auth.getSession();
@@ -108,33 +99,46 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Load user's preferred language on mount
+  // Load user's preferred language or default language from DB on mount
   useEffect(() => {
     const loadUserLanguage = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data: usuario } = await supabase
-          .from('usuarios')
-          .select('idioma_preferido')
-          .eq('email', session.user.email)
+      try {
+        // First, get the default language from DB
+        const { data: defaultLang } = await supabase
+          .from('idiomas_disponibles')
+          .select('codigo')
+          .eq('es_default', true)
+          .eq('activo', true)
           .single();
-        
-        if (usuario?.idioma_preferido) {
-          setCurrentLanguage(usuario.idioma_preferido);
-          localStorage.setItem('app_language', usuario.idioma_preferido);
+
+        const defaultLanguageCode = defaultLang?.codigo || 'es';
+
+        // Then check if user is authenticated and has a preferred language
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: usuario } = await supabase
+            .from('usuarios')
+            .select('idioma_preferido')
+            .eq('email', session.user.email)
+            .single();
+          
+          // Use user's preferred language if set, otherwise use default from DB
+          const languageToUse = usuario?.idioma_preferido || defaultLanguageCode;
+          setCurrentLanguage(languageToUse);
+        } else {
+          // Not authenticated, use default language
+          setCurrentLanguage(defaultLanguageCode);
         }
+      } catch (error) {
+        console.error('Error loading language:', error);
+        setCurrentLanguage('es'); // Fallback
       }
+      
       setUserLanguageLoaded(true);
     };
     
     loadUserLanguage();
   }, []);
-
-  useEffect(() => {
-    if (userLanguageLoaded) {
-      localStorage.setItem('app_language', currentLanguage);
-    }
-  }, [currentLanguage, userLanguageLoaded]);
 
   return (
     <TranslationContext.Provider 
