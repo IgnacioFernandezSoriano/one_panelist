@@ -147,18 +147,13 @@ export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMater
           description: "The material type has been updated successfully",
         });
       } else {
-        // Creating new - generate code from name
-        const generatedCode = formData.nombre
-          .toUpperCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^A-Z0-9-]/g, '')
-          .substring(0, 50);
-        
-        dataToSave.codigo = generatedCode;
+        // Creating new - let the database trigger generate the code
+        // Remove codigo from dataToSave as it will be auto-generated
+        const { codigo, ...dataWithoutCode } = dataToSave;
 
         const { error } = await supabase
           .from("tipos_material")
-          .insert([dataToSave]);
+          .insert([dataWithoutCode]);
 
         if (error) throw error;
 
@@ -220,7 +215,7 @@ export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMater
           className="bg-muted"
         />
         <p className="text-xs text-muted-foreground">
-          Code will be auto-generated based on material name
+          Code will be auto-generated as a 4-digit number (e.g., 0001, 0002)
         </p>
       </div>
 

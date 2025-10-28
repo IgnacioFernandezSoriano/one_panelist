@@ -1106,6 +1106,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_next_material_code: {
+        Args: { p_cliente_id: number }
+        Returns: string
+      }
       generate_next_product_code: {
         Args: { p_cliente_id: number }
         Returns: string
