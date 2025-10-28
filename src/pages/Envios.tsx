@@ -96,6 +96,8 @@ export default function Envios() {
     destination: "",
     panelist: "",
     status: "",
+    region: "",
+    ciudad: "",
     fechaProgramadaDesde: undefined as Date | undefined,
     fechaProgramadaHasta: undefined as Date | undefined,
     fechaEnvioDesde: undefined as Date | undefined,
@@ -104,11 +106,28 @@ export default function Envios() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [panelistSearchOpen, setPanelistSearchOpen] = useState(false);
+  const [regiones, setRegiones] = useState<Array<{id: number, nombre: string, codigo: string}>>([]);
+  const [ciudades, setCiudades] = useState<Array<{id: number, nombre: string, codigo: string}>>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     loadEnvios();
+    loadRegionesYCiudades();
   }, []);
+
+  const loadRegionesYCiudades = async () => {
+    try {
+      const [regionesData, ciudadesData] = await Promise.all([
+        supabase.from("regiones").select("id, nombre, codigo").eq("estado", "activo").order("nombre"),
+        supabase.from("ciudades").select("id, nombre, codigo").eq("estado", "activo").order("nombre")
+      ]);
+
+      if (regionesData.data) setRegiones(regionesData.data);
+      if (ciudadesData.data) setCiudades(ciudadesData.data);
+    } catch (error: any) {
+      console.error("Error loading regions/cities:", error);
+    }
+  };
 
   const loadEnvios = async () => {
     try {
@@ -336,6 +355,14 @@ export default function Envios() {
     const matchesStatus = !advancedFilters.status || 
       e.estado === advancedFilters.status;
     
+    const matchesRegion = !advancedFilters.region || 
+      e.nodo_origen.startsWith(advancedFilters.region) || 
+      e.nodo_destino.startsWith(advancedFilters.region);
+    
+    const matchesCiudad = !advancedFilters.ciudad || 
+      e.nodo_origen === advancedFilters.ciudad || 
+      e.nodo_destino === advancedFilters.ciudad;
+    
     // Date filters
     const matchesFechaProgramadaDesde = !advancedFilters.fechaProgramadaDesde ||
       new Date(e.fecha_programada) >= advancedFilters.fechaProgramadaDesde;
@@ -351,7 +378,7 @@ export default function Envios() {
 
     return matchesBasicSearch && matchesCarrier && matchesProduct && 
            matchesType && matchesOrigin && matchesDestination && 
-           matchesPanelist && matchesStatus && 
+           matchesPanelist && matchesStatus && matchesRegion && matchesCiudad &&
            matchesFechaProgramadaDesde && matchesFechaProgramadaHasta &&
            matchesFechaEnvioDesde && matchesFechaEnvioHasta;
   });
@@ -384,6 +411,8 @@ export default function Envios() {
       destination: "",
       panelist: "",
       status: "",
+      region: "",
+      ciudad: "",
       fechaProgramadaDesde: undefined,
       fechaProgramadaHasta: undefined,
       fechaEnvioDesde: undefined,
@@ -698,6 +727,18 @@ export default function Envios() {
                 <Badge variant="secondary" className="gap-1">
                   Status: {advancedFilters.status}
                   <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, status: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.region && (
+                <Badge variant="secondary" className="gap-1">
+                  Region: {regiones.find(r => r.codigo === advancedFilters.region)?.nombre}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, region: ""})} />
+                </Badge>
+              )}
+              {advancedFilters.ciudad && (
+                <Badge variant="secondary" className="gap-1">
+                  City: {ciudades.find(c => c.codigo === advancedFilters.ciudad)?.nombre}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setAdvancedFilters({...advancedFilters, ciudad: ""})} />
                 </Badge>
               )}
               {advancedFilters.fechaProgramadaDesde && (
@@ -1189,6 +1230,46 @@ export default function Envios() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Region</Label>
+                <Select
+                  value={advancedFilters.region || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, region: value === "ALL" ? "" : value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All regions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All regions</SelectItem>
+                    {regiones.map((region) => (
+                      <SelectItem key={region.id} value={region.codigo}>
+                        {region.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>City</Label>
+                <Select
+                  value={advancedFilters.ciudad || "ALL"}
+                  onValueChange={(value) => setAdvancedFilters({...advancedFilters, ciudad: value === "ALL" ? "" : value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="All cities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All cities</SelectItem>
+                    {ciudades.map((ciudad) => (
+                      <SelectItem key={ciudad.id} value={ciudad.codigo}>
+                        {ciudad.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
