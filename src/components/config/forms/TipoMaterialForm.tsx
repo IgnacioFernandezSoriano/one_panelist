@@ -42,10 +42,13 @@ export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMater
     setSubmitting(true);
 
     try {
+      const dataToSave = { ...formData };
+      
       if (initialData?.id) {
+        // Editing - keep existing code
         const { error } = await supabase
           .from("tipos_material")
-          .update(formData)
+          .update(dataToSave)
           .eq("id", initialData.id);
 
         if (error) throw error;
@@ -55,9 +58,18 @@ export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMater
           description: "The material type has been updated successfully",
         });
       } else {
+        // Creating new - generate code from name
+        const generatedCode = formData.nombre
+          .toUpperCase()
+          .replace(/\s+/g, '-')
+          .replace(/[^A-Z0-9-]/g, '')
+          .substring(0, 50);
+        
+        dataToSave.codigo = generatedCode;
+
         const { error } = await supabase
           .from("tipos_material")
-          .insert([formData]);
+          .insert([dataToSave]);
 
         if (error) throw error;
 
@@ -82,15 +94,16 @@ export function TipoMaterialForm({ onSuccess, onCancel, initialData }: TipoMater
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="codigo">Code *</Label>
+        <Label htmlFor="codigo">Code</Label>
         <Input
           id="codigo"
-          value={formData.codigo}
-          onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-          placeholder="TAG, SOBRE-A4, CAJA-S"
-          required
-          disabled={!!initialData?.id}
+          value={initialData?.codigo || "Auto-generated"}
+          disabled
+          className="bg-muted"
         />
+        <p className="text-xs text-muted-foreground">
+          Code will be auto-generated based on material name
+        </p>
       </div>
 
       <div className="space-y-2">
