@@ -30,6 +30,7 @@ import ConfigIncidencias from "./pages/config/ConfigIncidencias";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
+import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +49,7 @@ const App = () => {
             <Route path="/envios" element={<Envios />} />
             <Route path="/envios/nuevo" element={<NuevoEnvio />} />
             <Route path="/envios/massive-change" element={<MassivePanelistChange />} />
+            <Route path="/envios/materials-plan" element={<PanelistMaterialsPlan />} />
             <Route path="/envios/:id" element={<EditarEnvio />} />
             <Route path="/incidencias" element={<Incidencias />} />
             <Route path="/nodos" element={<Nodos />} />

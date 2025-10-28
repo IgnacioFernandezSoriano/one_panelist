@@ -38,7 +38,8 @@ import {
   Truck,
   RefreshCw,
   Upload,
-  UserX
+  UserX,
+  PackageSearch
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -98,6 +99,7 @@ const AppSidebarContent = () => {
   const allocationPlanItems = [
     { icon: Upload, label: "Import Plan", path: "/envios", action: "import-csv" },
     { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
+    { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
   ];
 
   const solutionParametersItems = [
