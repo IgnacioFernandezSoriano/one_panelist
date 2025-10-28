@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown, RefreshCw, ChevronDown } from "lucide-react";
+import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -127,6 +127,16 @@ export default function Envios() {
   useEffect(() => {
     loadEnvios();
     loadRegionesYCiudades();
+  }, []);
+
+  // Listen for import dialog event from sidebar
+  useEffect(() => {
+    const handleOpenImportDialog = () => {
+      setImportDialogOpen(true);
+    };
+    
+    window.addEventListener('openImportDialog', handleOpenImportDialog);
+    return () => window.removeEventListener('openImportDialog', handleOpenImportDialog);
   }, []);
 
   const loadRegionesYCiudades = async () => {
@@ -669,24 +679,6 @@ export default function Envios() {
             </p>
           </div>
           <div className="flex gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  Allocation Plan
-                  <ChevronDown className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem onClick={() => navigate("/envios/massive-change")}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Massive Panelist Change
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setImportDialogOpen(true)}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Import CSV
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
             <Button variant="outline" className="gap-2" onClick={exportTopologyCSV}>
               <FileDown className="w-4 h-4" />
               Export Topology CSV

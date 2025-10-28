@@ -35,7 +35,9 @@ import {
   FileText,
   GitBranch,
   Box,
-  Truck
+  Truck,
+  RefreshCw,
+  Upload
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -48,6 +50,7 @@ const AppSidebarContent = () => {
   const { open: sidebarOpen } = useSidebar();
   const [user, setUser] = useState<User | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
+  const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -67,6 +70,9 @@ const AppSidebarContent = () => {
     if (location.pathname.startsWith("/configuracion/")) {
       setConfigOpen(true);
     }
+    if (location.pathname.startsWith("/envios")) {
+      setAllocationPlanOpen(true);
+    }
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -76,10 +82,14 @@ const AppSidebarContent = () => {
 
   const mainMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: Send, label: "Allocation Plan", path: "/envios" },
     { icon: Users, label: "Panelists", path: "/panelistas" },
     { icon: AlertCircle, label: "Issues", path: "/incidencias" },
     { icon: GitBranch, label: "Topology", path: "/topology" },
+  ];
+
+  const allocationPlanItems = [
+    { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
+    { icon: Upload, label: "Import CSV", path: "/envios", action: "import-csv" },
   ];
 
   const solutionParametersItems = [
@@ -132,6 +142,70 @@ const AppSidebarContent = () => {
                 </SidebarMenuItem>
               );
             })}
+
+            {/* Allocation Plan Collapsible */}
+            <SidebarMenuItem>
+              <Collapsible open={allocationPlanOpen} onOpenChange={setAllocationPlanOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton isActive={location.pathname.startsWith("/envios")}>
+                    <Send className="w-5 h-5" />
+                    {sidebarOpen && <span>Allocation Plan</span>}
+                    {sidebarOpen && (allocationPlanOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {/* View Allocation Plan */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            asChild 
+                            isActive={location.pathname === "/envios"} 
+                            className="pl-8"
+                          >
+                            <Link to="/envios">
+                              <Send className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">View Plan</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        {/* Submenu items */}
+                        {allocationPlanItems.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <SidebarMenuItem key={item.path + (item.action || '')}>
+                              <SidebarMenuButton 
+                                asChild={!item.action} 
+                                isActive={isActive} 
+                                className="pl-8"
+                                onClick={item.action === 'import-csv' ? () => {
+                                  // Dispatch custom event to open import dialog
+                                  window.dispatchEvent(new CustomEvent('openImportDialog'));
+                                } : undefined}
+                              >
+                                {item.action ? (
+                                  <button className="w-full flex items-center gap-2">
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </button>
+                                ) : (
+                                  <Link to={item.path}>
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </Link>
+                                )}
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </CollapsibleContent>
+              </Collapsible>
+            </SidebarMenuItem>
 
             <SidebarMenuItem>
               <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
