@@ -21,31 +21,27 @@ export function useUserRole() {
         return;
       }
 
-      // Temporary: Wait for Supabase types to sync
-      // TODO: Uncomment once types are synced
-      console.log("Waiting for Supabase types to sync...");
-      
       // Get user info
-      // const { data: usuario } = await supabase
-      //   .from("usuarios")
-      //   .select("id, cliente_id")
-      //   .eq("email", session.user.email)
-      //   .maybeSingle();
+      const { data: usuario } = await supabase
+        .from("usuarios")
+        .select("id, cliente_id")
+        .eq("email", session.user.email)
+        .maybeSingle();
 
-      // if (usuario) {
-      //   setUserId(usuario.id);
-      //   setClienteId(usuario.cliente_id);
+      if (usuario) {
+        setUserId(usuario.id);
+        setClienteId(usuario.cliente_id);
 
-      //   // Get user roles
-      //   const { data: userRoles } = await supabase
-      //     .from("user_roles")
-      //     .select("role")
-      //     .eq("user_id", usuario.id);
+        // Get user roles
+        const { data: userRoles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", usuario.id);
 
-      //   if (userRoles) {
-      //     setRoles(userRoles.map(r => r.role as AppRole));
-      //   }
-      // }
+        if (userRoles) {
+          setRoles(userRoles.map(r => r.role as AppRole));
+        }
+      }
     } catch (error) {
       console.error("Error loading user roles:", error);
     } finally {

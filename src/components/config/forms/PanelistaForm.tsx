@@ -67,11 +67,24 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   };
 
   const loadGestores = async () => {
+    // Get users who have coordinator or manager roles
+    const { data: userRolesData, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .in("role", ["coordinator", "manager", "admin", "superadmin"]);
+
+    if (rolesError || !userRolesData || userRolesData.length === 0) {
+      setGestores([]);
+      return;
+    }
+
+    const userIds = userRolesData.map(ur => ur.user_id);
+
     const { data, error } = await supabase
       .from("usuarios")
       .select("id, nombre_completo")
       .eq("estado", "activo")
-      .in("rol", ["gestor", "administrador"])
+      .in("id", userIds)
       .order("nombre_completo", { ascending: true });
 
     if (!error && data) {
