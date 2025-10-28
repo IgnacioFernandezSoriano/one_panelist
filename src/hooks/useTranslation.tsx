@@ -66,7 +66,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
       return data as Translation[];
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: !!currentLanguage,
+    staleTime: 0, // Always fetch fresh data when language changes
   });
 
   // Convert translations array to map for faster lookup
@@ -96,7 +97,6 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   const changeLanguage = async (lang: string) => {
     setCurrentLanguage(lang);
     localStorage.setItem('app_language', lang);
-    queryClient.invalidateQueries({ queryKey: ['translations', lang] });
     
     // Update user's preferred language in database if authenticated
     const { data: { session } } = await supabase.auth.getSession();
