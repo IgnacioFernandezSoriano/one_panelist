@@ -25,10 +25,27 @@ export function QuickCreateCarrier({ open, onOpenChange, onSuccess }: QuickCreat
     setIsSubmitting(true);
 
     try {
+      // Get current user's cliente_id
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const { data: userData } = await supabase
+        .from("usuarios")
+        .select("cliente_id")
+        .eq("email", user.email)
+        .single();
+
+      if (!userData?.cliente_id) {
+        throw new Error("User has no associated account");
+      }
+
       const { data, error } = await supabase
         .from("carriers")
         .insert([{
           ...formData,
+          cliente_id: userData.cliente_id,
           operator_type: "licensed_postal",
           regulatory_status: "authorized"
         }])

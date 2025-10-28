@@ -18,7 +18,7 @@ export type Database = {
         Row: {
           authorization_date: string | null
           carrier_code: string | null
-          cliente_id: number | null
+          cliente_id: number
           commercial_name: string | null
           created_at: string | null
           declared_coverage: string | null
@@ -49,7 +49,7 @@ export type Database = {
         Insert: {
           authorization_date?: string | null
           carrier_code?: string | null
-          cliente_id?: number | null
+          cliente_id: number
           commercial_name?: string | null
           created_at?: string | null
           declared_coverage?: string | null
@@ -80,7 +80,7 @@ export type Database = {
         Update: {
           authorization_date?: string | null
           carrier_code?: string | null
-          cliente_id?: number | null
+          cliente_id?: number
           commercial_name?: string | null
           created_at?: string | null
           declared_coverage?: string | null

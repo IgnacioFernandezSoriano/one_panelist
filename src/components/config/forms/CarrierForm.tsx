@@ -53,8 +53,37 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Get current user's cliente_id
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "User not authenticated",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const { data: userData } = await supabase
+      .from("usuarios")
+      .select("cliente_id")
+      .eq("email", user.email)
+      .single();
+
+    if (!userData?.cliente_id) {
+      toast({
+        title: "Error",
+        description: "User has no associated account",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const dataToSave = {
       ...formData,
+      cliente_id: userData.cliente_id,
       guarantee_amount: formData.guarantee_amount ? parseFloat(formData.guarantee_amount) : null,
       number_of_branches: formData.number_of_branches ? parseInt(formData.number_of_branches) : null,
       authorization_date: formData.authorization_date || null,
@@ -76,9 +105,11 @@ export function CarrierForm({ onSuccess, onCancel, initialData }: CarrierFormPro
 
     let error;
     if (isEditing) {
+      // When editing, don't change the cliente_id
+      const { cliente_id, ...updateData } = dataToSave;
       const result = await supabase
         .from("carriers")
-        .update(dataToSave)
+        .update(updateData)
         .eq("id", initialData.id);
       error = result.error;
     } else {
