@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Loader2, Upload, User } from "lucide-react";
+import { Loader2, Upload, User, Edit, Check, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function Profile() {
@@ -20,6 +20,8 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [editedName, setEditedName] = useState("");
 
   // Fetch current user data
   const { data: usuario, isLoading } = useQuery({
@@ -210,6 +212,53 @@ export default function Profile() {
     }
   };
 
+  const handleStartEditName = () => {
+    setEditedName(usuario?.nombre_completo || '');
+    setEditingName(true);
+  };
+
+  const handleCancelEditName = () => {
+    setEditingName(false);
+    setEditedName('');
+  };
+
+  const handleSaveName = async () => {
+    if (!editedName.trim()) {
+      toast({
+        title: t('profile.name_required'),
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ nombre_completo: editedName.trim() })
+        .eq('email', user.email);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['current-user-profile'] });
+
+      toast({
+        title: t('profile.name_updated'),
+        description: t('profile.name_updated_desc'),
+      });
+
+      setEditingName(false);
+    } catch (error: any) {
+      toast({
+        title: t('profile.error_updating_name'),
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -290,8 +339,43 @@ export default function Profile() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>{t('label.name')}</Label>
-              <Input value={usuario?.nombre_completo || ''} disabled />
+              <div className="flex items-center justify-between">
+                <Label>{t('label.name')}</Label>
+                {!editingName ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleStartEditName}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    {t('profile.edit_name')}
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelEditName}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      {t('profile.cancel')}
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSaveName}
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      {t('profile.save_name')}
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <Input 
+                value={editingName ? editedName : (usuario?.nombre_completo || '')} 
+                onChange={(e) => setEditedName(e.target.value)}
+                disabled={!editingName}
+              />
             </div>
             <div className="space-y-2">
               <Label>{t('label.email')}</Label>
