@@ -12,6 +12,16 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders })
   }
 
+  // Helper: generate a strong temporary password (min 12 chars, includes symbols)
+  const generateTempPassword = () => {
+    const bytes = new Uint8Array(16)
+    crypto.getRandomValues(bytes)
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*'
+    let pass = 'Tmp-'
+    for (let i = 0; i < 12; i++) pass += chars[bytes[i] % chars.length]
+    return pass
+  }
+
   try {
     // Create a Supabase client with the service role key
     const supabaseAdmin = createClient(
@@ -63,9 +73,10 @@ serve(async (req) => {
 
         // Create user in Supabase Auth
         console.log(`Creating auth user for: ${usuario.email}`)
+        const tempPassword = generateTempPassword()
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
           email: usuario.email,
-          password: usuario.password_hash, // Using stored password
+          password: tempPassword,
           email_confirm: true, // Auto-confirm the email
           user_metadata: {
             nombre_completo: usuario.nombre_completo || usuario.email
