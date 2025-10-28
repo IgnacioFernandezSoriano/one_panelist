@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -91,6 +92,7 @@ interface Envio {
 
 export default function Envios() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -684,23 +686,23 @@ export default function Envios() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Allocation Plan</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('allocation_plan')}</h1>
             <p className="text-muted-foreground">
-              Manage shipping plans and tracking
+              {t('manage_shipping_plans')}
             </p>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="gap-2" onClick={exportTopologyCSV}>
               <FileDown className="w-4 h-4" />
-              Export Topology CSV
+              {t('export_topology_csv')}
             </Button>
             <Button variant="outline" className="gap-2" onClick={exportAllocationPlanCSV}>
               <FileDown className="w-4 h-4" />
-              Export Allocation Plan
+              {t('export_allocation_plan')}
             </Button>
             <Button className="gap-2" onClick={() => navigate("/envios/nuevo")}>
               <Plus className="w-4 h-4" />
-              Allocation Event
+              {t('allocation_event')}
             </Button>
           </div>
         </div>
@@ -709,7 +711,7 @@ export default function Envios() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Search by ID, account, product, carrier, panelist, node... (use commas to combine: FEDEX,IMS)"
+              placeholder={t('search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -726,7 +728,7 @@ export default function Envios() {
               onClick={() => setAdvancedSearchOpen(true)}
             >
               <Filter className="w-4 h-4" />
-              Advanced Search
+              {t('advanced_search')}
               {hasActiveFilters && (
                 <Badge variant="secondary" className="ml-1">
                   {Object.values(advancedFilters).filter(v => v).length}
