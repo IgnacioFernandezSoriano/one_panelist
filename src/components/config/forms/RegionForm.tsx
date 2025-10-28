@@ -136,12 +136,12 @@ export function RegionForm({ onSuccess, onCancel, initialData }: RegionFormProps
           <PopoverContent className="w-full p-0">
             <Command>
               <CommandInput 
-                placeholder="Search account..." 
+                placeholder={t('form.search_account')} 
                 value={clienteSearch}
                 onValueChange={setClienteSearch}
               />
               <CommandList>
-                <CommandEmpty>No account found.</CommandEmpty>
+                <CommandEmpty>{t('form.no_account_found')}</CommandEmpty>
                 <CommandGroup>
                   {clientes
                     .filter(c => 

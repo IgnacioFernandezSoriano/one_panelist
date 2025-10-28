@@ -303,9 +303,9 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
             <Command>
-              <CommandInput placeholder="Search account..." />
+              <CommandInput placeholder={t('form.search_account')} />
               <CommandList>
-                <CommandEmpty>No account found.</CommandEmpty>
+                <CommandEmpty>{t('form.no_account_found')}</CommandEmpty>
                 <CommandGroup>
                   {clientes.map((cliente) => (
                     <CommandItem

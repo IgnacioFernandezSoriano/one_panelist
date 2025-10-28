@@ -204,8 +204,8 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
-                <CommandInput placeholder="Search account..." />
-                <CommandEmpty>Account not found.</CommandEmpty>
+                <CommandInput placeholder={t('form.search_account')} />
+                <CommandEmpty>{t('form.account_not_found')}</CommandEmpty>
                 <CommandGroup className="max-h-64 overflow-auto">
                   {clientes.map((cliente) => (
                     <CommandItem
