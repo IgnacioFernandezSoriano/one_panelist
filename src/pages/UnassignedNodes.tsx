@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertCircle, ExternalLink } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import { NodoForm } from "@/components/config/forms/NodoForm";
 
 interface UnassignedNode {
   codigo: string;
@@ -26,8 +27,9 @@ interface UnassignedNode {
 export default function UnassignedNodes() {
   const [unassignedNodes, setUnassignedNodes] = useState<UnassignedNode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<any>(null);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadUnassignedNodes();
@@ -114,9 +116,41 @@ export default function UnassignedNodes() {
     }
   };
 
-  const handleNodeClick = (nodeCodigo: string) => {
-    // Navigate to nodes configuration page with edit parameter
-    navigate(`/configuracion/nodos?edit=${nodeCodigo}`);
+  const handleNodeClick = async (nodeCodigo: string) => {
+    // Load full node data and open edit dialog
+    try {
+      const { data: nodeData, error } = await supabase
+        .from("nodos")
+        .select(`
+          *,
+          panelistas:panelista_id (id, nombre_completo)
+        `)
+        .eq("codigo", nodeCodigo)
+        .single();
+
+      if (error) throw error;
+
+      if (nodeData) {
+        setSelectedNode({
+          ...nodeData,
+          panelista_nombre: nodeData.panelistas?.nombre_completo
+        });
+        setEditDialogOpen(true);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error loading node",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDialogClose = () => {
+    setEditDialogOpen(false);
+    setSelectedNode(null);
+    // Reload the list after editing
+    loadUnassignedNodes();
   };
 
   if (loading) {
@@ -237,6 +271,25 @@ export default function UnassignedNodes() {
           </Card>
         )}
       </div>
+
+      {/* Edit Node Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Node - Assign Panelist</DialogTitle>
+          </DialogHeader>
+          {selectedNode && (
+            <NodoForm
+              initialData={selectedNode}
+              onSuccess={() => {
+                toast({ title: "Node updated successfully" });
+                handleDialogClose();
+              }}
+              onCancel={handleDialogClose}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 }
