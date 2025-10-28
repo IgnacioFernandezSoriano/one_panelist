@@ -88,8 +88,6 @@ const AppSidebarContent = () => {
 
   const mainMenuItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: Users, label: "Panelists", path: "/panelistas" },
-    { icon: AlertCircle, label: "Issues", path: "/incidencias" },
   ];
 
   const topologyItems = [
@@ -153,59 +151,6 @@ const AppSidebarContent = () => {
                 </SidebarMenuItem>
               );
             })}
-
-            {/* Topology Collapsible */}
-            <SidebarMenuItem>
-              <Collapsible open={topologyOpen} onOpenChange={setTopologyOpen}>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton isActive={location.pathname.startsWith("/topology")}>
-                    <GitBranch className="w-5 h-5" />
-                    {sidebarOpen && <span>Topology</span>}
-                    {sidebarOpen && (topologyOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroup>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {/* View Topology */}
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            asChild 
-                            isActive={location.pathname === "/topology"} 
-                            className="pl-8"
-                          >
-                            <Link to="/topology">
-                              <GitBranch className="w-4 h-4" />
-                              {sidebarOpen && <span className="text-sm">View Topology</span>}
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        {/* Submenu items */}
-                        {topologyItems.map((item) => {
-                          const isActive = location.pathname === item.path;
-                          return (
-                            <SidebarMenuItem key={item.path}>
-                              <SidebarMenuButton 
-                                asChild 
-                                isActive={isActive} 
-                                className="pl-8"
-                              >
-                                <Link to={item.path}>
-                                  <item.icon className="w-4 h-4" />
-                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                </CollapsibleContent>
-              </Collapsible>
-            </SidebarMenuItem>
 
             {/* Allocation Plan Collapsible */}
             <SidebarMenuItem>
@@ -271,6 +216,80 @@ const AppSidebarContent = () => {
               </Collapsible>
             </SidebarMenuItem>
 
+            {/* Panelists */}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={location.pathname === "/panelistas"}>
+                <Link to="/panelistas">
+                  <Users className="w-5 h-5" />
+                  {sidebarOpen && <span>Panelists</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            {/* Issues */}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={location.pathname === "/incidencias"}>
+                <Link to="/incidencias">
+                  <AlertCircle className="w-5 h-5" />
+                  {sidebarOpen && <span>Issues</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+
+            {/* Topology Collapsible */}
+            <SidebarMenuItem>
+              <Collapsible open={topologyOpen} onOpenChange={setTopologyOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton isActive={location.pathname.startsWith("/topology")}>
+                    <GitBranch className="w-5 h-5" />
+                    {sidebarOpen && <span>Topology</span>}
+                    {sidebarOpen && (topologyOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {/* View Topology */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            asChild 
+                            isActive={location.pathname === "/topology"} 
+                            className="pl-8"
+                          >
+                            <Link to="/topology">
+                              <GitBranch className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">View Topology</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        {/* Submenu items */}
+                        {topologyItems.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton 
+                                asChild 
+                                isActive={isActive} 
+                                className="pl-8"
+                              >
+                                <Link to={item.path}>
+                                  <item.icon className="w-4 h-4" />
+                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </CollapsibleContent>
+              </Collapsible>
+            </SidebarMenuItem>
+
+            {/* Configuration Collapsible */}
             <SidebarMenuItem>
               <Collapsible open={configOpen} onOpenChange={setConfigOpen}>
                 <CollapsibleTrigger asChild>
@@ -415,7 +434,7 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
-        <Sidebar collapsible="icon">
+        <Sidebar collapsible="icon" className="w-[280px] data-[state=collapsed]:w-14">
           <AppSidebarContent />
         </Sidebar>
 
