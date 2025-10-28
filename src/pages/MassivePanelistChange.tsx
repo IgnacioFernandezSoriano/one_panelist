@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 interface Panelista {
   id: number;
@@ -41,7 +41,6 @@ export default function MassivePanelistChange() {
   const [affectedCount, setAffectedCount] = useState(0);
   
   // Form state
-  const [panelistType, setPanelistType] = useState<"origen" | "destino">("origen");
   const [currentPanelist, setCurrentPanelist] = useState<string>("");
   const [newPanelist, setNewPanelist] = useState<string>("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
@@ -64,7 +63,13 @@ export default function MassivePanelistChange() {
         .order("nombre_completo");
 
       if (error) throw error;
-      setPanelistas(data || []);
+      
+      // Remove duplicates based on id
+      const uniquePanelistas = data?.filter((panelista, index, self) =>
+        index === self.findIndex((p) => p.id === panelista.id)
+      ) || [];
+      
+      setPanelistas(uniquePanelistas);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -105,23 +110,27 @@ export default function MassivePanelistChange() {
     }
 
     try {
-      // Count affected records
-      const panelistField = panelistType === "origen" ? "panelista_origen_id" : "panelista_destino_id";
-      
-      let query = supabase
+      // Count affected records - both origin and destination
+      const { count: countOrigen, error: errorOrigen } = await supabase
         .from("envios")
         .select("id", { count: "exact", head: true })
-        .eq(panelistField, parseInt(currentPanelist))
+        .eq("panelista_origen_id", parseInt(currentPanelist))
         .gte("fecha_programada", format(dateFrom, "yyyy-MM-dd"))
         .lte("fecha_programada", format(dateTo, "yyyy-MM-dd"));
 
-      const { count, error } = await query;
+      const { count: countDestino, error: errorDestino } = await supabase
+        .from("envios")
+        .select("id", { count: "exact", head: true })
+        .eq("panelista_destino_id", parseInt(currentPanelist))
+        .gte("fecha_programada", format(dateFrom, "yyyy-MM-dd"))
+        .lte("fecha_programada", format(dateTo, "yyyy-MM-dd"));
 
-      if (error) throw error;
+      if (errorOrigen || errorDestino) throw errorOrigen || errorDestino;
       
-      setAffectedCount(count || 0);
+      const totalCount = (countOrigen || 0) + (countDestino || 0);
+      setAffectedCount(totalCount);
       
-      if (count === 0) {
+      if (totalCount === 0) {
         toast({
           title: "No Records Found",
           description: "No allocation plans match the selected criteria",
@@ -151,17 +160,26 @@ export default function MassivePanelistChange() {
   const handleExecuteChange = async () => {
     setProcessing(true);
     try {
-      const panelistField = panelistType === "origen" ? "panelista_origen_id" : "panelista_destino_id";
       const updateValue = newPanelist ? parseInt(newPanelist) : null;
 
-      const { error } = await supabase
-        .from("envios")
-        .update({ [panelistField]: updateValue })
-        .eq(panelistField, parseInt(currentPanelist))
-        .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
-        .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd"));
+      // Update both origin and destination panelists
+      const [resultOrigen, resultDestino] = await Promise.all([
+        supabase
+          .from("envios")
+          .update({ panelista_origen_id: updateValue })
+          .eq("panelista_origen_id", parseInt(currentPanelist))
+          .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
+          .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd")),
+        supabase
+          .from("envios")
+          .update({ panelista_destino_id: updateValue })
+          .eq("panelista_destino_id", parseInt(currentPanelist))
+          .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
+          .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd"))
+      ]);
 
-      if (error) throw error;
+      if (resultOrigen.error) throw resultOrigen.error;
+      if (resultDestino.error) throw resultDestino.error;
 
       toast({
         title: "Success",
@@ -211,23 +229,6 @@ export default function MassivePanelistChange() {
 
         <Card className="p-6 max-w-2xl">
           <div className="space-y-6">
-            {/* Panelist Type Selection */}
-            <div className="space-y-2">
-              <Label>Panelist Role</Label>
-              <Select value={panelistType} onValueChange={(value: "origen" | "destino") => setPanelistType(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="origen">Origin Panelist (Sender)</SelectItem>
-                  <SelectItem value="destino">Destination Panelist (Receiver)</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-muted-foreground">
-                Select whether to replace origin or destination panelists
-              </p>
-            </div>
-
             {/* Current Panelist Selector */}
             <div className="space-y-2">
               <Label>Current Panelist (to replace)</Label>
@@ -278,7 +279,7 @@ export default function MassivePanelistChange() {
                 </PopoverContent>
               </Popover>
               <p className="text-sm text-muted-foreground">
-                Select the panelist that will be replaced in the allocation plans
+                Select the panelist to be replaced (both as sender and receiver in all allocation plans)
               </p>
             </div>
 
@@ -435,10 +436,10 @@ export default function MassivePanelistChange() {
               <AlertDialogDescription className="space-y-2">
                 <p>You are about to update <strong>{affectedCount}</strong> allocation plan(s).</p>
                 <div className="bg-muted p-3 rounded-md space-y-1 text-sm">
-                  <p><strong>Role:</strong> {panelistType === "origen" ? "Origin Panelist (Sender)" : "Destination Panelist (Receiver)"}</p>
                   <p><strong>Current Panelist:</strong> {currentPanelistData?.nombre_completo}</p>
                   <p><strong>New Panelist:</strong> {newPanelistData?.nombre_completo || "(Unassigned)"}</p>
                   <p><strong>Date Range:</strong> {dateFrom && format(dateFrom, "PPP")} to {dateTo && format(dateTo, "PPP")}</p>
+                  <p className="text-xs text-muted-foreground mt-2">This will replace the panelist in both sender and receiver roles</p>
                 </div>
                 <p className="text-destructive font-semibold">This action cannot be undone.</p>
               </AlertDialogDescription>
