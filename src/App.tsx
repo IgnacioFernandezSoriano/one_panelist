@@ -27,6 +27,7 @@ import ConfigEnvios from "./pages/config/ConfigEnvios";
 import ConfigCarriers from "./pages/config/Carriers";
 import ConfigWorkflows from "./pages/config/Workflows";
 import ConfigIncidencias from "./pages/config/ConfigIncidencias";
+import ConfigTiposMateriales from "./pages/config/TiposMateriales";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
@@ -69,6 +70,7 @@ const App = () => {
             <Route path="/configuracion/carriers" element={<ConfigCarriers />} />
             <Route path="/configuracion/workflows" element={<ConfigWorkflows />} />
             <Route path="/configuracion/incidencias" element={<ConfigIncidencias />} />
+            <Route path="/configuracion/tipos-materiales" element={<ConfigTiposMateriales />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

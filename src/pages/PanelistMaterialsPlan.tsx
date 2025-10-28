@@ -14,8 +14,11 @@ interface MaterialsByPanelist {
   panelista_id: number;
   panelista_nombre: string;
   direccion_completa: string;
-  total_tags: number;
-  materiales_por_tipo: Record<string, number>;
+  total_envios: number;
+  materiales: Record<string, {
+    cantidad: number;
+    unidad_medida: string;
+  }>;
 }
 
 export default function PanelistMaterialsPlan() {
@@ -37,13 +40,14 @@ export default function PanelistMaterialsPlan() {
 
     setLoading(true);
     try {
-      // Fetch envios with panelist details
+      // Fetch envios with panelist details and product materials
       const { data: enviosData, error } = await supabase
         .from("envios")
         .select(`
           id,
           tipo_producto,
           panelista_destino_id,
+          producto_id,
           panelistas!envios_panelista_destino_id_fkey (
             id,
             nombre_completo,
@@ -51,15 +55,28 @@ export default function PanelistMaterialsPlan() {
             direccion_ciudad,
             direccion_codigo_postal,
             direccion_pais
+          ),
+          productos_cliente!inner (
+            id,
+            nombre_producto,
+            producto_materiales (
+              cantidad,
+              tipos_material (
+                codigo,
+                nombre,
+                unidad_medida
+              )
+            )
           )
         `)
         .gte("fecha_programada", startDate)
         .lte("fecha_programada", endDate)
-        .not("panelista_destino_id", "is", null);
+        .not("panelista_destino_id", "is", null)
+        .not("producto_id", "is", null);
 
       if (error) throw error;
 
-      // Group by panelist
+      // Group by panelist and calculate materials
       const grouped = enviosData.reduce((acc: Record<number, MaterialsByPanelist>, envio: any) => {
         const panelistaId = envio.panelista_destino_id;
         const panelista = envio.panelistas;
@@ -71,18 +88,30 @@ export default function PanelistMaterialsPlan() {
             panelista_id: panelistaId,
             panelista_nombre: panelista.nombre_completo,
             direccion_completa: `${panelista.direccion_calle}, ${panelista.direccion_ciudad}, ${panelista.direccion_codigo_postal}, ${panelista.direccion_pais}`,
-            total_tags: 0,
-            materiales_por_tipo: {},
+            total_envios: 0,
+            materiales: {},
           };
         }
 
-        // Count total tags (total records)
-        acc[panelistaId].total_tags += 1;
+        // Count total envios
+        acc[panelistaId].total_envios += 1;
 
-        // Count by tipo_producto
-        const tipo = envio.tipo_producto || "Sin tipo";
-        acc[panelistaId].materiales_por_tipo[tipo] = 
-          (acc[panelistaId].materiales_por_tipo[tipo] || 0) + 1;
+        // Calculate materials from product configuration
+        if (envio.productos_cliente?.producto_materiales) {
+          envio.productos_cliente.producto_materiales.forEach((pm: any) => {
+            const material = pm.tipos_material;
+            if (!material) return;
+
+            const key = `${material.codigo} - ${material.nombre}`;
+            if (!acc[panelistaId].materiales[key]) {
+              acc[panelistaId].materiales[key] = {
+                cantidad: 0,
+                unidad_medida: material.unidad_medida,
+              };
+            }
+            acc[panelistaId].materiales[key].cantidad += pm.cantidad;
+          });
+        }
 
         return acc;
       }, {});
@@ -119,30 +148,35 @@ export default function PanelistMaterialsPlan() {
       return;
     }
 
-    // Get all unique product types
-    const allTypes = new Set<string>();
+    // Get all unique material types
+    const allMaterials = new Set<string>();
     data.forEach(item => {
-      Object.keys(item.materiales_por_tipo).forEach(type => allTypes.add(type));
+      Object.keys(item.materiales).forEach(material => allMaterials.add(material));
     });
-    const sortedTypes = Array.from(allTypes).sort();
+    const sortedMaterials = Array.from(allMaterials).sort();
 
     // Build CSV header
     const headers = [
       "Panelist ID",
       "Panelist Name",
       "Address",
-      "Total Tags (Records)",
-      ...sortedTypes.map(type => `Material: ${type}`)
+      "Total Shipments",
+      ...sortedMaterials.flatMap(material => [`${material} (Qty)`, `${material} (Unit)`])
     ];
 
     // Build CSV rows
     const rows = data.map(item => {
+      const materialValues = sortedMaterials.flatMap(material => {
+        const mat = item.materiales[material];
+        return [mat?.cantidad || 0, mat?.unidad_medida || ''];
+      });
+      
       const row = [
         item.panelista_id,
         `"${item.panelista_nombre}"`,
         `"${item.direccion_completa}"`,
-        item.total_tags,
-        ...sortedTypes.map(type => item.materiales_por_tipo[type] || 0)
+        item.total_envios,
+        ...materialValues
       ];
       return row.join(",");
     });
@@ -250,8 +284,8 @@ export default function PanelistMaterialsPlan() {
                     <TableRow>
                       <TableHead>Panelist Name</TableHead>
                       <TableHead>Address</TableHead>
-                      <TableHead className="text-right">Total Tags</TableHead>
-                      <TableHead>Materials by Type</TableHead>
+                      <TableHead className="text-right">Total Shipments</TableHead>
+                      <TableHead>Materials Required</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -264,18 +298,23 @@ export default function PanelistMaterialsPlan() {
                           {item.direccion_completa}
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {item.total_tags}
+                          {item.total_envios}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-2">
-                            {Object.entries(item.materiales_por_tipo).map(([tipo, cantidad]) => (
+                            {Object.entries(item.materiales).map(([material, info]) => (
                               <span
-                                key={tipo}
+                                key={material}
                                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
                               >
-                                {tipo}: {cantidad}
+                                {material}: {info.cantidad} {info.unidad_medida}
                               </span>
                             ))}
+                            {Object.keys(item.materiales).length === 0 && (
+                              <span className="text-sm text-muted-foreground">
+                                No materials configured
+                              </span>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

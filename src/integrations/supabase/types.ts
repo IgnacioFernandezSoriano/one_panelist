@@ -688,6 +688,54 @@ export type Database = {
         }
         Relationships: []
       }
+      producto_materiales: {
+        Row: {
+          cantidad: number
+          es_obligatorio: boolean
+          fecha_creacion: string
+          fecha_modificacion: string
+          id: number
+          notas: string | null
+          producto_id: number
+          tipo_material_id: number
+        }
+        Insert: {
+          cantidad?: number
+          es_obligatorio?: boolean
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          notas?: string | null
+          producto_id: number
+          tipo_material_id: number
+        }
+        Update: {
+          cantidad?: number
+          es_obligatorio?: boolean
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          notas?: string | null
+          producto_id?: number
+          tipo_material_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "producto_materiales_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "producto_materiales_tipo_material_id_fkey"
+            columns: ["tipo_material_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_material"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       productos_cliente: {
         Row: {
           cliente_id: number
@@ -775,6 +823,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tipos_material: {
+        Row: {
+          codigo: string
+          descripcion: string | null
+          estado: string
+          fecha_creacion: string
+          fecha_modificacion: string
+          id: number
+          nombre: string
+          unidad_medida: string
+        }
+        Insert: {
+          codigo: string
+          descripcion?: string | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          nombre: string
+          unidad_medida?: string
+        }
+        Update: {
+          codigo?: string
+          descripcion?: string | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          id?: number
+          nombre?: string
+          unidad_medida?: string
+        }
+        Relationships: []
       }
       usuarios: {
         Row: {

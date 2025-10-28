@@ -5,6 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Trash2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -33,12 +36,18 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
   });
 
   const [clientes, setClientes] = useState<any[]>([]);
+  const [tiposMaterial, setTiposMaterial] = useState<any[]>([]);
+  const [materialesProducto, setMaterialesProducto] = useState<any[]>([]);
   const [openCliente, setOpenCliente] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     loadClientes();
+    loadTiposMaterial();
+    if (initialData?.id) {
+      loadMaterialesProducto(initialData.id);
+    }
   }, []);
 
   const loadClientes = async () => {
@@ -48,6 +57,65 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
       .eq("estado", "activo")
       .order("nombre");
     setClientes(data || []);
+  };
+
+  const loadTiposMaterial = async () => {
+    const { data } = await supabase
+      .from("tipos_material")
+      .select("*")
+      .eq("estado", "activo")
+      .order("nombre");
+    setTiposMaterial(data || []);
+  };
+
+  const loadMaterialesProducto = async (productoId: number) => {
+    const { data } = await supabase
+      .from("producto_materiales")
+      .select(`
+        *,
+        tipos_material (
+          id,
+          codigo,
+          nombre,
+          unidad_medida
+        )
+      `)
+      .eq("producto_id", productoId);
+    setMaterialesProducto(data || []);
+  };
+
+  const handleAddMaterial = () => {
+    if (tiposMaterial.length === 0) return;
+    
+    const firstMaterial = tiposMaterial[0];
+    setMaterialesProducto([
+      ...materialesProducto,
+      {
+        tipo_material_id: firstMaterial.id,
+        cantidad: 1,
+        es_obligatorio: true,
+        notas: "",
+        tipos_material: firstMaterial,
+      },
+    ]);
+  };
+
+  const handleRemoveMaterial = (index: number) => {
+    setMaterialesProducto(materialesProducto.filter((_, i) => i !== index));
+  };
+
+  const handleMaterialChange = (index: number, field: string, value: any) => {
+    const updated = [...materialesProducto];
+    updated[index] = { ...updated[index], [field]: value };
+    
+    if (field === "tipo_material_id") {
+      const selectedMaterial = tiposMaterial.find(m => m.id === parseInt(value));
+      if (selectedMaterial) {
+        updated[index].tipos_material = selectedMaterial;
+      }
+    }
+    
+    setMaterialesProducto(updated);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,6 +132,7 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
       };
 
       const isEditing = !!initialData?.id;
+      let productoId = initialData?.id;
 
       if (isEditing) {
         const { error } = await supabase
@@ -72,23 +141,49 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
           .eq("id", initialData.id);
 
         if (error) throw error;
-
-        toast({
-          title: "Product updated",
-          description: "The product has been updated successfully",
-        });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("productos_cliente")
-          .insert([dataToSave] as any);
+          .insert([dataToSave] as any)
+          .select()
+          .single();
 
         if (error) throw error;
-
-        toast({
-          title: "Product created",
-          description: "The product has been created successfully",
-        });
+        productoId = data.id;
       }
+
+      // Save materials
+      if (productoId) {
+        // Delete existing materials if editing
+        if (isEditing) {
+          await supabase
+            .from("producto_materiales")
+            .delete()
+            .eq("producto_id", productoId);
+        }
+
+        // Insert new materials
+        if (materialesProducto.length > 0) {
+          const materialesData = materialesProducto.map(m => ({
+            producto_id: productoId,
+            tipo_material_id: m.tipo_material_id,
+            cantidad: m.cantidad,
+            es_obligatorio: m.es_obligatorio,
+            notas: m.notas || null,
+          }));
+
+          const { error: materialesError } = await supabase
+            .from("producto_materiales")
+            .insert(materialesData);
+
+          if (materialesError) throw materialesError;
+        }
+      }
+
+      toast({
+        title: isEditing ? "Product updated" : "Product created",
+        description: "The product has been saved successfully",
+      });
 
       onSuccess();
     } catch (error: any) {
@@ -210,6 +305,106 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
             <SelectItem value="inactivo">Inactive</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Required Materials Section */}
+      <div className="space-y-4 pt-4 border-t">
+        <div className="flex justify-between items-center">
+          <div>
+            <Label className="text-base">Required Materials</Label>
+            <p className="text-xs text-muted-foreground">
+              Materials needed for each shipment of this product
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAddMaterial}
+            disabled={tiposMaterial.length === 0}
+            className="gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Material
+          </Button>
+        </div>
+
+        {materialesProducto.length > 0 && (
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Material Type</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Required</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {materialesProducto.map((material, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Select
+                        value={material.tipo_material_id?.toString()}
+                        onValueChange={(value) => handleMaterialChange(index, "tipo_material_id", parseInt(value))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tiposMaterial.map((tipo) => (
+                            <SelectItem key={tipo.id} value={tipo.id.toString()}>
+                              {tipo.codigo} - {tipo.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={material.cantidad}
+                        onChange={(e) => handleMaterialChange(index, "cantidad", parseInt(e.target.value) || 1)}
+                        className="w-20"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Checkbox
+                        checked={material.es_obligatorio}
+                        onCheckedChange={(checked) => handleMaterialChange(index, "es_obligatorio", checked)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Input
+                        value={material.notas || ""}
+                        onChange={(e) => handleMaterialChange(index, "notas", e.target.value)}
+                        placeholder="Optional notes"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveMaterial(index)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+
+        {materialesProducto.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground border rounded-lg border-dashed">
+            No materials added. Click "Add Material" to specify required materials for this product.
+          </div>
+        )}
       </div>
 
       <div className="flex gap-2 pt-4">
