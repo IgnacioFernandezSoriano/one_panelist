@@ -88,8 +88,8 @@ const AppSidebarContent = () => {
   ];
 
   const allocationPlanItems = [
+    { icon: Upload, label: "Import Plan", path: "/envios", action: "import-csv" },
     { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
-    { icon: Upload, label: "Import CSV", path: "/envios", action: "import-csv" },
   ];
 
   const solutionParametersItems = [
