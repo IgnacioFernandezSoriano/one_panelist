@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { NodoForm } from "@/components/config/forms/NodoForm";
 import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -22,10 +22,26 @@ export default function ConfigNodos() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [selectedPanelista, setSelectedPanelista] = useState<any>(null);
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // Handle auto-opening edit dialog from URL parameter
+  useEffect(() => {
+    const editCodigo = searchParams.get("edit");
+    if (editCodigo && data.length > 0) {
+      const nodeToEdit = data.find((node: any) => node.codigo === editCodigo);
+      if (nodeToEdit) {
+        setSelectedItem(nodeToEdit);
+        setEditDialogOpen(true);
+        // Remove the edit parameter from URL
+        searchParams.delete("edit");
+        setSearchParams(searchParams);
+      }
+    }
+  }, [data, searchParams, setSearchParams]);
 
   const loadData = async () => {
     setIsLoading(true);

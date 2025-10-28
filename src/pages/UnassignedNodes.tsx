@@ -115,8 +115,8 @@ export default function UnassignedNodes() {
   };
 
   const handleNodeClick = (nodeCodigo: string) => {
-    // Navigate to nodes configuration page with filter or highlight
-    navigate(`/configuracion/nodos?codigo=${nodeCodigo}`);
+    // Navigate to nodes configuration page with edit parameter
+    navigate(`/configuracion/nodos?edit=${nodeCodigo}`);
   };
 
   if (loading) {
