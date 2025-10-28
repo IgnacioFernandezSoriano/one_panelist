@@ -10,6 +10,7 @@ import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { PanelistaForm } from "./PanelistaForm";
 
 interface NodoFormProps {
@@ -19,6 +20,7 @@ interface NodoFormProps {
 }
 
 export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientes, setClientes] = useState<any[]>([]);
   const [regiones, setRegiones] = useState<any[]>([]);
@@ -283,7 +285,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
       )}
 
       <div className="space-y-2">
-        <Label>Account *</Label>
+        <Label>{t('label.account')} *</Label>
         <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -295,7 +297,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
             >
               {formData.cliente_id 
                 ? clientes.find(c => c.id === parseInt(formData.cliente_id))?.nombre
-                : "Select account..."}
+                : t('form.select_account')}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>

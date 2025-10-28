@@ -8,6 +8,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandSeparator } from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Calendar as CalendarIcon, Check, ChevronsUpDown, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ interface EnvioFormProps {
 }
 
 export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientes, setClientes] = useState<any[]>([]);
   const [nodos, setNodos] = useState<any[]>([]);
@@ -187,7 +189,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Cliente */}
         <div className="space-y-2">
-          <Label htmlFor="cliente">Account *</Label>
+          <Label htmlFor="cliente">{t('label.account')} *</Label>
           <Popover open={openCliente} onOpenChange={setOpenCliente}>
             <PopoverTrigger asChild>
               <Button
@@ -196,7 +198,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
                 aria-expanded={openCliente}
                 className="w-full justify-between"
               >
-                {selectedCliente ? `${selectedCliente.codigo} - ${selectedCliente.nombre}` : "Select account..."}
+                {selectedCliente ? `${selectedCliente.codigo} - ${selectedCliente.nombre}` : t('form.select_account')}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>

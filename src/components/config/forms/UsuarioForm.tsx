@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface UsuarioFormProps {
   onSuccess: () => void;
@@ -14,6 +15,7 @@ interface UsuarioFormProps {
 }
 
 export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormProps) {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableLanguages, setAvailableLanguages] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
@@ -230,7 +232,7 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
 
       <div className="space-y-2">
         <Label htmlFor="cliente_id">
-          Client {selectedRole !== 'superadmin' && '*'}
+          {t('label.account')} {selectedRole !== 'superadmin' && '*'}
         </Label>
         <Select 
           value={formData.cliente_id?.toString() || ""} 
@@ -238,7 +240,7 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
           disabled={!isSuperAdmin() || selectedRole === 'superadmin'}
         >
           <SelectTrigger>
-            <SelectValue placeholder={selectedRole === 'superadmin' ? "No client (Global)" : "Select a client"} />
+            <SelectValue placeholder={selectedRole === 'superadmin' ? t('form.no_account_global') : t('form.select_account')} />
           </SelectTrigger>
           <SelectContent>
             {clientes.map((cliente) => (
@@ -250,12 +252,12 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
         </Select>
         {selectedRole !== 'superadmin' && (
           <p className="text-xs text-muted-foreground">
-            Users must be assigned to a client account to ensure data isolation
+            {t('form.account_isolation_info')}
           </p>
         )}
         {selectedRole === 'superadmin' && (
           <p className="text-xs text-muted-foreground">
-            Superadmins have global access and don't need a specific client
+            {t('form.superadmin_global_access')}
           </p>
         )}
       </div>

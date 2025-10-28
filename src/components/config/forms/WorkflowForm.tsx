@@ -9,6 +9,7 @@ import { Check, ChevronsUpDown, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface WorkflowFormProps {
@@ -18,6 +19,7 @@ interface WorkflowFormProps {
 }
 
 export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormProps) {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [clientes, setClientes] = useState<Array<{ id: number; nombre: string; codigo: string }>>([]);
   const [productos, setProductos] = useState<Array<{ id: number; nombre_producto: string; codigo_producto: string }>>([]);
@@ -125,7 +127,7 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
       </Alert>
 
       <div className="space-y-2">
-        <Label htmlFor="cliente_id">Account *</Label>
+        <Label htmlFor="cliente_id">{t('label.account')} *</Label>
         <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -135,14 +137,14 @@ export function WorkflowForm({ onSuccess, onCancel, initialData }: WorkflowFormP
               className="w-full justify-between"
             >
               {formData.cliente_id 
-                ? clientes.find(c => c.id.toString() === formData.cliente_id)?.nombre || "Select account..."
-                : "Select account..."}
+                ? clientes.find(c => c.id.toString() === formData.cliente_id)?.nombre || t('form.select_account')
+                : t('form.select_account')}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
             <Command>
-              <CommandInput 
+              <CommandInput
                 placeholder="Search account..." 
                 value={clienteSearch}
                 onValueChange={setClienteSearch}

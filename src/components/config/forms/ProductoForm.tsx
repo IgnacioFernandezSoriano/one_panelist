@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
@@ -27,6 +28,7 @@ interface ProductoFormProps {
 }
 
 export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormProps) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     cliente_id: initialData?.cliente_id || "",
     nombre_producto: initialData?.nombre_producto || "",
@@ -202,7 +204,7 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="cliente_id">Account *</Label>
+        <Label htmlFor="cliente_id">{t('label.account')} *</Label>
         <Popover open={openCliente} onOpenChange={setOpenCliente}>
           <PopoverTrigger asChild>
             <Button
@@ -211,13 +213,13 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
               aria-expanded={openCliente}
               className="w-full justify-between"
             >
-              {selectedCliente ? `${selectedCliente.codigo} - ${selectedCliente.nombre}` : "Select account..."}
+              {selectedCliente ? `${selectedCliente.codigo} - ${selectedCliente.nombre}` : t('form.select_account')}
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
             <Command>
-              <CommandInput placeholder="Search account..." />
+              <CommandInput placeholder={t('form.select_account')} />
               <CommandList>
                 <CommandEmpty>No account found.</CommandEmpty>
                 <CommandGroup>
