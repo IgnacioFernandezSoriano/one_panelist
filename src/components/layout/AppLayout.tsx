@@ -312,30 +312,6 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
-            {/* Nodes */}
-            {canAccessMenuItem('nodos') && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/nodos"}>
-                  <Link to="/nodos">
-                    <MapPin className="w-5 h-5" />
-                    {sidebarOpen && <span>Nodes</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-
-            {/* Data Import */}
-            {canAccessMenuItem('import') && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/import"}>
-                  <Link to="/import">
-                    <Database className="w-5 h-5" />
-                    {sidebarOpen && <span>Data Import</span>}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-
             {/* Configuration Collapsible - Admin & Super Admin only */}
             {hasAnyRole(['superadmin', 'admin']) && (
               <SidebarMenuItem>
