@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -669,6 +669,10 @@ export default function Envios() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={() => navigate("/envios/massive-change")}>
+              <RefreshCw className="w-4 h-4" />
+              Massive Panelist Change
+            </Button>
             <Button variant="outline" className="gap-2" onClick={exportTopologyCSV}>
               <FileDown className="w-4 h-4" />
               Export Topology CSV
