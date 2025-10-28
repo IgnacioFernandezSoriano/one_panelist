@@ -54,6 +54,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useMenuPermissions } from "@/hooks/useMenuPermissions";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -67,6 +68,7 @@ const AppSidebarContent = () => {
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
   const [topologyOpen, setTopologyOpen] = useState(false);
   const { isSuperAdmin, hasAnyRole } = useUserRole();
+  const { canAccessMenuItem } = useMenuPermissions();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -129,6 +131,7 @@ const AppSidebarContent = () => {
 
   const administrationItems = [
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
+    { icon: Shield, label: "Menu Permissions", path: "/configuracion/menu-permissions" },
   ];
 
   const superAdminItems = [
@@ -156,7 +159,8 @@ const AppSidebarContent = () => {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {mainMenuItems.map((item) => {
+            {/* Dashboard - always visible but check permission for coordinator/manager */}
+            {canAccessMenuItem('dashboard') && mainMenuItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <SidebarMenuItem key={item.path}>
@@ -171,8 +175,9 @@ const AppSidebarContent = () => {
             })}
 
             {/* Allocation Plan Collapsible */}
-            <SidebarMenuItem>
-              <Collapsible open={allocationPlanOpen} onOpenChange={setAllocationPlanOpen}>
+            {canAccessMenuItem('envios') && (
+              <SidebarMenuItem>
+                <Collapsible open={allocationPlanOpen} onOpenChange={setAllocationPlanOpen}>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton isActive={location.pathname.startsWith("/envios")}>
                     <Send className="w-5 h-5" />
@@ -231,32 +236,38 @@ const AppSidebarContent = () => {
                     </SidebarGroupContent>
                   </SidebarGroup>
                 </CollapsibleContent>
-              </Collapsible>
-            </SidebarMenuItem>
+                </Collapsible>
+              </SidebarMenuItem>
+            )}
 
             {/* Panelists */}
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={location.pathname === "/panelistas"}>
-                <Link to="/panelistas">
-                  <Users className="w-5 h-5" />
-                  {sidebarOpen && <span>Panelists</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {canAccessMenuItem('panelistas') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/panelistas"}>
+                  <Link to="/panelistas">
+                    <Users className="w-5 h-5" />
+                    {sidebarOpen && <span>Panelists</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
 
             {/* Issues */}
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={location.pathname === "/incidencias"}>
-                <Link to="/incidencias">
-                  <AlertCircle className="w-5 h-5" />
-                  {sidebarOpen && <span>Issues</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {canAccessMenuItem('incidencias') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/incidencias"}>
+                  <Link to="/incidencias">
+                    <AlertCircle className="w-5 h-5" />
+                    {sidebarOpen && <span>Issues</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
 
             {/* Topology Collapsible */}
-            <SidebarMenuItem>
-              <Collapsible open={topologyOpen} onOpenChange={setTopologyOpen}>
+            {canAccessMenuItem('topology') && (
+              <SidebarMenuItem>
+                <Collapsible open={topologyOpen} onOpenChange={setTopologyOpen}>
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton isActive={location.pathname.startsWith("/topology")}>
                     <GitBranch className="w-5 h-5" />
@@ -304,8 +315,33 @@ const AppSidebarContent = () => {
                     </SidebarGroupContent>
                   </SidebarGroup>
                 </CollapsibleContent>
-              </Collapsible>
-            </SidebarMenuItem>
+                </Collapsible>
+              </SidebarMenuItem>
+            )}
+
+            {/* Nodes */}
+            {canAccessMenuItem('nodos') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/nodos"}>
+                  <Link to="/nodos">
+                    <MapPin className="w-5 h-5" />
+                    {sidebarOpen && <span>Nodes</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+
+            {/* Data Import */}
+            {canAccessMenuItem('import') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/import"}>
+                  <Link to="/import">
+                    <Database className="w-5 h-5" />
+                    {sidebarOpen && <span>Data Import</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
 
             {/* Configuration Collapsible - Admin & Super Admin only */}
             {hasAnyRole(['superadmin', 'admin']) && (

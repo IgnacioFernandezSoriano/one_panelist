@@ -33,6 +33,7 @@ import ConfigIncidencias from "./pages/config/ConfigIncidencias";
 import ConfigTiposMateriales from "./pages/config/TiposMateriales";
 import ConfigTraducciones from "./pages/config/Traducciones";
 import ConfigIdiomas from "./pages/config/Idiomas";
+import MenuPermissions from "./pages/config/MenuPermissions";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
@@ -87,6 +88,11 @@ const App = () => {
             <Route path="/configuracion/usuarios" element={
               <RoleGuard allowedRoles={['superadmin', 'admin']}>
                 <ConfigUsuarios />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/menu-permissions" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <MenuPermissions />
               </RoleGuard>
             } />
             

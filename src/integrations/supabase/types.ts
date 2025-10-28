@@ -573,6 +573,33 @@ export type Database = {
           },
         ]
       }
+      menu_permissions: {
+        Row: {
+          can_access: boolean
+          created_at: string
+          id: string
+          menu_item: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          menu_item: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          can_access?: boolean
+          created_at?: string
+          id?: string
+          menu_item?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nodos: {
         Row: {
           ciudad: string
