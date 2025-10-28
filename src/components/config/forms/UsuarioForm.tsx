@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ interface UsuarioFormProps {
 
 export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableLanguages, setAvailableLanguages] = useState<any[]>([]);
   const { toast } = useToast();
   const isEditing = !!initialData;
   const [formData, setFormData] = useState({
@@ -24,7 +25,23 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
     telefono: initialData?.telefono || "",
     whatsapp_telegram_cuenta: initialData?.whatsapp_telegram_cuenta || "",
     estado: initialData?.estado || "activo",
+    idioma_preferido: initialData?.idioma_preferido || "es",
   });
+
+  useEffect(() => {
+    const loadLanguages = async () => {
+      const { data, error } = await supabase
+        .from('idiomas_disponibles')
+        .select('*')
+        .eq('activo', true)
+        .order('es_default', { ascending: false });
+      
+      if (!error && data) {
+        setAvailableLanguages(data);
+      }
+    };
+    loadLanguages();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,6 +142,25 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
           value={formData.whatsapp_telegram_cuenta}
           onChange={(e) => setFormData({ ...formData, whatsapp_telegram_cuenta: e.target.value })}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="idioma_preferido">Preferred Language *</Label>
+        <Select value={formData.idioma_preferido} onValueChange={(value) => setFormData({ ...formData, idioma_preferido: value })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {availableLanguages.map((lang) => (
+              <SelectItem key={lang.codigo} value={lang.codigo}>
+                <span className="flex items-center gap-2">
+                  <span>{lang.bandera_emoji}</span>
+                  <span>{lang.nombre_nativo}</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex gap-2 justify-end">

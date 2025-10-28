@@ -930,6 +930,7 @@ export type Database = {
           fecha_creacion: string
           fecha_ultimo_acceso: string | null
           id: number
+          idioma_preferido: string
           nombre_completo: string
           password_hash: string
           rol: Database["public"]["Enums"]["app_role"]
@@ -942,6 +943,7 @@ export type Database = {
           fecha_creacion?: string
           fecha_ultimo_acceso?: string | null
           id?: number
+          idioma_preferido?: string
           nombre_completo: string
           password_hash: string
           rol: Database["public"]["Enums"]["app_role"]
@@ -954,13 +956,22 @@ export type Database = {
           fecha_creacion?: string
           fecha_ultimo_acceso?: string | null
           id?: number
+          idioma_preferido?: string
           nombre_completo?: string
           password_hash?: string
           rol?: Database["public"]["Enums"]["app_role"]
           telefono?: string | null
           whatsapp_telegram_cuenta?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "usuarios_idioma_preferido_fkey"
+            columns: ["idioma_preferido"]
+            isOneToOne: false
+            referencedRelation: "idiomas_disponibles"
+            referencedColumns: ["codigo"]
+          },
+        ]
       }
     }
     Views: {

@@ -36,6 +36,7 @@ const getDefaultLanguage = (): string => {
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const [currentLanguage, setCurrentLanguage] = useState<string>(getDefaultLanguage());
+  const [userLanguageLoaded, setUserLanguageLoaded] = useState(false);
   const queryClient = useQueryClient();
 
   // Fetch available languages
@@ -92,15 +93,48 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
     return text;
   };
 
-  const changeLanguage = (lang: string) => {
+  const changeLanguage = async (lang: string) => {
     setCurrentLanguage(lang);
     localStorage.setItem('app_language', lang);
     queryClient.invalidateQueries({ queryKey: ['translations', lang] });
+    
+    // Update user's preferred language in database if authenticated
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      await supabase
+        .from('usuarios')
+        .update({ idioma_preferido: lang })
+        .eq('email', session.user.email);
+    }
   };
 
+  // Load user's preferred language on mount
   useEffect(() => {
-    localStorage.setItem('app_language', currentLanguage);
-  }, [currentLanguage]);
+    const loadUserLanguage = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: usuario } = await supabase
+          .from('usuarios')
+          .select('idioma_preferido')
+          .eq('email', session.user.email)
+          .single();
+        
+        if (usuario?.idioma_preferido) {
+          setCurrentLanguage(usuario.idioma_preferido);
+          localStorage.setItem('app_language', usuario.idioma_preferido);
+        }
+      }
+      setUserLanguageLoaded(true);
+    };
+    
+    loadUserLanguage();
+  }, []);
+
+  useEffect(() => {
+    if (userLanguageLoaded) {
+      localStorage.setItem('app_language', currentLanguage);
+    }
+  }, [currentLanguage, userLanguageLoaded]);
 
   return (
     <TranslationContext.Provider 

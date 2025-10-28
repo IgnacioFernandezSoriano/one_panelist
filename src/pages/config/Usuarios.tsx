@@ -61,6 +61,7 @@ export default function ConfigUsuarios() {
     { key: "nombre_completo", label: "Full Name" },
     { key: "email", label: "Email" },
     { key: "rol", label: "Role" },
+    { key: "idioma_preferido", label: "Language" },
     { 
       key: "estado", 
       label: "Status",
@@ -75,10 +76,10 @@ export default function ConfigUsuarios() {
 
   const csvConfig = {
     tableName: "usuarios",
-    expectedColumns: ["nombre_completo", "email", "password_hash", "rol", "telefono", "whatsapp_telegram_cuenta", "estado"],
+    expectedColumns: ["nombre_completo", "email", "password_hash", "rol", "telefono", "whatsapp_telegram_cuenta", "idioma_preferido", "estado"],
     exampleData: [
-      ["Juan Pérez", "juan@example.com", "hashed_password", "gestor", "+34600000000", "@juanperez", "activo"],
-      ["María García", "maria@example.com", "hashed_password", "admin", "+34600000001", "@mariagarcia", "activo"],
+      ["Juan Pérez", "juan@example.com", "hashed_password", "gestor", "+34600000000", "@juanperez", "es", "activo"],
+      ["María García", "maria@example.com", "hashed_password", "admin", "+34600000001", "@mariagarcia", "en", "activo"],
     ],
   };
 
