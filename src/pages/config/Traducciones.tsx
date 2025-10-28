@@ -302,8 +302,9 @@ export default function Traducciones() {
           </div>
         </Card>
 
-        <Card className="overflow-x-auto">
-          <Table>
+        <Card>
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="min-w-[200px]">Clave</TableHead>
@@ -350,6 +351,7 @@ export default function Traducciones() {
               )}
             </TableBody>
           </Table>
+          </div>
         </Card>
       </div>
     </AppLayout>
