@@ -6,11 +6,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { UsuarioForm } from "@/components/config/forms/UsuarioForm";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
+import { RefreshCw } from "lucide-react";
 
 export default function ConfigUsuarios() {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -65,6 +68,35 @@ export default function ConfigUsuarios() {
     } else {
       toast({ title: t("message.success.deleted") });
       loadData();
+    }
+  };
+
+  const handleSyncAuthUsers = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-users-auth', {
+        body: {}
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Synchronization completed",
+        description: data.message || "All users have been synchronized with authentication",
+      });
+
+      // Reload data after sync
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error synchronizing users",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -126,11 +158,22 @@ export default function ConfigUsuarios() {
   return (
     <AppLayout>
       <div className="p-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t("config.users.title")}</h1>
-          <p className="text-muted-foreground">
-            {t("config.users.subtitle")}
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t("config.users.title")}</h1>
+            <p className="text-muted-foreground">
+              {t("config.users.subtitle")}
+            </p>
+          </div>
+          <Button 
+            onClick={handleSyncAuthUsers}
+            disabled={isSyncing}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+            {isSyncing ? "Synchronizing..." : "Sync Auth Accounts"}
+          </Button>
         </div>
 
         <ConfigDataTable
