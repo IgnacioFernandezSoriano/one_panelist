@@ -48,10 +48,13 @@ import {
   Upload,
   UserX,
   PackageSearch,
-  Languages
+  Languages,
+  Shield
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
+// Temporarily comment out until types are synced
+// import { useUserRole } from "@/hooks/useUserRole";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -61,8 +64,11 @@ const AppSidebarContent = () => {
   const { open: sidebarOpen } = useSidebar();
   const [user, setUser] = useState<User | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
+  const [superAdminOpen, setSuperAdminOpen] = useState(false);
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
   const [topologyOpen, setTopologyOpen] = useState(false);
+  // Temporarily set as false until types sync - will be replaced with useUserRole
+  const isSuperAdmin = false; // const { isSuperAdmin } = useUserRole();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -124,10 +130,13 @@ const AppSidebarContent = () => {
   ];
 
   const administrationItems = [
-    { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
-    { icon: Languages, label: "Translations", path: "/configuracion/traducciones" },
+  ];
+
+  const superAdminItems = [
+    { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
     { icon: Languages, label: "Languages", path: "/configuracion/idiomas" },
+    { icon: Languages, label: "Translations", path: "/configuracion/traducciones" },
   ];
 
   return (
@@ -392,6 +401,42 @@ const AppSidebarContent = () => {
                 </CollapsibleContent>
               </Collapsible>
             </SidebarMenuItem>
+
+            {/* Super Admin Menu - Only visible to superadmins */}
+            {isSuperAdmin && (
+              <SidebarMenuItem>
+                <Collapsible open={superAdminOpen} onOpenChange={setSuperAdminOpen}>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={location.pathname.startsWith("/configuracion/clientes") || location.pathname.startsWith("/configuracion/idiomas") || location.pathname.startsWith("/configuracion/traducciones")}>
+                      <Shield className="w-5 h-5" />
+                      {sidebarOpen && <span>Super Admin</span>}
+                      {sidebarOpen && (superAdminOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarGroup>
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {superAdminItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton asChild isActive={isActive} className="pl-8">
+                                  <Link to={item.path}>
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarMenuItem>
+            )}
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>

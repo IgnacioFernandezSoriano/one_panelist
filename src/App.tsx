@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { TranslationProvider } from "./hooks/useTranslation";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Panelistas from "./pages/Panelistas";
@@ -16,6 +17,7 @@ import UnassignedNodes from "./pages/UnassignedNodes";
 import DataImport from "./pages/DataImport";
 import ImportGuide from "./pages/ImportGuide";
 import NotFound from "./pages/NotFound";
+import Unauthorized from "./pages/Unauthorized";
 import ConfigClientes from "./pages/config/Clientes";
 import ConfigRegiones from "./pages/config/Regiones";
 import ConfigCiudades from "./pages/config/Ciudades";
@@ -49,6 +51,7 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/panelistas" element={<Panelistas />} />
             <Route path="/envios" element={<Envios />} />
@@ -62,11 +65,35 @@ const App = () => {
             <Route path="/topology/unassigned-nodes" element={<UnassignedNodes />} />
             <Route path="/import" element={<DataImport />} />
             <Route path="/import-guide" element={<ImportGuide />} />
-            <Route path="/configuracion/clientes" element={<ConfigClientes />} />
+            
+            {/* Super Admin Routes */}
+            <Route path="/configuracion/clientes" element={
+              <RoleGuard allowedRoles={['superadmin']}>
+                <ConfigClientes />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/idiomas" element={
+              <RoleGuard allowedRoles={['superadmin']}>
+                <ConfigIdiomas />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/traducciones" element={
+              <RoleGuard allowedRoles={['superadmin']}>
+                <ConfigTraducciones />
+              </RoleGuard>
+            } />
+
+            {/* Admin & Super Admin Routes */}
+            <Route path="/configuracion/usuarios" element={
+              <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                <ConfigUsuarios />
+              </RoleGuard>
+            } />
+            
+            {/* Standard Config Routes */}
             <Route path="/configuracion/regiones" element={<ConfigRegiones />} />
             <Route path="/configuracion/ciudades" element={<ConfigCiudades />} />
             <Route path="/configuracion/nodos" element={<ConfigNodos />} />
-            <Route path="/configuracion/usuarios" element={<ConfigUsuarios />} />
             <Route path="/configuracion/productos" element={<ConfigProductos />} />
             <Route path="/configuracion/plantillas" element={<ConfigPlantillas />} />
             <Route path="/configuracion/panelistas" element={<ConfigPanelistas />} />
@@ -75,8 +102,6 @@ const App = () => {
             <Route path="/configuracion/workflows" element={<ConfigWorkflows />} />
             <Route path="/configuracion/incidencias" element={<ConfigIncidencias />} />
             <Route path="/configuracion/tipos-materiales" element={<ConfigTiposMateriales />} />
-            <Route path="/configuracion/traducciones" element={<ConfigTraducciones />} />
-            <Route path="/configuracion/idiomas" element={<ConfigIdiomas />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
