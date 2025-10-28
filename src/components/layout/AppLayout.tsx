@@ -37,7 +37,8 @@ import {
   Box,
   Truck,
   RefreshCw,
-  Upload
+  Upload,
+  UserX
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -51,6 +52,7 @@ const AppSidebarContent = () => {
   const [user, setUser] = useState<User | null>(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
+  const [topologyOpen, setTopologyOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -73,6 +75,9 @@ const AppSidebarContent = () => {
     if (location.pathname.startsWith("/envios")) {
       setAllocationPlanOpen(true);
     }
+    if (location.pathname.startsWith("/topology")) {
+      setTopologyOpen(true);
+    }
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -84,7 +89,10 @@ const AppSidebarContent = () => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Users, label: "Panelists", path: "/panelistas" },
     { icon: AlertCircle, label: "Issues", path: "/incidencias" },
-    { icon: GitBranch, label: "Topology", path: "/topology" },
+  ];
+
+  const topologyItems = [
+    { icon: UserX, label: "Unassigned Nodes", path: "/topology/unassigned-nodes" },
   ];
 
   const allocationPlanItems = [
@@ -142,6 +150,59 @@ const AppSidebarContent = () => {
                 </SidebarMenuItem>
               );
             })}
+
+            {/* Topology Collapsible */}
+            <SidebarMenuItem>
+              <Collapsible open={topologyOpen} onOpenChange={setTopologyOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton isActive={location.pathname.startsWith("/topology")}>
+                    <GitBranch className="w-5 h-5" />
+                    {sidebarOpen && <span>Topology</span>}
+                    {sidebarOpen && (topologyOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {/* View Topology */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            asChild 
+                            isActive={location.pathname === "/topology"} 
+                            className="pl-8"
+                          >
+                            <Link to="/topology">
+                              <GitBranch className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">View Topology</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        {/* Submenu items */}
+                        {topologyItems.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton 
+                                asChild 
+                                isActive={isActive} 
+                                className="pl-8"
+                              >
+                                <Link to={item.path}>
+                                  <item.icon className="w-4 h-4" />
+                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </CollapsibleContent>
+              </Collapsible>
+            </SidebarMenuItem>
 
             {/* Allocation Plan Collapsible */}
             <SidebarMenuItem>

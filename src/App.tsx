@@ -11,6 +11,7 @@ import Envios from "./pages/Envios";
 import Incidencias from "./pages/Incidencias";
 import Nodos from "./pages/Nodos";
 import Topology from "./pages/Topology";
+import UnassignedNodes from "./pages/UnassignedNodes";
 import DataImport from "./pages/DataImport";
 import ImportGuide from "./pages/ImportGuide";
 import NotFound from "./pages/NotFound";
@@ -51,6 +52,7 @@ const App = () => {
             <Route path="/incidencias" element={<Incidencias />} />
             <Route path="/nodos" element={<Nodos />} />
             <Route path="/topology" element={<Topology />} />
+            <Route path="/topology/unassigned-nodes" element={<UnassignedNodes />} />
             <Route path="/import" element={<DataImport />} />
             <Route path="/import-guide" element={<ImportGuide />} />
             <Route path="/configuracion/clientes" element={<ConfigClientes />} />
