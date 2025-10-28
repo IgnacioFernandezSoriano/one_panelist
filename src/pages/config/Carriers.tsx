@@ -98,17 +98,6 @@ export default function Carriers() {
     },
   ];
 
-  const csvConfig = {
-    tableName: "carriers",
-    expectedColumns: [
-      "cliente_id", "commercial_name", "operator_type", "status"
-    ],
-    exampleData: [
-      ["1", "Correos", "designated_usp", "active"],
-      ["1", "DHL", "express_courier", "active"],
-    ],
-  };
-
   return (
     <AppLayout>
       <div className="p-8">
@@ -130,7 +119,6 @@ export default function Carriers() {
           onDelete={handleDelete}
           onCreate={() => setCreateDialogOpen(true)}
           isLoading={isLoading}
-          csvConfig={csvConfig}
         />
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
