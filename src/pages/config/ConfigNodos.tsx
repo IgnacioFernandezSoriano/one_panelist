@@ -5,15 +5,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { NodoForm } from "@/components/config/forms/NodoForm";
 import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Link, useSearchParams } from "react-router-dom";
-import { Pencil } from "lucide-react";
+import { Pencil, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function ConfigNodos() {
+  const { t } = useTranslation();
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -65,9 +70,30 @@ export default function ConfigNodos() {
         panelista_nombre: n.panelistas?.nombre_completo
       })) || [];
       setData(formattedData);
+      setFilteredData(formattedData);
     }
     setIsLoading(false);
   };
+
+  // Filter data based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredData(data);
+      return;
+    }
+
+    const lowercaseSearch = searchTerm.toLowerCase();
+    const filtered = data.filter((node: any) => {
+      return (
+        node.codigo?.toLowerCase().includes(lowercaseSearch) ||
+        node.ciudad?.toLowerCase().includes(lowercaseSearch) ||
+        node.pais?.toLowerCase().includes(lowercaseSearch) ||
+        node.panelista_nombre?.toLowerCase().includes(lowercaseSearch)
+      );
+    });
+
+    setFilteredData(filtered);
+  }, [searchTerm, data]);
 
   const handleDelete = async (item: any) => {
     const { error } = await supabase
@@ -254,9 +280,38 @@ export default function ConfigNodos() {
           </p>
         </div>
 
+        {/* Search Filter */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder={t('common.search_nodes')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+            {searchTerm && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 px-2"
+                onClick={() => setSearchTerm("")}
+              >
+                Clear
+              </Button>
+            )}
+          </div>
+          {searchTerm && (
+            <p className="text-sm text-muted-foreground mt-2">
+              {filteredData.length} {filteredData.length === 1 ? 'node' : 'nodes'} found
+            </p>
+          )}
+        </div>
+
         <ConfigDataTable
           title="Nodes"
-          data={data}
+          data={filteredData}
           columns={columns}
           onEdit={(item) => {
             setSelectedItem(item);
