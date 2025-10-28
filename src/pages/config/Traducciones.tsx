@@ -302,14 +302,14 @@ export default function Traducciones() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Clave</TableHead>
-                <TableHead>Categoría</TableHead>
+                <TableHead className="min-w-[200px]">Clave</TableHead>
+                <TableHead className="min-w-[120px]">Categoría</TableHead>
                 {languages.map((lang: any) => (
-                  <TableHead key={lang.codigo}>
+                  <TableHead key={lang.codigo} className="min-w-[200px]">
                     {lang.bandera_emoji} {lang.nombre_nativo}
                   </TableHead>
                 ))}
