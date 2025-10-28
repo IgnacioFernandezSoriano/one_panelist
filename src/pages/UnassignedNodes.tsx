@@ -14,8 +14,11 @@ interface UnassignedNode {
   codigo: string;
   ciudad: string;
   pais: string;
+  estado: string;
   region_id: number | null;
   ciudad_id: number | null;
+  region_nombre: string | null;
+  ciudad_nombre: string | null;
   affectedEventsCount: number;
   firstEventDate: string | null;
 }
@@ -33,12 +36,21 @@ export default function UnassignedNodes() {
   const loadUnassignedNodes = async () => {
     setLoading(true);
     try {
-      // Get all nodes without assigned panelist
+      // Get all nodes without assigned panelist (both active and inactive)
       const { data: nodesData, error: nodesError } = await supabase
         .from("nodos")
-        .select("codigo, ciudad, pais, region_id, ciudad_id")
+        .select(`
+          codigo, 
+          ciudad, 
+          pais, 
+          estado,
+          region_id, 
+          ciudad_id,
+          regiones:region_id(nombre),
+          ciudades:ciudad_id(nombre)
+        `)
         .is("panelista_id", null)
-        .eq("estado", "activo")
+        .order("estado", { ascending: false })
         .order("codigo");
 
       if (nodesError) throw nodesError;
@@ -51,7 +63,7 @@ export default function UnassignedNodes() {
 
       // For each node, get the count of affected events and first event date
       const nodesWithStats = await Promise.all(
-        nodesData.map(async (node) => {
+        nodesData.map(async (node: any) => {
           // Count events where this node is origin or destination
           const { data: enviosData, error: enviosError } = await supabase
             .from("envios")
@@ -62,14 +74,28 @@ export default function UnassignedNodes() {
           if (enviosError) {
             console.error("Error fetching envios for node:", node.codigo, enviosError);
             return {
-              ...node,
+              codigo: node.codigo,
+              ciudad: node.ciudad,
+              pais: node.pais,
+              estado: node.estado,
+              region_id: node.region_id,
+              ciudad_id: node.ciudad_id,
+              region_nombre: node.regiones?.nombre || null,
+              ciudad_nombre: node.ciudades?.nombre || null,
               affectedEventsCount: 0,
               firstEventDate: null,
             };
           }
 
           return {
-            ...node,
+            codigo: node.codigo,
+            ciudad: node.ciudad,
+            pais: node.pais,
+            estado: node.estado,
+            region_id: node.region_id,
+            ciudad_id: node.ciudad_id,
+            region_nombre: node.regiones?.nombre || null,
+            ciudad_nombre: node.ciudades?.nombre || null,
             affectedEventsCount: enviosData?.length || 0,
             firstEventDate: enviosData && enviosData.length > 0 ? enviosData[0].fecha_programada : null,
           };
@@ -123,7 +149,7 @@ export default function UnassignedNodes() {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">All nodes have assigned panelists</h3>
                   <p className="text-muted-foreground">
-                    Great! There are no active nodes without a panelist assignment.
+                    Great! There are no nodes without a panelist assignment.
                   </p>
                 </div>
               </div>
@@ -142,6 +168,8 @@ export default function UnassignedNodes() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Node Code</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Region</TableHead>
                     <TableHead>City</TableHead>
                     <TableHead>Country</TableHead>
                     <TableHead className="text-center">Affected Events</TableHead>
@@ -162,7 +190,17 @@ export default function UnassignedNodes() {
                           <ExternalLink className="w-3 h-3 ml-1" />
                         </Button>
                       </TableCell>
-                      <TableCell>{node.ciudad}</TableCell>
+                      <TableCell>
+                        {node.estado === "activo" ? (
+                          <Badge variant="default" className="bg-success text-white">Active</Badge>
+                        ) : (
+                          <Badge variant="destructive">Inactive</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {node.region_nombre || <span className="text-muted-foreground">-</span>}
+                      </TableCell>
+                      <TableCell>{node.ciudad_nombre || node.ciudad}</TableCell>
                       <TableCell>{node.pais}</TableCell>
                       <TableCell className="text-center">
                         {node.affectedEventsCount > 0 ? (
