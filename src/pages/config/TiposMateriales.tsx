@@ -102,7 +102,7 @@ export default function TiposMateriales() {
             setEditingMaterial(material);
             setDialogOpen(true);
           }}
-          onDelete={handleDelete}
+          onDelete={(material) => handleDelete(material.id)}
           isLoading={loading}
           csvConfig={csvConfig}
         />
