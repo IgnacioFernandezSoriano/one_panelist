@@ -82,12 +82,6 @@ export default function TiposMateriales() {
     { key: "id", label: "ID", hidden: true },
   ];
 
-  const csvConfig = {
-    tableName: "tipos_material",
-    expectedColumns: ["codigo", "nombre", "unidad_medida", "descripcion", "estado"],
-    exampleData: [["TAG", "Tag de seguimiento", "unidad", "Tag for shipment tracking", "activo"]],
-  };
-
   return (
     <AppLayout>
       <div className="p-8">
@@ -114,7 +108,6 @@ export default function TiposMateriales() {
           }}
           onDelete={(material) => handleDelete(material.id)}
           isLoading={loading}
-          csvConfig={csvConfig}
         />
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
