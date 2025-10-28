@@ -343,28 +343,39 @@ export default function Envios() {
   };
 
   const filteredEnvios = envios.filter((e) => {
-    const searchLower = searchTerm.toLowerCase();
+    // Split search terms by commas and clean spaces
+    const searchTerms = searchTerm
+      .split(',')
+      .map(term => term.trim().toLowerCase())
+      .filter(term => term.length > 0);
     
-    // Basic text search
-    const matchesBasicSearch = !searchTerm || (
-      e.id.toString().includes(searchTerm) ||
-      (e.tipo_producto && e.tipo_producto.toLowerCase().includes(searchLower)) ||
-      (e.estado && e.estado.toLowerCase().includes(searchLower)) ||
-      (e.nodo_origen && e.nodo_origen.toLowerCase().includes(searchLower)) ||
-      (e.nodo_destino && e.nodo_destino.toLowerCase().includes(searchLower)) ||
-      (e.numero_etiqueta && e.numero_etiqueta.toLowerCase().includes(searchLower)) ||
-      (e.carrier_name && e.carrier_name.toLowerCase().includes(searchLower)) ||
-      (e.carriers?.legal_name && e.carriers.legal_name.toLowerCase().includes(searchLower)) ||
-      (e.carriers?.carrier_code && e.carriers.carrier_code.toLowerCase().includes(searchLower)) ||
-      (e.clientes?.nombre && e.clientes.nombre.toLowerCase().includes(searchLower)) ||
-      (e.clientes?.codigo && e.clientes.codigo.toLowerCase().includes(searchLower)) ||
-      (e.productos_cliente?.nombre_producto && e.productos_cliente.nombre_producto.toLowerCase().includes(searchLower)) ||
-      (e.productos_cliente?.codigo_producto && e.productos_cliente.codigo_producto.toLowerCase().includes(searchLower)) ||
-      (e.panelista_origen?.nombre_completo && e.panelista_origen.nombre_completo.toLowerCase().includes(searchLower)) ||
-      (e.panelista_origen?.nodo_asignado && e.panelista_origen.nodo_asignado.toLowerCase().includes(searchLower)) ||
-      (e.panelista_destino?.nombre_completo && e.panelista_destino.nombre_completo.toLowerCase().includes(searchLower)) ||
-      (e.panelista_destino?.nodo_asignado && e.panelista_destino.nodo_asignado.toLowerCase().includes(searchLower))
-    );
+    // Basic text search with multi-term support (AND logic)
+    let matchesBasicSearch = true;
+    
+    if (searchTerms.length > 0) {
+      // All terms must be found in the record (AND)
+      matchesBasicSearch = searchTerms.every(term => {
+        return (
+          e.id.toString().includes(term) ||
+          (e.tipo_producto && e.tipo_producto.toLowerCase().includes(term)) ||
+          (e.estado && e.estado.toLowerCase().includes(term)) ||
+          (e.nodo_origen && e.nodo_origen.toLowerCase().includes(term)) ||
+          (e.nodo_destino && e.nodo_destino.toLowerCase().includes(term)) ||
+          (e.numero_etiqueta && e.numero_etiqueta.toLowerCase().includes(term)) ||
+          (e.carrier_name && e.carrier_name.toLowerCase().includes(term)) ||
+          (e.carriers?.legal_name && e.carriers.legal_name.toLowerCase().includes(term)) ||
+          (e.carriers?.carrier_code && e.carriers.carrier_code.toLowerCase().includes(term)) ||
+          (e.clientes?.nombre && e.clientes.nombre.toLowerCase().includes(term)) ||
+          (e.clientes?.codigo && e.clientes.codigo.toLowerCase().includes(term)) ||
+          (e.productos_cliente?.nombre_producto && e.productos_cliente.nombre_producto.toLowerCase().includes(term)) ||
+          (e.productos_cliente?.codigo_producto && e.productos_cliente.codigo_producto.toLowerCase().includes(term)) ||
+          (e.panelista_origen?.nombre_completo && e.panelista_origen.nombre_completo.toLowerCase().includes(term)) ||
+          (e.panelista_origen?.nodo_asignado && e.panelista_origen.nodo_asignado.toLowerCase().includes(term)) ||
+          (e.panelista_destino?.nombre_completo && e.panelista_destino.nombre_completo.toLowerCase().includes(term)) ||
+          (e.panelista_destino?.nodo_asignado && e.panelista_destino.nodo_asignado.toLowerCase().includes(term))
+        );
+      });
+    }
 
     // Advanced filters
     const matchesCarrier = !advancedFilters.carrier || 
@@ -698,7 +709,7 @@ export default function Envios() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
             <Input
-              placeholder="Search by ID, account, product, carrier, panelist name, node, label..."
+              placeholder="Search by ID, account, product, carrier, panelist, node... (use commas to combine: FEDEX,IMS)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
