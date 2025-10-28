@@ -131,7 +131,7 @@ const AppSidebarContent = () => {
 
   const administrationItems = [
     { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
-    { icon: Shield, label: "Menu Permissions", path: "/configuracion/menu-permissions" },
+    { icon: Shield, label: "Users Permissions", path: "/configuracion/menu-permissions" },
   ];
 
   const superAdminItems = [
