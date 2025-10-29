@@ -200,6 +200,19 @@ export function GeneratePlanTab() {
         .eq("cliente_id", selectedCliente)
         .eq("estado", "activo");
 
+      // Fetch nodes grouped by city for topology
+      const { data: nodos } = await supabase
+        .from("nodos")
+        .select(`
+          codigo,
+          ciudad,
+          ciudad_id,
+          estado,
+          ciudades!inner(codigo, nombre)
+        `)
+        .eq("cliente_id", selectedCliente)
+        .eq("estado", "activo");
+
       if (!cityAllocations || !allCities || !productSeasonality || !products) {
         throw new Error("Failed to fetch data");
       }
@@ -295,7 +308,38 @@ export function GeneratePlanTab() {
       });
       const productCSVString = Papa.unparse(productCSV);
 
-      // Generate CSV 3: Current Allocation Plan (from envios table - same as Export Allocation Plan button)
+      // Generate CSV 3: Topology (nodes per city)
+      const nodosGroupedByCity = new Map();
+      
+      nodos?.forEach(nodo => {
+        const cityKey = nodo.ciudad_id;
+        if (!nodosGroupedByCity.has(cityKey)) {
+          nodosGroupedByCity.set(cityKey, {
+            ciudad_codigo: nodo.ciudades.codigo,
+            ciudad_nombre: nodo.ciudades.nombre,
+            total_nodos: 0,
+            nodos_activos: 0,
+            codigos_nodos: []
+          });
+        }
+        const cityData = nodosGroupedByCity.get(cityKey);
+        cityData.total_nodos += 1;
+        if (nodo.estado === 'activo') {
+          cityData.nodos_activos += 1;
+        }
+        cityData.codigos_nodos.push(nodo.codigo);
+      });
+
+      const topologyCSV = Array.from(nodosGroupedByCity.values()).map(city => ({
+        ciudad_codigo: city.ciudad_codigo,
+        ciudad_nombre: city.ciudad_nombre,
+        total_nodos: city.total_nodos,
+        nodos_activos: city.nodos_activos,
+        codigos_nodos: city.codigos_nodos.join(', ')
+      }));
+      const topologyCSVString = Papa.unparse(topologyCSV);
+
+      // Generate CSV 4: Current Allocation Plan (from envios table - same as Export Allocation Plan button)
       const { data: envios } = await supabase
         .from("envios")
         .select(`
@@ -405,7 +449,19 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
    
    USO: Define la estacionalidad de eventos por producto a lo largo del año.
 
-3. Current_Allocation_Plan_${selectedYear}.csv
+3. Topology.csv
+   
+   DESCRIPCIÓN: Topología de nodos por ciudad
+   COLUMNAS:
+   - ciudad_codigo: Código único de la ciudad
+   - ciudad_nombre: Nombre de la ciudad
+   - total_nodos: Número total de nodos en la ciudad
+   - nodos_activos: Número de nodos activos en la ciudad
+   - codigos_nodos: Lista de códigos de todos los nodos en la ciudad
+   
+   USO: Este archivo muestra la distribución de nodos por ciudad para entender la infraestructura disponible.
+
+4. Current_Allocation_Plan_${selectedYear}.csv
    
    DESCRIPCIÓN: Eventos de asignación actuales (igual que el botón Export Allocation Plan)
    COLUMNAS:
@@ -431,7 +487,7 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
    
    USO: Muestra todos los eventos de asignación actuales del año para comparar con el plan objetivo.
 
-4. Import_Format_Template_${selectedYear}.csv
+5. Import_Format_Template_${selectedYear}.csv
    
    DESCRIPCIÓN: Plantilla para importar eventos de asignación (igual que el botón Download Template)
    COLUMNAS:
@@ -510,7 +566,19 @@ ALLOCATION PLAN FILES DOCUMENTATION
    
    USE: Defines product event seasonality throughout the year.
 
-3. Current_Allocation_Plan_${selectedYear}.csv
+3. Topology.csv
+   
+   DESCRIPTION: Node topology by city
+   COLUMNS:
+   - ciudad_codigo: Unique city code
+   - ciudad_nombre: City name
+   - total_nodos: Total number of nodes in the city
+   - nodos_activos: Number of active nodes in the city
+   - codigos_nodos: List of all node codes in the city
+   
+   USE: This file shows the distribution of nodes per city to understand available infrastructure.
+
+4. Current_Allocation_Plan_${selectedYear}.csv
    
    DESCRIPTION: Current allocation events (same as Export Allocation Plan button)
    COLUMNS:
@@ -536,7 +604,7 @@ ALLOCATION PLAN FILES DOCUMENTATION
    
    USE: Shows all current year allocation events to compare with target plan.
 
-4. Import_Format_Template_${selectedYear}.csv
+5. Import_Format_Template_${selectedYear}.csv
    
    DESCRIPTION: Template to import allocation events (same as Download Template button)
    COLUMNS:
@@ -615,7 +683,19 @@ DOCUMENTATION DES FICHIERS DU PLAN D'ALLOCATION
    
    UTILISATION: Définit la saisonnalité des événements par produit tout au long de l'année.
 
-3. Current_Allocation_Plan_${selectedYear}.csv
+3. Topology.csv
+   
+   DESCRIPTION: Topologie des nœuds par ville
+   COLONNES:
+   - ciudad_codigo: Code unique de la ville
+   - ciudad_nombre: Nom de la ville
+   - total_nodos: Nombre total de nœuds dans la ville
+   - nodos_activos: Nombre de nœuds actifs dans la ville
+   - codigos_nodos: Liste de tous les codes de nœuds dans la ville
+   
+   UTILISATION: Ce fichier montre la distribution des nœuds par ville pour comprendre l'infrastructure disponible.
+
+4. Current_Allocation_Plan_${selectedYear}.csv
    
    DESCRIPTION: État actuel des événements d'allocation (identique au bouton Export Allocation Plan)
    COLONNES:
@@ -641,7 +721,7 @@ DOCUMENTATION DES FICHIERS DU PLAN D'ALLOCATION
    
    UTILISATION: Montre tous les événements d'allocation de l'année en cours pour comparer avec le plan objectif.
 
-4. Import_Format_Template_${selectedYear}.csv
+5. Import_Format_Template_${selectedYear}.csv
    
    DESCRIPTION: Modèle pour importer des événements d'allocation (identique au bouton Download Template)
    COLONNES:
@@ -698,6 +778,7 @@ NOTES IMPORTANTES:
       
       zip.file(`City_Allocation_Requirements_${selectedYear}.csv`, cityCSVString);
       zip.file(`Product_Seasonality_Plan_${selectedYear}.csv`, productCSVString);
+      zip.file(`Topology.csv`, topologyCSVString);
       zip.file(`Current_Allocation_Plan_${selectedYear}.csv`, currentAllocationCSVString);
       zip.file(`Import_Format_Template_${selectedYear}.csv`, importTemplateCSVString);
       zip.file(`Documentation.txt`, documentation);
@@ -885,6 +966,10 @@ NOTES IMPORTANTES:
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <span><strong>Product_Seasonality_Plan.csv:</strong> {t('plan_generator.seasonality_desc')}</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span><strong>Topology.csv:</strong> {t('plan_generator.topology_desc')}</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
