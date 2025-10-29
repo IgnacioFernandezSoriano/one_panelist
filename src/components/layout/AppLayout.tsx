@@ -219,6 +219,61 @@ const AppSidebarContent = () => {
               );
             })}
 
+            {/* Topology Collapsible */}
+            {canAccessMenuItem('topology') && (
+              <SidebarMenuItem>
+                <Collapsible open={topologyOpen} onOpenChange={setTopologyOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton isActive={location.pathname.startsWith("/topology")}>
+                    <GitBranch className="w-5 h-5" />
+                    {sidebarOpen && <span>Topology</span>}
+                    {sidebarOpen && (topologyOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {/* View Topology */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            asChild 
+                            isActive={location.pathname === "/topology"} 
+                            className="pl-8"
+                          >
+                            <Link to="/topology">
+                              <GitBranch className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">View Topology</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        {/* Submenu items */}
+                        {topologyItems.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton 
+                                asChild 
+                                isActive={isActive} 
+                                className="pl-8"
+                              >
+                                <Link to={item.path}>
+                                  <item.icon className="w-4 h-4" />
+                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </CollapsibleContent>
+                </Collapsible>
+              </SidebarMenuItem>
+            )}
+
             {/* Allocation Plan Collapsible */}
             {canAccessMenuItem('envios') && (
               <SidebarMenuItem>
@@ -306,61 +361,6 @@ const AppSidebarContent = () => {
                     {sidebarOpen && <span>Issues</span>}
                   </Link>
                 </SidebarMenuButton>
-              </SidebarMenuItem>
-            )}
-
-            {/* Topology Collapsible */}
-            {canAccessMenuItem('topology') && (
-              <SidebarMenuItem>
-                <Collapsible open={topologyOpen} onOpenChange={setTopologyOpen}>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuButton isActive={location.pathname.startsWith("/topology")}>
-                    <GitBranch className="w-5 h-5" />
-                    {sidebarOpen && <span>Topology</span>}
-                    {sidebarOpen && (topologyOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroup>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {/* View Topology */}
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            asChild 
-                            isActive={location.pathname === "/topology"} 
-                            className="pl-8"
-                          >
-                            <Link to="/topology">
-                              <GitBranch className="w-4 h-4" />
-                              {sidebarOpen && <span className="text-sm">View Topology</span>}
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
-                        {/* Submenu items */}
-                        {topologyItems.map((item) => {
-                          const isActive = location.pathname === item.path;
-                          return (
-                            <SidebarMenuItem key={item.path}>
-                              <SidebarMenuButton 
-                                asChild 
-                                isActive={isActive} 
-                                className="pl-8"
-                              >
-                                <Link to={item.path}>
-                                  <item.icon className="w-4 h-4" />
-                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                </Link>
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
-                </CollapsibleContent>
-                </Collapsible>
               </SidebarMenuItem>
             )}
 
