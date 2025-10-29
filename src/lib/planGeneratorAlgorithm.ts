@@ -386,6 +386,14 @@ export async function generateIntelligentPlan(config: PlanConfig) {
     throw new Error("No city allocation requirements configured");
   }
 
+  // Log capacity warning if max_events_per_week is too low
+  if (config.max_events_per_week < 3) {
+    console.warn(
+      `⚠️ Low capacity detected: ${config.max_events_per_week} events/week = ${config.max_events_per_week * 4} events/month/node. ` +
+      `This may result in many unassigned events. Recommended minimum: 3 events/week.`
+    );
+  }
+
   const seasonality = await loadProductSeasonality(
     config.cliente_id,
     config.producto_id,
@@ -396,6 +404,14 @@ export async function generateIntelligentPlan(config: PlanConfig) {
   if (topology.length === 0) {
     throw new Error("No active nodes configured");
   }
+
+  // Calculate theoretical capacity
+  const totalWeeks = Math.ceil(differenceInDays(config.end_date, config.start_date) / 7);
+  const theoreticalCapacity = topology.length * config.max_events_per_week * totalWeeks;
+  console.log(
+    `📊 Plan capacity: ${topology.length} nodes × ${config.max_events_per_week} events/week × ${totalWeeks} weeks = ` +
+    `${theoreticalCapacity} max events (requested: ${config.total_events})`
+  );
 
   const totalDays = differenceInDays(config.end_date, config.start_date) + 1;
   const proportionalEvents = Math.round((config.total_events * totalDays) / 365);
@@ -442,6 +458,17 @@ export async function generateIntelligentPlan(config: PlanConfig) {
   }
 
   const totalUnassigned = unassignedBreakdown.reduce((sum, c) => sum + c.deficit, 0);
+  
+  // Log results
+  if (totalUnassigned > 0) {
+    console.warn(
+      `⚠️ ${totalUnassigned} events could not be assigned (${((totalUnassigned / proportionalEvents) * 100).toFixed(1)}% of plan). ` +
+      `Consider increasing max_events_per_panelist_week (current: ${config.max_events_per_week}) or adding more active nodes.`
+    );
+  } else {
+    console.log(`✅ All ${allEvents.length} events successfully assigned!`);
+  }
+  
   return await saveDraftPlan(
     config,
     proportionalEvents,

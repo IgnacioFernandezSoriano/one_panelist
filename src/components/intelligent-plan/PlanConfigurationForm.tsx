@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -335,6 +336,24 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           value={formData.max_events_per_week || ''}
           onChange={(e) => setFormData({ ...formData, max_events_per_week: parseInt(e.target.value) || 1 })}
         />
+        {formData.max_events_per_week && formData.max_events_per_week < 3 && (
+          <Alert variant="destructive" className="mt-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Warning: Value too low. With {formData.max_events_per_week} events/week, each node can only handle {formData.max_events_per_week * 4} events/month. 
+              This may result in many unassigned events. Recommended minimum: 3 events/week (12/month).
+            </AlertDescription>
+          </Alert>
+        )}
+        {formData.max_events_per_week && formData.max_events_per_week >= 3 && formData.max_events_per_week < 5 && (
+          <Alert className="mt-2">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Capacity: {formData.max_events_per_week * 4} events/month/node. 
+              Standard recommended: 5 events/week (20/month) for better distribution.
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
       <div className="space-y-2">

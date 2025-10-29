@@ -35,6 +35,7 @@ import ConfigTiposMateriales from "./pages/config/TiposMateriales";
 import ConfigTraducciones from "./pages/config/Traducciones";
 import ConfigIdiomas from "./pages/config/Idiomas";
 import MenuPermissions from "./pages/config/MenuPermissions";
+import Mantenimiento from "./pages/config/Mantenimiento";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import PlanGenerator from "./pages/PlanGenerator";
@@ -89,6 +90,11 @@ const App = () => {
             <Route path="/configuracion/traducciones" element={
               <RoleGuard allowedRoles={['superadmin']}>
                 <ConfigTraducciones />
+              </RoleGuard>
+            } />
+            <Route path="/configuracion/mantenimiento" element={
+              <RoleGuard allowedRoles={['superadmin']}>
+                <Mantenimiento />
               </RoleGuard>
             } />
 

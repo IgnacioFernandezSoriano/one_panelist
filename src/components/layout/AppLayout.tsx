@@ -47,7 +47,8 @@ import {
   Shield,
   User as UserIcon,
   FileBarChart,
-  Brain
+  Brain,
+  Wrench
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -188,6 +189,7 @@ const AppSidebarContent = () => {
     { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
     { icon: Languages, label: "Languages", path: "/configuracion/idiomas" },
     { icon: Languages, label: "Translations", path: "/configuracion/traducciones" },
+    { icon: Wrench, label: "Maintenance", path: "/configuracion/mantenimiento" },
   ];
 
   return (
