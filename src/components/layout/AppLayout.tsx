@@ -304,20 +304,6 @@ const AppSidebarContent = () => {
                   <SidebarGroup>
                     <SidebarGroupContent>
                       <SidebarMenu>
-                        {/* View Allocation Plan */}
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            asChild 
-                            isActive={location.pathname === "/envios"} 
-                            className="pl-8"
-                          >
-                            <Link to="/envios">
-                              <Send className="w-4 h-4" />
-                              {sidebarOpen && <span className="text-sm">View Plan</span>}
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
                         {/* Submenu items */}
                         {allocationPlanItems.map((item) => {
                           const isActive = location.pathname === item.path;
