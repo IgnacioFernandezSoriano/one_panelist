@@ -235,10 +235,10 @@ export function GeneratePlanTab() {
           return;
         }
 
-        // Calculate events by multiplying requirements by number of cities of each type
-        const fromA = targetRequirements.from_classification_a * cityCountByClassification.A;
-        const fromB = targetRequirements.from_classification_b * cityCountByClassification.B;
-        const fromC = targetRequirements.from_classification_c * cityCountByClassification.C;
+        // Use configured values directly (no multiplication)
+        const fromA = targetRequirements.from_classification_a;
+        const fromB = targetRequirements.from_classification_b;
+        const fromC = targetRequirements.from_classification_c;
 
         cityIncomingMap.set(targetCity.id, {
           codigo: targetCity.codigo,
@@ -441,10 +441,10 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
         Complete con los IDs y códigos existentes en el sistema.
 
 NOTAS IMPORTANTES:
-- City_Allocation_Requirements: Los valores se calculan multiplicando el requisito configurado 
-  (from_classification_a/b/c) por el número total de ciudades de cada tipo en la topología.
-  Ejemplo: Si una ciudad requiere 50 eventos de ciudades A y hay 2 ciudades tipo A,
-  el total será 100 eventos.
+- City_Allocation_Requirements: Los valores mostrados son exactamente los configurados en la tabla
+  (from_classification_a/b/c) sin ningún tipo de multiplicación.
+  Ejemplo: Si Barcelona está configurada para recibir 50 eventos de ciudades A, 20 de B y 5 de C,
+  el archivo mostrará exactamente esos valores (50, 20, 5).
 - Current_Allocation_Plan: Muestra todos los eventos de asignación reales creados durante
   el año seleccionado (exportación idéntica al botón "Export Allocation Plan").
 - Import_Format_Template: Use este formato para crear nuevos eventos de asignación.
@@ -527,10 +527,10 @@ ALLOCATION PLAN FILES DOCUMENTATION
         Fill with existing IDs and codes in the system.
 
 IMPORTANT NOTES:
-- City_Allocation_Requirements: Values are calculated by multiplying the configured requirement
-  (from_classification_a/b/c) by the total number of cities of each type in the topology.
-  Example: If a city requires 50 events from type A cities and there are 2 type A cities,
-  the total will be 100 events.
+- City_Allocation_Requirements: Values shown are exactly as configured in the table
+  (from_classification_a/b/c) without any multiplication.
+  Example: If Barcelona is configured to receive 50 events from A cities, 20 from B, and 5 from C,
+  the file will show exactly those values (50, 20, 5).
 - Current_Allocation_Plan: Shows all real allocation events created during the selected year
   (identical export to "Export Allocation Plan" button).
 - Import_Format_Template: Use this format to create new allocation events.
@@ -613,10 +613,10 @@ DOCUMENTATION DES FICHIERS DU PLAN D'ALLOCATION
                 Complétez avec les IDs et codes existants dans le système.
 
 NOTES IMPORTANTES:
-- City_Allocation_Requirements: Les valeurs sont calculées en multipliant l'exigence configurée
-  (from_classification_a/b/c) par le nombre total de villes de chaque type dans la topologie.
-  Exemple: Si une ville nécessite 50 événements des villes de type A et qu'il y a 2 villes de type A,
-  le total sera de 100 événements.
+- City_Allocation_Requirements: Les valeurs affichées sont exactement telles que configurées dans la table
+  (from_classification_a/b/c) sans aucune multiplication.
+  Exemple: Si Barcelone est configurée pour recevoir 50 événements des villes A, 20 de B et 5 de C,
+  le fichier affichera exactement ces valeurs (50, 20, 5).
 - Current_Allocation_Plan: Affiche tous les événements d'allocation réels créés pendant l'année
   sélectionnée (exportation identique au bouton "Export Allocation Plan").
 - Import_Format_Template: Utilisez ce format pour créer de nouveaux événements d'allocation.
