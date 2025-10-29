@@ -70,6 +70,20 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
     setTiposMaterial(data || []);
   };
 
+  const loadCarriers = async (productoId: number) => {
+    try {
+      const { data, error } = await supabase
+        .from('carrier_productos' as any)
+        .select('carrier_id')
+        .eq('producto_id', productoId);
+      
+      if (error) throw error;
+      setSelectedCarriers((data || []).map((item: any) => item.carrier_id));
+    } catch (error) {
+      console.error("Error loading carriers:", error);
+    }
+  };
+
   const loadMaterialesProducto = async (productoId: number) => {
     const { data } = await supabase
       .from("producto_materiales")

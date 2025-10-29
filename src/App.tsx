@@ -38,6 +38,7 @@ import MenuPermissions from "./pages/config/MenuPermissions";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import PlanGenerator from "./pages/PlanGenerator";
+import IntelligentPlanGenerator from "./pages/IntelligentPlanGenerator";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
 import Profile from "./pages/Profile";
