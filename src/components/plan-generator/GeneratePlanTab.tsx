@@ -261,25 +261,53 @@ export function GeneratePlanTab() {
       });
       const productCSVString = Papa.unparse(productCSV);
 
-      // Generate CSV 3: Current Allocation Plan (from nodos table)
-      const { data: nodos } = await supabase
-        .from("nodos")
+      // Generate CSV 3: Current Allocation Plan (from envios table - same as Export Allocation Plan button)
+      const { data: envios } = await supabase
+        .from("envios")
         .select(`
-          codigo,
-          ciudad,
-          panelista_id,
-          ciudades!inner(codigo, nombre, clasificacion)
+          id,
+          clientes!inner(codigo, nombre),
+          productos_cliente(codigo_producto, nombre_producto),
+          tipo_producto,
+          carriers(carrier_code, legal_name),
+          carrier_name,
+          nodo_origen,
+          panelista_origen:panelistas!envios_panelista_origen_id_fkey(nombre_completo),
+          nodo_destino,
+          panelista_destino:panelistas!envios_panelista_destino_id_fkey(nombre_completo),
+          fecha_programada,
+          fecha_limite,
+          estado,
+          numero_etiqueta,
+          fecha_envio_real,
+          fecha_recepcion_real,
+          tiempo_transito_dias
         `)
         .eq("cliente_id", selectedCliente)
-        .eq("estado", "activo")
-        .not("panelista_id", "is", null);
+        .gte("fecha_creacion", new Date(selectedYear, 0, 1).toISOString())
+        .lt("fecha_creacion", new Date(selectedYear + 1, 0, 1).toISOString())
+        .order("fecha_programada", { ascending: false });
 
-      const currentAllocationCSV = nodos?.map(nodo => ({
-        nodo_codigo: nodo.codigo,
-        ciudad_codigo: nodo.ciudades.codigo,
-        ciudad_nombre: nodo.ciudades.nombre,
-        clasificacion: nodo.ciudades.clasificacion,
-        panelista_asignado: nodo.panelista_id ? "Si" : "No",
+      const currentAllocationCSV = envios?.map(envio => ({
+        id: envio.id,
+        cliente_codigo: envio.clientes?.codigo || '',
+        cliente_nombre: envio.clientes?.nombre || '',
+        producto_codigo: envio.productos_cliente?.codigo_producto || '',
+        producto_nombre: envio.productos_cliente?.nombre_producto || '',
+        tipo_producto: envio.tipo_producto || '',
+        carrier_code: envio.carriers?.carrier_code || '',
+        carrier_name: envio.carriers?.legal_name || envio.carrier_name || '',
+        nodo_origen: envio.nodo_origen,
+        panelista_origen: (envio.panelista_origen as any)?.nombre_completo || '',
+        nodo_destino: envio.nodo_destino,
+        panelista_destino: (envio.panelista_destino as any)?.nombre_completo || '',
+        fecha_programada: envio.fecha_programada,
+        fecha_limite: envio.fecha_limite || '',
+        estado: envio.estado,
+        numero_etiqueta: envio.numero_etiqueta || '',
+        fecha_envio_real: envio.fecha_envio_real || '',
+        fecha_recepcion_real: envio.fecha_recepcion_real || '',
+        tiempo_transito_dias: envio.tiempo_transito_dias || ''
       })) || [];
       const currentAllocationCSVString = Papa.unparse(currentAllocationCSV);
 
@@ -331,15 +359,29 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
 
 3. Current_Allocation_Plan_${selectedYear}.csv
    
-   DESCRIPCIÓN: Estado actual de asignación de nodos y panelistas
+   DESCRIPCIÓN: Eventos de asignación actuales (igual que el botón Export Allocation Plan)
    COLUMNAS:
-   - nodo_codigo: Código del nodo
-   - ciudad_codigo: Código de la ciudad del nodo
-   - ciudad_nombre: Nombre de la ciudad
-   - clasificacion: Clasificación de la ciudad
-   - panelista_asignado: Indica si el nodo tiene panelista asignado (Si/No)
+   - id: ID del evento
+   - cliente_codigo: Código del cliente
+   - cliente_nombre: Nombre del cliente
+   - producto_codigo: Código del producto
+   - producto_nombre: Nombre del producto
+   - tipo_producto: Tipo de producto
+   - carrier_code: Código del carrier
+   - carrier_name: Nombre del carrier
+   - nodo_origen: Código del nodo origen
+   - panelista_origen: Nombre del panelista origen
+   - nodo_destino: Código del nodo destino
+   - panelista_destino: Nombre del panelista destino
+   - fecha_programada: Fecha programada del envío
+   - fecha_limite: Fecha límite
+   - estado: Estado del evento
+   - numero_etiqueta: Número de etiqueta
+   - fecha_envio_real: Fecha real de envío
+   - fecha_recepcion_real: Fecha real de recepción
+   - tiempo_transito_dias: Tiempo de tránsito en días
    
-   USO: Muestra la situación actual de asignaciones para comparar con el plan objetivo.
+   USO: Muestra todos los eventos de asignación actuales del año para comparar con el plan objetivo.
 
 4. Import_Format_Template_${selectedYear}.csv
    
@@ -390,15 +432,29 @@ ALLOCATION PLAN FILES DOCUMENTATION
 
 3. Current_Allocation_Plan_${selectedYear}.csv
    
-   DESCRIPTION: Current node and panelist allocation status
+   DESCRIPTION: Current allocation events (same as Export Allocation Plan button)
    COLUMNS:
-   - nodo_codigo: Node code
-   - ciudad_codigo: Node city code
-   - ciudad_nombre: City name
-   - clasificacion: City classification
-   - panelista_asignado: Indicates if node has assigned panelist (Yes/No)
+   - id: Event ID
+   - cliente_codigo: Client code
+   - cliente_nombre: Client name
+   - producto_codigo: Product code
+   - producto_nombre: Product name
+   - tipo_producto: Product type
+   - carrier_code: Carrier code
+   - carrier_name: Carrier name
+   - nodo_origen: Origin node code
+   - panelista_origen: Origin panelist name
+   - nodo_destino: Destination node code
+   - panelista_destino: Destination panelist name
+   - fecha_programada: Scheduled date
+   - fecha_limite: Deadline date
+   - estado: Event status
+   - numero_etiqueta: Label number
+   - fecha_envio_real: Actual shipping date
+   - fecha_recepcion_real: Actual reception date
+   - tiempo_transito_dias: Transit time in days
    
-   USE: Shows current allocation situation to compare with target plan.
+   USE: Shows all current year allocation events to compare with target plan.
 
 4. Import_Format_Template_${selectedYear}.csv
    
@@ -449,15 +505,29 @@ DOCUMENTATION DES FICHIERS DU PLAN D'ALLOCATION
 
 3. Current_Allocation_Plan_${selectedYear}.csv
    
-   DESCRIPTION: État actuel de l'allocation des nœuds et panélistes
+   DESCRIPTION: État actuel des événements d'allocation (identique au bouton Export Allocation Plan)
    COLONNES:
-   - nodo_codigo: Code du nœud
-   - ciudad_codigo: Code de la ville du nœud
-   - ciudad_nombre: Nom de la ville
-   - clasificacion: Classification de la ville
-   - panelista_asignado: Indique si le nœud a un panéliste assigné (Oui/Non)
+   - id: ID de l'événement
+   - cliente_codigo: Code client
+   - cliente_nombre: Nom du client
+   - producto_codigo: Code produit
+   - producto_nombre: Nom du produit
+   - tipo_producto: Type de produit
+   - carrier_code: Code transporteur
+   - carrier_name: Nom du transporteur
+   - nodo_origen: Code nœud d'origine
+   - panelista_origen: Nom du panéliste d'origine
+   - nodo_destino: Code nœud de destination
+   - panelista_destino: Nom du panéliste de destination
+   - fecha_programada: Date programmée
+   - fecha_limite: Date limite
+   - estado: Statut de l'événement
+   - numero_etiqueta: Numéro d'étiquette
+   - fecha_envio_real: Date réelle d'expédition
+   - fecha_recepcion_real: Date réelle de réception
+   - tiempo_transito_dias: Temps de transit en jours
    
-   UTILISATION: Montre la situation actuelle des allocations pour comparer avec le plan objectif.
+   UTILISATION: Montre tous les événements d'allocation de l'année en cours pour comparer avec le plan objectif.
 
 4. Import_Format_Template_${selectedYear}.csv
    
