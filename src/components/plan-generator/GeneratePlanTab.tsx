@@ -311,19 +311,33 @@ export function GeneratePlanTab() {
       })) || [];
       const currentAllocationCSVString = Papa.unparse(currentAllocationCSV);
 
-      // Generate CSV 4: Import Format Template
+      // Generate CSV 4: Import Format Template (same format as Download Template button in Envios page)
       const importTemplateCSV = [
         {
-          ciudad_codigo: "BCN",
-          from_classification_a: "10",
-          from_classification_b: "5",
-          from_classification_c: "3",
+          cliente_id: "1",
+          carrier_id: "1",
+          producto_id: "2",
+          panelista_origen_id: "5",
+          panelista_destino_id: "8",
+          nodo_origen: "MAD",
+          nodo_destino: "BCN",
+          fecha_programada: "2025-01-15",
+          tipo_producto: "letter",
+          estado: "PENDING",
+          motivo_creacion: "scheduled"
         },
         {
-          ciudad_codigo: "MAD",
-          from_classification_a: "8",
-          from_classification_b: "6",
-          from_classification_c: "4",
+          cliente_id: "1",
+          carrier_id: "2",
+          producto_id: "3",
+          panelista_origen_id: "10",
+          panelista_destino_id: "12",
+          nodo_origen: "BCN",
+          nodo_destino: "VLC",
+          fecha_programada: "2025-01-20",
+          tipo_producto: "package",
+          estado: "PENDING",
+          motivo_creacion: "scheduled"
         },
       ];
       const importTemplateCSVString = Papa.unparse(importTemplateCSV);
@@ -385,15 +399,22 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
 
 4. Import_Format_Template_${selectedYear}.csv
    
-   DESCRIPCIÓN: Plantilla para importar requisitos de asignación de ciudades
+   DESCRIPCIÓN: Plantilla para importar eventos de asignación (igual que el botón Download Template)
    COLUMNAS:
-   - ciudad_codigo: Código de la ciudad (debe existir en el sistema)
-   - from_classification_a: Cantidad de eventos desde ciudades A
-   - from_classification_b: Cantidad de eventos desde ciudades B
-   - from_classification_c: Cantidad de eventos desde ciudades C
+   - cliente_id: ID del cliente (debe existir en el sistema)
+   - carrier_id: ID del carrier (debe existir en el sistema)
+   - producto_id: ID del producto (debe existir en el sistema)
+   - panelista_origen_id: ID del panelista origen (debe existir en el sistema)
+   - panelista_destino_id: ID del panelista destino (debe existir en el sistema)
+   - nodo_origen: Código del nodo origen (debe existir en el sistema)
+   - nodo_destino: Código del nodo destino (debe existir en el sistema)
+   - fecha_programada: Fecha programada del envío (formato: YYYY-MM-DD)
+   - tipo_producto: Tipo de producto (e.g., letter, package)
+   - estado: Estado del evento (e.g., PENDING, IN_TRANSIT)
+   - motivo_creacion: Motivo de creación (e.g., scheduled, urgent)
    
-   USO: Use este formato para importar masivamente requisitos de asignación.
-        Complete con los códigos de ciudad existentes y las cantidades deseadas.
+   USO: Use este formato para importar masivamente eventos de asignación.
+        Complete con los IDs y códigos existentes en el sistema.
 
 NOTAS IMPORTANTES:
 - Todos los totales deben ser coherentes entre ciudades origen y destino
@@ -458,15 +479,22 @@ ALLOCATION PLAN FILES DOCUMENTATION
 
 4. Import_Format_Template_${selectedYear}.csv
    
-   DESCRIPTION: Template to import city allocation requirements
+   DESCRIPTION: Template to import allocation events (same as Download Template button)
    COLUMNS:
-   - ciudad_codigo: City code (must exist in system)
-   - from_classification_a: Number of events from A cities
-   - from_classification_b: Number of events from B cities
-   - from_classification_c: Number of events from C cities
+   - cliente_id: Client ID (must exist in system)
+   - carrier_id: Carrier ID (must exist in system)
+   - producto_id: Product ID (must exist in system)
+   - panelista_origen_id: Origin panelist ID (must exist in system)
+   - panelista_destino_id: Destination panelist ID (must exist in system)
+   - nodo_origen: Origin node code (must exist in system)
+   - nodo_destino: Destination node code (must exist in system)
+   - fecha_programada: Scheduled date (format: YYYY-MM-DD)
+   - tipo_producto: Product type (e.g., letter, package)
+   - estado: Event status (e.g., PENDING, IN_TRANSIT)
+   - motivo_creacion: Creation reason (e.g., scheduled, urgent)
    
-   USE: Use this format to massively import allocation requirements.
-        Fill with existing city codes and desired quantities.
+   USE: Use this format to massively import allocation events.
+        Fill with existing IDs and codes in the system.
 
 IMPORTANT NOTES:
 - All totals must be consistent between source and destination cities
@@ -531,15 +559,22 @@ DOCUMENTATION DES FICHIERS DU PLAN D'ALLOCATION
 
 4. Import_Format_Template_${selectedYear}.csv
    
-   DESCRIPTION: Modèle pour importer les besoins d'allocation de villes
+   DESCRIPTION: Modèle pour importer des événements d'allocation (identique au bouton Download Template)
    COLONNES:
-   - ciudad_codigo: Code de la ville (doit exister dans le système)
-   - from_classification_a: Nombre d'événements depuis les villes A
-   - from_classification_b: Nombre d'événements depuis les villes B
-   - from_classification_c: Nombre d'événements depuis les villes C
+   - cliente_id: ID client (doit exister dans le système)
+   - carrier_id: ID transporteur (doit exister dans le système)
+   - producto_id: ID produit (doit exister dans le système)
+   - panelista_origen_id: ID panéliste origine (doit exister dans le système)
+   - panelista_destino_id: ID panéliste destination (doit exister dans le système)
+   - nodo_origen: Code nœud origine (doit exister dans le système)
+   - nodo_destino: Code nœud destination (doit exister dans le système)
+   - fecha_programada: Date programmée (format: YYYY-MM-DD)
+   - tipo_producto: Type de produit (ex: letter, package)
+   - estado: Statut de l'événement (ex: PENDING, IN_TRANSIT)
+   - motivo_creacion: Raison de création (ex: scheduled, urgent)
    
-   UTILISATION: Utilisez ce format pour importer massivement les besoins d'allocation.
-                Complétez avec les codes de ville existants et les quantités désirées.
+   UTILISATION: Utilisez ce format pour importer massivement des événements d'allocation.
+                Complétez avec les IDs et codes existants dans le système.
 
 NOTES IMPORTANTES:
 - Tous les totaux doivent être cohérents entre villes source et destination
