@@ -235,23 +235,27 @@ export function GeneratePlanTab() {
           return;
         }
 
-        // Multiply by number of origin cities of each classification, excluding the target city itself
+        // Counts of origin cities by classification, excluding the target city itself
         const countA = cityCountByClassification.A - (targetCity.clasificacion === 'A' ? 1 : 0);
         const countB = cityCountByClassification.B - (targetCity.clasificacion === 'B' ? 1 : 0);
         const countC = cityCountByClassification.C - (targetCity.clasificacion === 'C' ? 1 : 0);
 
-        const fromA = targetRequirements.from_classification_a * countA;
-        const fromB = targetRequirements.from_classification_b * countB;
-        const fromC = targetRequirements.from_classification_c * countC;
+        // Use configured per-origin-city values for columns
+        const fromAConfig = targetRequirements.from_classification_a || 0;
+        const fromBConfig = targetRequirements.from_classification_b || 0;
+        const fromCConfig = targetRequirements.from_classification_c || 0;
+
+        // Total incoming = configured values * number of origin cities of each class
+        const totalIncoming = (fromAConfig * countA) + (fromBConfig * countB) + (fromCConfig * countC);
 
         cityIncomingMap.set(targetCity.id, {
           codigo: targetCity.codigo,
           nombre: targetCity.nombre,
           clasificacion: targetCity.clasificacion,
-          from_a: fromA,
-          from_b: fromB,
-          from_c: fromC,
-          total: fromA + fromB + fromC,
+          from_a: fromAConfig,
+          from_b: fromBConfig,
+          from_c: fromCConfig,
+          total: totalIncoming,
         });
       });
 
@@ -445,14 +449,12 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
         Complete con los IDs y códigos existentes en el sistema.
 
 NOTAS IMPORTANTES:
-- City_Allocation_Requirements: Para cada ciudad destino, los valores se calculan como:
-  (requisito configurado) x (número de ciudades emisoras de esa clasificación), excluyendo la propia ciudad destino si pertenece a esa clasificación.
-  EJEMPLO DE LÓGICA:
-  Barcelona (clasificación A) está configurada con: From A=50, From B=20, From C=5.
-  Ciudades: Madrid Capital (A), Girona (B), La Palma (B), Boadilla (C) y Barcelona (A).
-  Cálculo correcto: A → 50 x (2 A totales - 1 por ser Barcelona A) = 50 x 1 = 50.
-  B → 20 x (2 ciudades B: Girona y La Palma) = 40. C → 5 x (1 ciudad C: Boadilla) = 5.
-  Total Barcelona = 50 + 40 + 5 = 95.
+- City_Allocation_Requirements: Las columnas From A/B/C reflejan exactamente los valores configurados en la tabla (requisito por ciudad emisora). El campo Total_incoming se calcula como:
+  (From A x nº de ciudades A emisoras) + (From B x nº de ciudades B emisoras) + (From C x nº de ciudades C emisoras), excluyendo la propia ciudad si coincide con la clasificación.
+  EJEMPLO:
+  Barcelona (A) configurada con From A=50, From B=20, From C=5.
+  Ciudades: Madrid (A), Girona (B), La Palma (B), Boadilla (C) y Barcelona (A).
+  Total_incoming = 50 x (2 A - 1) + 20 x (2 B) + 5 x (1 C) = 50 + 40 + 5 = 95.
   
 - Current_Allocation_Plan: Muestra todos los eventos de asignación reales creados durante
   el año seleccionado (exportación idéntica al botón "Export Allocation Plan").
@@ -552,14 +554,12 @@ ALLOCATION PLAN FILES DOCUMENTATION
         Fill with existing IDs and codes in the system.
 
 IMPORTANT NOTES:
-- City_Allocation_Requirements: For each destination city, values are calculated as:
-  (configured requirement) x (number of origin cities of that classification), excluding the destination city itself if it belongs to that classification.
-  LOGIC EXAMPLE:
-  Barcelona (classification A) is configured with: From A=50, From B=20, From C=5.
-  Cities: Madrid Capital (A), Girona (B), La Palma (B), Boadilla (C) and Barcelona (A).
-  Correct calculation: A → 50 x (2 A total - 1 for Barcelona being A) = 50 x 1 = 50.
-  B → 20 x (2 B cities: Girona and La Palma) = 40. C → 5 x (1 C city: Boadilla) = 5.
-  Total Barcelona = 50 + 40 + 5 = 95.
+- City_Allocation_Requirements: The From A/B/C columns reflect exactly the configured values (requirement per origin city). The Total_incoming is computed as:
+  (From A x number of A origin cities) + (From B x number of B origin cities) + (From C x number of C origin cities), excluding the destination city itself if it shares the classification.
+  EXAMPLE:
+  Barcelona (A) configured with From A=50, From B=20, From C=5.
+  Cities: Madrid (A), Girona (B), La Palma (B), Boadilla (C) and Barcelona (A).
+  Total_incoming = 50 x (2 A - 1) + 20 x (2 B) + 5 x (1 C) = 50 + 40 + 5 = 95.
   
 - Current_Allocation_Plan: Shows all real allocation events created during the selected year
   (identical export to "Export Allocation Plan" button).
