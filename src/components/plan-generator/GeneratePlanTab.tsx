@@ -417,10 +417,16 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
         Complete con los IDs y códigos existentes en el sistema.
 
 NOTAS IMPORTANTES:
-- Todos los totales deben ser coherentes entre ciudades origen y destino
-- Los porcentajes de estacionalidad deben sumar exactamente 100%
-- Los códigos de ciudad deben existir previamente en el sistema
-- La suma de eventos debe coincidir con el número total de nodos disponibles
+- City_Allocation_Requirements: Los valores se calculan multiplicando el requisito configurado 
+  (from_classification_a/b/c) por el número total de ciudades de cada tipo en la topología.
+  Ejemplo: Si una ciudad requiere 50 eventos de ciudades A y hay 2 ciudades tipo A,
+  el total será 100 eventos.
+- Current_Allocation_Plan: Muestra todos los eventos de asignación reales creados durante
+  el año seleccionado (exportación idéntica al botón "Export Allocation Plan").
+- Import_Format_Template: Use este formato para crear nuevos eventos de asignación.
+  Todos los IDs (cliente_id, carrier_id, producto_id, panelista IDs) deben existir en el sistema.
+- Los porcentajes de estacionalidad deben sumar exactamente 100% por producto.
+- Los códigos de nodo (nodo_origen, nodo_destino) deben existir en la topología.
 
 
 ═══════════════════════════════════════════════════════════════
@@ -497,10 +503,16 @@ ALLOCATION PLAN FILES DOCUMENTATION
         Fill with existing IDs and codes in the system.
 
 IMPORTANT NOTES:
-- All totals must be consistent between source and destination cities
-- Seasonality percentages must sum exactly to 100%
-- City codes must previously exist in the system
-- Event sum must match total number of available nodes
+- City_Allocation_Requirements: Values are calculated by multiplying the configured requirement
+  (from_classification_a/b/c) by the total number of cities of each type in the topology.
+  Example: If a city requires 50 events from type A cities and there are 2 type A cities,
+  the total will be 100 events.
+- Current_Allocation_Plan: Shows all real allocation events created during the selected year
+  (identical export to "Export Allocation Plan" button).
+- Import_Format_Template: Use this format to create new allocation events.
+  All IDs (cliente_id, carrier_id, producto_id, panelist IDs) must exist in the system.
+- Seasonality percentages must sum exactly to 100% per product.
+- Node codes (nodo_origen, nodo_destino) must exist in the topology.
 
 
 ═══════════════════════════════════════════════════════════════
@@ -577,10 +589,16 @@ DOCUMENTATION DES FICHIERS DU PLAN D'ALLOCATION
                 Complétez avec les IDs et codes existants dans le système.
 
 NOTES IMPORTANTES:
-- Tous les totaux doivent être cohérents entre villes source et destination
-- Les pourcentages de saisonnalité doivent totaliser exactement 100%
-- Les codes de ville doivent exister préalablement dans le système
-- La somme des événements doit correspondre au nombre total de nœuds disponibles
+- City_Allocation_Requirements: Les valeurs sont calculées en multipliant l'exigence configurée
+  (from_classification_a/b/c) par le nombre total de villes de chaque type dans la topologie.
+  Exemple: Si une ville nécessite 50 événements des villes de type A et qu'il y a 2 villes de type A,
+  le total sera de 100 événements.
+- Current_Allocation_Plan: Affiche tous les événements d'allocation réels créés pendant l'année
+  sélectionnée (exportation identique au bouton "Export Allocation Plan").
+- Import_Format_Template: Utilisez ce format pour créer de nouveaux événements d'allocation.
+  Tous les IDs (cliente_id, carrier_id, producto_id, IDs des panélistes) doivent exister dans le système.
+- Les pourcentages de saisonnalité doivent totaliser exactement 100% par produit.
+- Les codes de nœud (nodo_origen, nodo_destino) doivent exister dans la topologie.
 `;
 
       // Create ZIP file
