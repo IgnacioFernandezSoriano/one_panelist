@@ -14,6 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
+      carrier_productos: {
+        Row: {
+          carrier_id: number
+          cliente_id: number
+          created_at: string
+          id: number
+          producto_id: number
+        }
+        Insert: {
+          carrier_id: number
+          cliente_id: number
+          created_at?: string
+          id?: number
+          producto_id: number
+        }
+        Update: {
+          carrier_id?: number
+          cliente_id?: number
+          created_at?: string
+          id?: number
+          producto_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carrier_productos_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carrier_productos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carrier_productos_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_cliente"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       carriers: {
         Row: {
           authorization_date: string | null
@@ -247,6 +293,7 @@ export type Database = {
           estado: string
           fecha_alta: string
           id: number
+          max_events_per_panelist_week: number | null
           nombre: string
           pais: string
         }
@@ -255,6 +302,7 @@ export type Database = {
           estado?: string
           fecha_alta?: string
           id?: number
+          max_events_per_panelist_week?: number | null
           nombre: string
           pais: string
         }
@@ -263,6 +311,7 @@ export type Database = {
           estado?: string
           fecha_alta?: string
           id?: number
+          max_events_per_panelist_week?: number | null
           nombre?: string
           pais?: string
         }
@@ -443,6 +492,148 @@ export type Database = {
           },
           {
             foreignKeyName: "envios_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_cliente"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_allocation_plan_details: {
+        Row: {
+          carrier_id: number
+          cliente_id: number
+          created_at: string
+          fecha_programada: string
+          id: number
+          nodo_destino: string
+          nodo_origen: string
+          plan_id: number
+          producto_id: number
+        }
+        Insert: {
+          carrier_id: number
+          cliente_id: number
+          created_at?: string
+          fecha_programada: string
+          id?: number
+          nodo_destino: string
+          nodo_origen: string
+          plan_id: number
+          producto_id: number
+        }
+        Update: {
+          carrier_id?: number
+          cliente_id?: number
+          created_at?: string
+          fecha_programada?: string
+          id?: number
+          nodo_destino?: string
+          nodo_origen?: string
+          plan_id?: number
+          producto_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_allocation_plan_details_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_allocation_plan_details_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_allocation_plan_details_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "generated_allocation_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_allocation_plan_details_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_cliente"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generated_allocation_plans: {
+        Row: {
+          calculated_events: number
+          carrier_id: number
+          cliente_id: number
+          created_at: string
+          created_by: number | null
+          end_date: string
+          id: number
+          merge_strategy: string
+          merged_at: string | null
+          producto_id: number
+          start_date: string
+          status: string
+          total_events: number
+        }
+        Insert: {
+          calculated_events?: number
+          carrier_id: number
+          cliente_id: number
+          created_at?: string
+          created_by?: number | null
+          end_date: string
+          id?: number
+          merge_strategy?: string
+          merged_at?: string | null
+          producto_id: number
+          start_date: string
+          status?: string
+          total_events: number
+        }
+        Update: {
+          calculated_events?: number
+          carrier_id?: number
+          cliente_id?: number
+          created_at?: string
+          created_by?: number | null
+          end_date?: string
+          id?: number
+          merge_strategy?: string
+          merged_at?: string | null
+          producto_id?: number
+          start_date?: string
+          status?: string
+          total_events?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generated_allocation_plans_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_allocation_plans_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_allocation_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_allocation_plans_producto_id_fkey"
             columns: ["producto_id"]
             isOneToOne: false
             referencedRelation: "productos_cliente"
