@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,7 @@ import JSZip from "jszip";
 export function GeneratePlanTab() {
   const { isSuperAdmin, clienteId } = useUserRole();
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   const [clientes, setClientes] = useState<any[]>([]);
   const [selectedCliente, setSelectedCliente] = useState<number | null>(null);
@@ -712,14 +714,14 @@ NOTES IMPORTANTES:
       window.URL.revokeObjectURL(url);
 
       toast({
-        title: "Success",
-        description: "Plan generated and downloaded successfully",
+        title: t('common.success'),
+        description: t('plan_generator.plan_generated_success'),
       });
     } catch (error) {
       console.error("Error generating plan:", error);
       toast({
-        title: "Error",
-        description: "Failed to generate plan",
+        title: t('common.error'),
+        description: t('plan_generator.plan_generation_error'),
         variant: "destructive",
       });
     } finally {
@@ -740,19 +742,19 @@ NOTES IMPORTANTES:
       {/* Configuration Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Plan Configuration</CardTitle>
-          <CardDescription>Select year and options for plan generation</CardDescription>
+          <CardTitle>{t('plan_generator.configuration')}</CardTitle>
+          <CardDescription>{t('plan_generator.configuration_desc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {isSuperAdmin() && (
             <div className="space-y-2">
-              <Label>Client</Label>
+              <Label>{t('common.client')}</Label>
               <Select
                 value={selectedCliente?.toString()}
                 onValueChange={(value) => setSelectedCliente(parseInt(value))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select client" />
+                  <SelectValue placeholder={t('common.select_client')} />
                 </SelectTrigger>
                 <SelectContent>
                   {clientes.map((cliente) => (
@@ -766,7 +768,7 @@ NOTES IMPORTANTES:
           )}
 
           <div className="space-y-2">
-            <Label>Year</Label>
+            <Label>{t('plan_generator.year')}</Label>
             <Select
               value={selectedYear.toString()}
               onValueChange={(value) => setSelectedYear(parseInt(value))}
@@ -794,7 +796,7 @@ NOTES IMPORTANTES:
                 }
               />
               <Label htmlFor="includeEvents" className="text-sm font-normal cursor-pointer">
-                Include current events in calculation
+                {t('plan_generator.include_current_events')}
               </Label>
             </div>
 
@@ -807,7 +809,7 @@ NOTES IMPORTANTES:
                 }
               />
               <Label htmlFor="applySeasonality" className="text-sm font-normal cursor-pointer">
-                Apply seasonality adjustments
+                {t('plan_generator.apply_seasonality')}
               </Label>
             </div>
 
@@ -820,7 +822,7 @@ NOTES IMPORTANTES:
                 }
               />
               <Label htmlFor="applyCityWeights" className="text-sm font-normal cursor-pointer">
-                Apply city classification weights
+                {t('plan_generator.apply_city_weights')}
               </Label>
             </div>
           </div>
@@ -831,36 +833,36 @@ NOTES IMPORTANTES:
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Cities Configured</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('plan_generator.cities_configured')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.citiesConfigured}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Cities with allocation data
+              {t('plan_generator.cities_with_requirements')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Products Configured</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('plan_generator.products_configured')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.productsConfigured}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Products with seasonality data
+              {t('plan_generator.products_with_seasonality')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Current Events</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('plan_generator.current_events')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{summary.currentEvents}</div>
             <p className="text-xs text-muted-foreground mt-1">
-              Events in selected year
+              {t('plan_generator.events_in_year')}
             </p>
           </CardContent>
         </Card>
@@ -869,32 +871,32 @@ NOTES IMPORTANTES:
       {/* Generation Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Generate Plan</CardTitle>
+          <CardTitle>{t('plan_generator.generate_plan')}</CardTitle>
           <CardDescription>
-            Download allocation plan as CSV files in a ZIP package
+            {t('plan_generator.download_plan_desc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>City_Allocation_Requirements.csv:</strong> Requisitos de eventos de asignación por ciudad</span>
+              <span><strong>City_Allocation_Requirements.csv:</strong> {t('plan_generator.city_requirements_desc')}</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>Product_Seasonality_Plan.csv:</strong> Distribución porcentual de eventos por producto mensual</span>
+              <span><strong>Product_Seasonality_Plan.csv:</strong> {t('plan_generator.seasonality_desc')}</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>Current_Allocation_Plan.csv:</strong> Estado actual de asignaciones de nodos</span>
+              <span><strong>Current_Allocation_Plan.csv:</strong> {t('plan_generator.current_allocation_desc')}</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>Import_Format_Template.csv:</strong> Plantilla para importar requisitos</span>
+              <span><strong>Import_Format_Template.csv:</strong> {t('plan_generator.import_template_desc')}</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>Documentation.txt:</strong> Documentación detallada en 3 idiomas (ES/EN/FR)</span>
+              <span><strong>Documentation.txt:</strong> {t('plan_generator.documentation_desc')}</span>
             </p>
           </div>
 
@@ -907,12 +909,12 @@ NOTES IMPORTANTES:
             {generating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Generating Plan...
+                {t('plan_generator.generating')}
               </>
             ) : (
               <>
                 <Download className="h-4 w-4 mr-2" />
-                Generate & Download Plan
+                {t('plan_generator.generate_download')}
               </>
             )}
           </Button>
