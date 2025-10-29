@@ -156,6 +156,8 @@ const AppSidebarContent = () => {
   ];
 
   const allocationPlanItems = [
+    { icon: Send, label: "View Plan", path: "/envios" },
+    { icon: FileBarChart, label: "Plan Generator", path: "/envios/plan-generator" },
     { icon: Upload, label: "Import Plan", path: "/envios", action: "import-csv" },
     { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
     { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },

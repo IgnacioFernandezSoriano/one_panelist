@@ -37,6 +37,7 @@ import ConfigIdiomas from "./pages/config/Idiomas";
 import MenuPermissions from "./pages/config/MenuPermissions";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
+import PlanGenerator from "./pages/PlanGenerator";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
 import Profile from "./pages/Profile";
@@ -61,6 +62,7 @@ const App = () => {
             <Route path="/panelistas" element={<Panelistas />} />
             <Route path="/envios" element={<Envios />} />
             <Route path="/envios/nuevo" element={<NuevoEnvio />} />
+            <Route path="/envios/plan-generator" element={<PlanGenerator />} />
             <Route path="/envios/massive-change" element={<MassivePanelistChange />} />
             <Route path="/envios/materials-plan" element={<PanelistMaterialsPlan />} />
             <Route path="/envios/:id" element={<EditarEnvio />} />
