@@ -68,16 +68,24 @@ export default function Traducciones() {
   const addTranslationMutation = useMutation({
     mutationFn: async (data: typeof newTranslation) => {
       const translations = [];
-      for (const lang of ['es', 'en', 'pt']) {
-        if (data[lang as keyof typeof data]) {
+      
+      // Usar los idiomas disponibles dinámicamente
+      for (const language of languages) {
+        const langCode = language.codigo;
+        if (data[langCode as keyof typeof data]) {
           translations.push({
             clave: data.clave,
-            idioma: lang,
-            texto: data[lang as keyof typeof data],
+            idioma: langCode,
+            texto: data[langCode as keyof typeof data] as string,
             categoria: data.categoria,
             descripcion: data.descripcion
           });
         }
+      }
+      
+      // Validar que hay al menos una traducción
+      if (translations.length === 0) {
+        throw new Error('Debe completar al menos un idioma');
       }
       
       const { error } = await supabase
@@ -91,10 +99,20 @@ export default function Traducciones() {
       queryClient.invalidateQueries({ queryKey: ['all-translations'] });
       queryClient.invalidateQueries({ queryKey: ['translations'] });
       setIsAddDialogOpen(false);
-      setNewTranslation({ clave: '', categoria: '', descripcion: '', es: '', en: '', pt: '' });
+      
+      // Resetear el formulario dinámicamente
+      const resetState: any = { clave: '', categoria: '', descripcion: '' };
+      languages.forEach(lang => {
+        resetState[lang.codigo] = '';
+      });
+      setNewTranslation(resetState);
     },
-    onError: () => {
-      toast({ title: 'Error al agregar traducción', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error al agregar traducción', 
+        description: error.message || 'Por favor, verifica los datos e intenta nuevamente',
+        variant: 'destructive' 
+      });
     }
   });
 
