@@ -67,18 +67,6 @@ export default function ConfigWorkflows() {
     { key: "hours_receiver_escalation", label: "Receiver Escalation" },
   ];
 
-  const csvConfig = {
-    tableName: "configuracion_workflows",
-    expectedColumns: [
-      "cliente_id", "producto_id", "tipo_dias", "hours_sender_first_reminder",
-      "hours_sender_second_reminder", "hours_sender_escalation", "hours_receiver_verification", "hours_receiver_escalation"
-    ],
-    exampleData: [
-      ["1", "1", "habiles", "24", "48", "72", "48", "72"],
-      ["2", "2", "calendario", "24", "48", "72", "48", "72"],
-    ],
-  };
-
   return (
     <AppLayout>
       <div className="p-8">
@@ -100,7 +88,6 @@ export default function ConfigWorkflows() {
           onDelete={handleDelete}
           onCreate={() => setCreateDialogOpen(true)}
           isLoading={isLoading}
-          csvConfig={csvConfig}
         />
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>

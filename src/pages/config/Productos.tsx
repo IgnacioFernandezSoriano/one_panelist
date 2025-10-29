@@ -78,12 +78,6 @@ export default function Productos() {
     { key: "id", label: "ID", hidden: true },
   ];
 
-  const csvConfig = {
-    tableName: "productos_cliente",
-    expectedColumns: ["cliente_id", "nombre_producto", "standard_delivery_hours", "descripcion", "estado"],
-    exampleData: [["1", "Standard Package", "72", "Standard postal package", "activo"]],
-  };
-
   return (
     <AppLayout>
       <div className="p-8">
@@ -110,7 +104,6 @@ export default function Productos() {
           }}
           onDelete={handleDelete}
           isLoading={loading}
-          csvConfig={csvConfig}
         />
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
