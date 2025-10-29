@@ -22,14 +22,17 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   const [nodos, setNodos] = useState<Array<{ codigo: string }>>([]);
   const [gestores, setGestores] = useState<Array<{ id: number; nombre_completo: string }>>([]);
   const [paises, setPaises] = useState<string[]>([]);
+  const [clientes, setClientes] = useState<Array<{ id: number; nombre: string; codigo: string }>>([]);
   const [nodoSearch, setNodoSearch] = useState("");
   const [gestorSearch, setGestorSearch] = useState("");
   const [paisSearch, setPaisSearch] = useState("");
+  const [clienteSearch, setClienteSearch] = useState("");
   const [nodoOpen, setNodoOpen] = useState(false);
   const [gestorOpen, setGestorOpen] = useState(false);
   const [paisOpen, setPaisOpen] = useState(false);
+  const [clienteOpen, setClienteOpen] = useState(false);
   const { toast } = useToast();
-  const { clienteId } = useUserRole();
+  const { clienteId, isSuperAdmin } = useUserRole();
   const isEditing = !!initialData?.id;
   const [formData, setFormData] = useState({
     nombre_completo: initialData?.nombre_completo || "",
@@ -48,12 +51,16 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     dias_comunicacion: initialData?.dias_comunicacion || "ambos",
     gestor_asignado_id: initialData?.gestor_asignado_id?.toString() || "",
     estado: initialData?.estado || "activo",
+    cliente_id: initialData?.cliente_id?.toString() || clienteId?.toString() || "",
   });
 
   useEffect(() => {
     loadNodos();
     loadGestores();
     loadPaises();
+    if (isSuperAdmin()) {
+      loadClientes();
+    }
   }, []);
 
   const loadNodos = async () => {
@@ -106,13 +113,30 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     }
   };
 
+  const loadClientes = async () => {
+    const { data, error } = await supabase
+      .from("clientes")
+      .select("id, nombre, codigo")
+      .eq("estado", "activo")
+      .order("nombre", { ascending: true });
+
+    if (!error && data) {
+      setClientes(data);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Determine cliente_id: use form data if superadmin, otherwise use user's cliente
+    const finalClienteId = isSuperAdmin() && formData.cliente_id 
+      ? parseInt(formData.cliente_id) 
+      : clienteId;
+
     const dataToSave = {
       ...formData,
-      cliente_id: clienteId,
+      cliente_id: finalClienteId,
       gestor_asignado_id: formData.gestor_asignado_id ? parseInt(formData.gestor_asignado_id) : null,
       ciudad_id: null, // No usamos este campo por ahora
     };
@@ -144,6 +168,65 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+      {isSuperAdmin() && (
+        <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
+          <Label htmlFor="cliente_id">Account / Client *</Label>
+          <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={clienteOpen}
+                className="w-full justify-between"
+              >
+                {formData.cliente_id 
+                  ? clientes.find(c => c.id.toString() === formData.cliente_id)?.nombre || "Select account..."
+                  : "Select account..."}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <Command>
+                <CommandInput 
+                  placeholder="Search account..." 
+                  value={clienteSearch}
+                  onValueChange={setClienteSearch}
+                />
+                <CommandList>
+                  <CommandEmpty>No account found.</CommandEmpty>
+                  <CommandGroup>
+                    {clientes
+                      .filter(c => 
+                        c.nombre.toLowerCase().includes(clienteSearch.toLowerCase()) ||
+                        c.codigo.toLowerCase().includes(clienteSearch.toLowerCase())
+                      )
+                      .map((cliente) => (
+                        <CommandItem
+                          key={cliente.id}
+                          value={cliente.id.toString()}
+                          onSelect={() => {
+                            setFormData({ ...formData, cliente_id: cliente.id.toString() });
+                            setClienteOpen(false);
+                            setClienteSearch("");
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.cliente_id === cliente.id.toString() ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {cliente.codigo} - {cliente.nombre}
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="nombre_completo">Full Name *</Label>
