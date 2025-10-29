@@ -604,7 +604,7 @@ export type Database = {
         Row: {
           ciudad: string
           ciudad_id: number | null
-          cliente_id: number | null
+          cliente_id: number
           codigo: string
           estado: string
           pais: string
@@ -614,7 +614,7 @@ export type Database = {
         Insert: {
           ciudad: string
           ciudad_id?: number | null
-          cliente_id?: number | null
+          cliente_id: number
           codigo: string
           estado?: string
           pais: string
@@ -624,7 +624,7 @@ export type Database = {
         Update: {
           ciudad?: string
           ciudad_id?: number | null
-          cliente_id?: number | null
+          cliente_id?: number
           codigo?: string
           estado?: string
           pais?: string
@@ -1108,6 +1108,10 @@ export type Database = {
     Functions: {
       generate_next_material_code: {
         Args: { p_cliente_id: number }
+        Returns: string
+      }
+      generate_next_nodo_code: {
+        Args: { p_ciudad_id: number; p_region_id: number }
         Returns: string
       }
       generate_next_product_code: {

@@ -169,11 +169,12 @@ export default function ConfigNodos() {
 
       const newCodigo = `${clienteData.codigo}-${regionData.codigo}-${ciudadData.codigo}-${secuencial.toString().padStart(4, "0")}`;
 
-      // Crear el nodo duplicado con el nuevo código
+      // El código se genera automáticamente por el trigger, solo pasamos los datos necesarios
       const { error: insertError } = await supabase
         .from("nodos")
         .insert([{
-          codigo: newCodigo,
+          codigo: "", // El trigger lo generará automáticamente
+          cliente_id: item.cliente_id,
           region_id: item.region_id,
           ciudad_id: item.ciudad_id,
           pais: item.pais,

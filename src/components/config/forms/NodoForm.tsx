@@ -170,7 +170,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
         .eq("codigo", initialData.codigo);
       error = result.error;
     } else {
-      // Generar código automático: pais-region-ciudad-secuencial
+      // El código se genera automáticamente por el trigger en la base de datos
       const cliente = clientes.find(c => c.id === parseInt(formData.cliente_id));
       const region = regiones.find(r => r.id === parseInt(formData.region_id));
       const ciudad = ciudades.find(c => c.id === parseInt(formData.ciudad_id));
@@ -184,42 +184,15 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
         setIsSubmitting(false);
         return;
       }
-
-      // Obtener todos los nodos existentes para esta combinación y calcular el siguiente secuencial de forma robusta
-      const { data: existingNodos, error: fetchError } = await supabase
-        .from("nodos")
-        .select("codigo")
-        .like("codigo", `${cliente.codigo}-${region.codigo}-${ciudad.codigo}-%`);
-
-      if (fetchError) {
-        toast({
-          title: "Error",
-          description: fetchError.message,
-          variant: "destructive",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      let secuencial = 1;
-      if (existingNodos && existingNodos.length > 0) {
-        const maxSeq = existingNodos
-          .map((n: any) => parseInt(n.codigo.split("-").pop() || "0", 10))
-          .filter((v: number) => !Number.isNaN(v))
-          .reduce((max: number, v: number) => (v > max ? v : max), 0);
-        secuencial = maxSeq + 1;
-      }
-
-      const codigo = `${cliente.codigo}-${region.codigo}-${ciudad.codigo}-${secuencial.toString().padStart(4, "0")}`;
-
+      
       const dataToInsert = {
-        codigo,
+        codigo: "", // El trigger lo generará automáticamente
         cliente_id: parseInt(formData.cliente_id),
         region_id: parseInt(formData.region_id),
         ciudad_id: parseInt(formData.ciudad_id),
         panelista_id: formData.panelista_id ? parseInt(formData.panelista_id) : null,
-        pais: formData.pais,
-        ciudad: formData.ciudad,
+        pais: region.pais,
+        ciudad: ciudad.nombre,
         estado: formData.estado,
       };
 

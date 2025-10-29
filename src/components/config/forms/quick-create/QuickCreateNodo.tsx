@@ -18,6 +18,9 @@ export function QuickCreateNodo({ open, onOpenChange, onSuccess }: QuickCreateNo
     codigo: "",
     ciudad: "",
     pais: "",
+    cliente_id: 1, // Default to first client - this component needs proper refactoring
+    region_id: 1,
+    ciudad_id: 1,
   });
   const { toast } = useToast();
 
@@ -41,7 +44,14 @@ export function QuickCreateNodo({ open, onOpenChange, onSuccess }: QuickCreateNo
 
       onSuccess(data);
       onOpenChange(false);
-      setFormData({ codigo: "", ciudad: "", pais: "" });
+      setFormData({ 
+        codigo: "", 
+        ciudad: "", 
+        pais: "",
+        cliente_id: 1,
+        region_id: 1,
+        ciudad_id: 1,
+      });
     } catch (error: any) {
       toast({
         title: "Error",
