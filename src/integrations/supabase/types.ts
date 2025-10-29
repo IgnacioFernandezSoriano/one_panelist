@@ -665,7 +665,7 @@ export type Database = {
       panelistas: {
         Row: {
           ciudad_id: number | null
-          cliente_id: number | null
+          cliente_id: number
           dias_comunicacion: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
@@ -688,7 +688,7 @@ export type Database = {
         }
         Insert: {
           ciudad_id?: number | null
-          cliente_id?: number | null
+          cliente_id: number
           dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
@@ -711,7 +711,7 @@ export type Database = {
         }
         Update: {
           ciudad_id?: number | null
-          cliente_id?: number | null
+          cliente_id?: number
           dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle?: string
           direccion_ciudad?: string

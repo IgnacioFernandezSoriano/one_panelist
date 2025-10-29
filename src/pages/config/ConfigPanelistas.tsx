@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
 import { Badge } from "@/components/ui/badge";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export default function ConfigPanelistas() {
   const [data, setData] = useState([]);
@@ -14,6 +15,7 @@ export default function ConfigPanelistas() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const { toast } = useToast();
+  const { clienteId, isSuperAdmin } = useUserRole();
 
   useEffect(() => {
     loadData();
@@ -21,10 +23,18 @@ export default function ConfigPanelistas() {
 
   const loadData = async () => {
     setIsLoading(true);
-    const { data: panelistas, error } = await supabase
+    
+    let query = supabase
       .from("panelistas")
       .select("*")
       .order("id", { ascending: true });
+    
+    // Filter by cliente_id unless user is superadmin
+    if (!isSuperAdmin() && clienteId) {
+      query = query.eq("cliente_id", clienteId);
+    }
+
+    const { data: panelistas, error } = await query;
 
     if (error) {
       toast({

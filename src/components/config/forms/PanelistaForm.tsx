@@ -9,6 +9,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface PanelistaFormProps {
   onSuccess: () => void;
@@ -28,6 +29,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   const [gestorOpen, setGestorOpen] = useState(false);
   const [paisOpen, setPaisOpen] = useState(false);
   const { toast } = useToast();
+  const { clienteId } = useUserRole();
   const isEditing = !!initialData?.id;
   const [formData, setFormData] = useState({
     nombre_completo: initialData?.nombre_completo || "",
@@ -110,6 +112,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
     const dataToSave = {
       ...formData,
+      cliente_id: clienteId,
       gestor_asignado_id: formData.gestor_asignado_id ? parseInt(formData.gestor_asignado_id) : null,
       ciudad_id: null, // No usamos este campo por ahora
     };
