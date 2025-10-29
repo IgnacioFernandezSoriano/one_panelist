@@ -3,10 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Upload, Save, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useUserRole } from "@/hooks/useUserRole";
 import Papa from "papaparse";
 
 interface CityRequirement {
@@ -23,19 +25,26 @@ interface CityRequirement {
 
 const CityRequirementsTab = () => {
   const { t } = useTranslation();
+  const { isSuperAdmin } = useUserRole();
   const [requirements, setRequirements] = useState<CityRequirement[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [clientes, setClientes] = useState<any[]>([]);
+  const [selectedCliente, setSelectedCliente] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchRequirements();
+    initializeData();
   }, []);
 
-  const fetchRequirements = async () => {
+  useEffect(() => {
+    if (selectedCliente) {
+      fetchRequirements(selectedCliente);
+    }
+  }, [selectedCliente]);
+
+  const initializeData = async () => {
     try {
       setLoading(true);
-      
-      // Get current user's cliente_id
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
@@ -45,13 +54,40 @@ const CityRequirementsTab = () => {
         .eq("email", user.email)
         .single();
 
-      if (!userData?.cliente_id) throw new Error("No cliente_id found");
+      if (isSuperAdmin) {
+        // Load all clientes for superadmin
+        const { data: clientesData } = await supabase
+          .from("clientes")
+          .select("id, codigo, nombre")
+          .eq("estado", "activo")
+          .order("nombre");
+        
+        setClientes(clientesData || []);
+        if (clientesData && clientesData.length > 0) {
+          setSelectedCliente(clientesData[0].id);
+        }
+      } else if (userData?.cliente_id) {
+        setSelectedCliente(userData.cliente_id);
+      } else {
+        toast.error(t('common.no_cliente_assigned'));
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error initializing:", error);
+      toast.error(t('common.error_loading'));
+      setLoading(false);
+    }
+  };
+
+  const fetchRequirements = async (clienteId: number) => {
+    try {
+      setLoading(true);
 
       // Fetch all active cities for the cliente
       const { data: cities, error: citiesError } = await supabase
         .from("ciudades")
         .select("id, codigo, nombre, clasificacion")
-        .eq("cliente_id", userData.cliente_id)
+        .eq("cliente_id", clienteId)
         .eq("estado", "activo")
         .order("nombre");
 
@@ -61,7 +97,7 @@ const CityRequirementsTab = () => {
       const { data: existingReqs, error: reqsError } = await supabase
         .from("city_allocation_requirements" as any)
         .select("*")
-        .eq("cliente_id", userData.cliente_id);
+        .eq("cliente_id", clienteId);
 
       if (reqsError) throw reqsError;
 
@@ -77,7 +113,7 @@ const CityRequirementsTab = () => {
           from_classification_a: req?.from_classification_a || 0,
           from_classification_b: req?.from_classification_b || 0,
           from_classification_c: req?.from_classification_c || 0,
-          cliente_id: userData.cliente_id,
+          cliente_id: clienteId,
         };
       }) || [];
 
@@ -133,7 +169,7 @@ const CityRequirementsTab = () => {
       }
 
       toast.success(t('common.save_success'));
-      fetchRequirements();
+      if (selectedCliente) fetchRequirements(selectedCliente);
     } catch (error) {
       console.error("Error saving requirements:", error);
       toast.error(t('common.error_saving'));
@@ -201,6 +237,27 @@ const CityRequirementsTab = () => {
 
   return (
     <div className="space-y-4">
+      {isSuperAdmin && (
+        <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+          <label className="text-sm font-medium">{t('common.select_cliente')}:</label>
+          <Select
+            value={selectedCliente?.toString()}
+            onValueChange={(value) => setSelectedCliente(parseInt(value))}
+          >
+            <SelectTrigger className="w-64">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {clientes.map((cliente) => (
+                <SelectItem key={cliente.id} value={cliente.id.toString()}>
+                  {cliente.nombre} ({cliente.codigo})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-semibold">{t('plan_generator.city_requirements')}</h3>
