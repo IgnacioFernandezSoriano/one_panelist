@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -97,9 +98,8 @@ function ResetPasswordContent() {
       <form onSubmit={handleResetPassword} className="space-y-4 mt-4">
         <div className="space-y-2">
           <Label htmlFor="new-password">{t('auth.new_password')}</Label>
-          <Input
+          <PasswordInput
             id="new-password"
-            type="password"
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -111,9 +111,8 @@ function ResetPasswordContent() {
 
         <div className="space-y-2">
           <Label htmlFor="confirm-password">{t('auth.confirm_new_password')}</Label>
-          <Input
+          <PasswordInput
             id="confirm-password"
-            type="password"
             placeholder="••••••••"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -251,9 +252,8 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
 
       <div className="space-y-2">
         <Label htmlFor="password_hash">Password {!isEditing && "*"}</Label>
-        <Input
+        <PasswordInput
           id="password_hash"
-          type="password"
           value={formData.password_hash}
           onChange={(e) => setFormData({ ...formData, password_hash: e.target.value })}
           required={!isEditing}

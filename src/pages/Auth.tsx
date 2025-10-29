@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -188,9 +189,8 @@ function AuthContent() {
 
             <div className="space-y-2">
               <Label htmlFor="signin-password">{t('label.password')}</Label>
-              <Input
+              <PasswordInput
                 id="signin-password"
-                type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -234,9 +234,8 @@ function AuthContent() {
 
             <div className="space-y-2">
               <Label htmlFor="signup-password">{t('label.password')}</Label>
-              <Input
+              <PasswordInput
                 id="signup-password"
-                type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
