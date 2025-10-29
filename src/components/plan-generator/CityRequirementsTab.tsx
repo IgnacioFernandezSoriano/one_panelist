@@ -44,7 +44,6 @@ const CityRequirementsTab = () => {
 
   const initializeData = async () => {
     try {
-      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
@@ -54,7 +53,9 @@ const CityRequirementsTab = () => {
         .eq("email", user.email)
         .single();
 
-      if (isSuperAdmin) {
+      console.log("InitializeData - isSuperAdmin:", isSuperAdmin(), "userData:", userData);
+
+      if (isSuperAdmin()) {
         // Load all clientes for superadmin
         const { data: clientesData } = await supabase
           .from("clientes")
@@ -62,9 +63,12 @@ const CityRequirementsTab = () => {
           .eq("estado", "activo")
           .order("nombre");
         
+        console.log("Clientes loaded:", clientesData);
         setClientes(clientesData || []);
         if (clientesData && clientesData.length > 0) {
           setSelectedCliente(clientesData[0].id);
+        } else {
+          setLoading(false);
         }
       } else if (userData?.cliente_id) {
         setSelectedCliente(userData.cliente_id);
@@ -117,6 +121,7 @@ const CityRequirementsTab = () => {
         };
       }) || [];
 
+      console.log("Cities fetched:", cities?.length, "Merged requirements:", merged.length);
       setRequirements(merged);
     } catch (error) {
       console.error("Error fetching requirements:", error);
@@ -235,9 +240,21 @@ const CityRequirementsTab = () => {
     return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
+  if (!selectedCliente) {
+    return <div className="text-center py-8">{t('common.select_cliente')}</div>;
+  }
+
+  if (requirements.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        {t('plan_generator.no_cities_found')}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {isSuperAdmin && (
+      {isSuperAdmin() && (
         <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
           <label className="text-sm font-medium">{t('common.select_cliente')}:</label>
           <Select
