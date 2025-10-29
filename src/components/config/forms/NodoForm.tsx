@@ -185,13 +185,11 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
         return;
       }
 
-      // Obtener el último secuencial para esta combinación
+      // Obtener todos los nodos existentes para esta combinación y calcular el siguiente secuencial de forma robusta
       const { data: existingNodos, error: fetchError } = await supabase
         .from("nodos")
         .select("codigo")
-        .like("codigo", `${cliente.codigo}-${region.codigo}-${ciudad.codigo}-%`)
-        .order("codigo", { ascending: false })
-        .limit(1);
+        .like("codigo", `${cliente.codigo}-${region.codigo}-${ciudad.codigo}-%`);
 
       if (fetchError) {
         toast({
@@ -205,9 +203,11 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
 
       let secuencial = 1;
       if (existingNodos && existingNodos.length > 0) {
-        const lastCode = existingNodos[0].codigo;
-        const parts = lastCode.split("-");
-        secuencial = parseInt(parts[parts.length - 1]) + 1;
+        const maxSeq = existingNodos
+          .map((n: any) => parseInt(n.codigo.split("-").pop() || "0", 10))
+          .filter((v: number) => !Number.isNaN(v))
+          .reduce((max: number, v: number) => (v > max ? v : max), 0);
+        secuencial = maxSeq + 1;
       }
 
       const codigo = `${cliente.codigo}-${region.codigo}-${ciudad.codigo}-${secuencial.toString().padStart(4, "0")}`;
