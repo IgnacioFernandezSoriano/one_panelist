@@ -17,7 +17,10 @@ export function GeneratePlanTab() {
   
   const [clientes, setClientes] = useState<any[]>([]);
   const [selectedCliente, setSelectedCliente] = useState<number | null>(null);
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState<number>(() => {
+    const savedYear = localStorage.getItem('planGeneratorYear');
+    return savedYear ? parseInt(savedYear) : new Date().getFullYear();
+  });
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   
@@ -27,21 +30,42 @@ export function GeneratePlanTab() {
     currentEvents: 0,
   });
 
-  const [options, setOptions] = useState({
-    includeEvents: true,
-    applySeasonality: true,
-    applyCityWeights: true,
+  // Load from localStorage
+  const [options, setOptions] = useState(() => {
+    const savedOptions = localStorage.getItem('planGeneratorOptions');
+    return savedOptions ? JSON.parse(savedOptions) : {
+      includeEvents: true,
+      applySeasonality: true,
+      applyCityWeights: true,
+    };
   });
 
   useEffect(() => {
     initializeData();
   }, []);
 
+  // Sync clienteId with selectedCliente for non-superadmin users
+  useEffect(() => {
+    if (!isSuperAdmin() && clienteId && selectedCliente !== clienteId) {
+      setSelectedCliente(clienteId);
+    }
+  }, [clienteId, isSuperAdmin]);
+
   useEffect(() => {
     if (selectedCliente) {
       fetchSummary(selectedCliente);
     }
   }, [selectedCliente, selectedYear]);
+
+  // Persist selectedYear to localStorage
+  useEffect(() => {
+    localStorage.setItem('planGeneratorYear', selectedYear.toString());
+  }, [selectedYear]);
+
+  // Persist options to localStorage
+  useEffect(() => {
+    localStorage.setItem('planGeneratorOptions', JSON.stringify(options));
+  }, [options]);
 
   const initializeData = async () => {
     try {
