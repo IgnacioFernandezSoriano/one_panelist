@@ -68,11 +68,15 @@ export function GeneratePlanTab() {
 
   const fetchSummary = async (cliente: number) => {
     try {
+      console.log("Fetching summary for cliente:", cliente, "year:", selectedYear);
+      
       // Count cities with allocations (only count rows with at least one allocation > 0)
-      const { data: cityData } = await supabase
+      const { data: cityData, error: cityError } = await supabase
         .from("city_allocation_requirements")
         .select("*")
         .eq("cliente_id", cliente);
+
+      console.log("City data fetched:", cityData, "error:", cityError);
 
       const citiesWithData = cityData?.filter(city => 
         city.from_classification_a > 0 || 
@@ -80,26 +84,35 @@ export function GeneratePlanTab() {
         city.from_classification_c > 0
       ).length || 0;
 
+      console.log("Cities with data:", citiesWithData);
+
       // Count products with seasonality
-      const { data: productData } = await supabase
+      const { data: productData, error: productError } = await supabase
         .from("product_seasonality")
         .select("*")
         .eq("cliente_id", cliente)
         .eq("year", selectedYear);
 
+      console.log("Product data fetched:", productData, "error:", productError);
+
       // Count current events (envios created recently)
-      const { data: eventsData } = await supabase
+      const { data: eventsData, error: eventsError } = await supabase
         .from("envios")
         .select("id")
         .eq("cliente_id", cliente)
         .gte("fecha_creacion", new Date(selectedYear, 0, 1).toISOString())
         .lt("fecha_creacion", new Date(selectedYear + 1, 0, 1).toISOString());
 
-      setSummary({
+      console.log("Events data fetched:", eventsData, "error:", eventsError);
+
+      const newSummary = {
         citiesConfigured: citiesWithData,
         productsConfigured: productData?.length || 0,
         currentEvents: eventsData?.length || 0,
-      });
+      };
+
+      console.log("Setting summary:", newSummary);
+      setSummary(newSummary);
     } catch (error) {
       console.error("Error fetching summary:", error);
     }
