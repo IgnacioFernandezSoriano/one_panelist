@@ -45,7 +45,8 @@ import {
   PackageSearch,
   Languages,
   Shield,
-  User as UserIcon
+  User as UserIcon,
+  FileBarChart
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -352,17 +353,29 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
-            {/* Issues */}
+            {/* Issues - Not developed yet */}
             {canAccessMenuItem('incidencias') && (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/incidencias"}>
-                  <Link to="/incidencias">
-                    <AlertCircle className="w-5 h-5" />
-                    {sidebarOpen && <span>Issues</span>}
-                  </Link>
+                <SidebarMenuButton 
+                  disabled 
+                  className="opacity-50 cursor-not-allowed"
+                >
+                  <AlertCircle className="w-5 h-5" />
+                  {sidebarOpen && <span>Issues</span>}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )}
+
+            {/* Reporting - Not developed yet */}
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                disabled 
+                className="opacity-50 cursor-not-allowed"
+              >
+                <FileBarChart className="w-5 h-5" />
+                {sidebarOpen && <span>Reporting</span>}
+              </SidebarMenuButton>
+            </SidebarMenuItem>
 
             {/* Configuration Collapsible - Admin & Super Admin only */}
             {hasAnyRole(['superadmin', 'admin']) && (
