@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { CarrierProductSelector } from "./CarrierProductSelector";
 
 interface ProductoFormProps {
   onSuccess: () => void;
@@ -40,6 +41,7 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
   const [clientes, setClientes] = useState<any[]>([]);
   const [tiposMaterial, setTiposMaterial] = useState<any[]>([]);
   const [materialesProducto, setMaterialesProducto] = useState<any[]>([]);
+  const [selectedCarriers, setSelectedCarriers] = useState<number[]>([]);
   const [openCliente, setOpenCliente] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
@@ -49,6 +51,7 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
     loadTiposMaterial();
     if (initialData?.id) {
       loadMaterialesProducto(initialData.id);
+      loadCarriers(initialData.id);
     }
   }, []);
 
@@ -168,8 +171,27 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
         productoId = data.id;
       }
 
-      // Save materials
+      // Save carrier relationships
       if (productoId) {
+        // Delete existing relationships
+        await supabase
+          .from('carrier_productos' as any)
+          .delete()
+          .eq('producto_id', productoId);
+        
+        // Insert new relationships
+        if (selectedCarriers.length > 0) {
+          const relationships = selectedCarriers.map(carrierId => ({
+            cliente_id: parseInt(formData.cliente_id),
+            carrier_id: carrierId,
+            producto_id: productoId,
+          }));
+          
+          await supabase
+            .from('carrier_productos' as any)
+            .insert(relationships);
+        }
+
         // Delete existing materials if editing
         if (isEditing) {
           await supabase
@@ -322,6 +344,21 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
           </SelectContent>
         </Select>
       </div>
+
+      {/* Carrier Assignment Section */}
+      {formData.cliente_id && (
+        <div className="space-y-2 pt-4 border-t">
+          <Label>Assigned Carriers</Label>
+          <p className="text-xs text-muted-foreground mb-2">
+            Select which carriers can handle this product
+          </p>
+          <CarrierProductSelector
+            clienteId={parseInt(formData.cliente_id)}
+            selectedCarrierIds={selectedCarriers}
+            onChange={setSelectedCarriers}
+          />
+        </div>
+      )}
 
       {/* Required Materials Section */}
       <div className="space-y-4 pt-4 border-t">

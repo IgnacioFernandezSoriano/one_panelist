@@ -63,7 +63,8 @@ const App = () => {
             <Route path="/panelistas" element={<Panelistas />} />
             <Route path="/envios" element={<Envios />} />
             <Route path="/envios/nuevo" element={<NuevoEnvio />} />
-            <Route path="/envios/plan-generator" element={<PlanGenerator />} />
+            <Route path="/envios/intelligent-plan-generator" element={<IntelligentPlanGenerator />} />
+            <Route path="/envios/plan-csv-generator" element={<PlanGenerator />} />
             <Route path="/envios/massive-change" element={<MassivePanelistChange />} />
             <Route path="/envios/materials-plan" element={<PanelistMaterialsPlan />} />
             <Route path="/envios/:id" element={<EditarEnvio />} />

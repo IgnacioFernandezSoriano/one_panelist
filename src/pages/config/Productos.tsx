@@ -27,6 +27,12 @@ export default function Productos() {
           *,
           clientes (
             nombre
+          ),
+          carrier_productos (
+            carrier_id,
+            carriers (
+              commercial_name
+            )
           )
         `)
         .order("fecha_creacion", { ascending: false });
@@ -72,6 +78,16 @@ export default function Productos() {
     { key: "codigo_producto", label: "Code" },
     { key: "nombre_producto", label: "Name" },
     { key: "clientes.nombre", label: "Account", render: (row: any) => row.clientes?.nombre },
+    { 
+      key: "carriers", 
+      label: "Carriers", 
+      render: (row: any) => {
+        const carriers = row.carrier_productos || [];
+        return carriers.length > 0
+          ? carriers.map((cp: any) => cp.carriers?.commercial_name).filter(Boolean).join(", ")
+          : "Not assigned";
+      }
+    },
     { key: "standard_delivery_hours", label: "Std. Delivery (hrs)" },
     { key: "descripcion", label: "Description" },
     { key: "estado", label: "Status" },
