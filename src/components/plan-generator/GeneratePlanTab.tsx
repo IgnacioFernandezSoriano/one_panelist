@@ -693,20 +693,19 @@ NOTES IMPORTANTES:
 
       // Create ZIP file
       const zip = new JSZip();
-      const timestamp = new Date().toISOString().split('T')[0];
       
-      zip.file(`City_Allocation_Requirements_${selectedYear}_${timestamp}.csv`, cityCSVString);
-      zip.file(`Product_Seasonality_Plan_${selectedYear}_${timestamp}.csv`, productCSVString);
-      zip.file(`Current_Allocation_Plan_${selectedYear}_${timestamp}.csv`, currentAllocationCSVString);
-      zip.file(`Import_Format_Template_${selectedYear}_${timestamp}.csv`, importTemplateCSVString);
-      zip.file(`Documentation_${selectedYear}_${timestamp}.txt`, documentation);
+      zip.file(`City_Allocation_Requirements_${selectedYear}.csv`, cityCSVString);
+      zip.file(`Product_Seasonality_Plan_${selectedYear}.csv`, productCSVString);
+      zip.file(`Current_Allocation_Plan_${selectedYear}.csv`, currentAllocationCSVString);
+      zip.file(`Import_Format_Template_${selectedYear}.csv`, importTemplateCSVString);
+      zip.file(`Documentation.txt`, documentation);
 
       // Generate and download ZIP
       const zipBlob = await zip.generateAsync({ type: "blob" });
       const url = window.URL.createObjectURL(zipBlob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `Allocation_Plan_${selectedYear}_${timestamp}.zip`;
+      link.download = `Allocation_Plan_${selectedYear}.zip`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
