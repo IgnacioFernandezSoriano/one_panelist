@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Upload, Save, HelpCircle, RotateCcw } from "lucide-react";
+import { Save, HelpCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -208,58 +208,6 @@ const CityRequirementsTab = () => {
     }
   };
 
-  const handleExport = () => {
-    const csvData = requirements.map(req => ({
-      ciudad_codigo: req.ciudad_codigo,
-      ciudad_nombre: req.ciudad_nombre,
-      clasificacion: req.clasificacion,
-      from_A: req.from_classification_a,
-      from_B: req.from_classification_b,
-      from_C: req.from_classification_c,
-    }));
-
-    const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `City_Requirements_${new Date().toISOString().split('T')[0]}.csv`);
-    link.click();
-    toast.success(t('plan_generator.export_success'));
-  };
-
-  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    Papa.parse(file, {
-      header: true,
-      complete: (results) => {
-        try {
-          const imported = results.data as any[];
-          setRequirements(prev =>
-            prev.map(req => {
-              const match = imported.find(
-                (imp: any) => imp.ciudad_codigo === req.ciudad_codigo
-              );
-              if (match) {
-                return {
-                  ...req,
-                  from_classification_a: parseInt(match.from_A) || 0,
-                  from_classification_b: parseInt(match.from_B) || 0,
-                  from_classification_c: parseInt(match.from_C) || 0,
-                };
-              }
-              return req;
-            })
-          );
-          toast.success(t('plan_generator.import_success'));
-        } catch (error) {
-          toast.error(t('plan_generator.import_error'));
-        }
-      },
-    });
-  };
 
   if (loading) {
     return <div className="text-center py-8">{t('common.loading')}</div>;
@@ -315,22 +263,6 @@ const CityRequirementsTab = () => {
           </TooltipProvider>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4 mr-2" />
-            {t('plan_generator.export_csv')}
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <label>
-              <Upload className="h-4 w-4 mr-2" />
-              {t('plan_generator.import_csv')}
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleImport}
-                className="hidden"
-              />
-            </label>
-          </Button>
           <Button size="sm" onClick={handleSave} disabled={saving}>
             <Save className="h-4 w-4 mr-2" />
             {saving ? t('common.saving') : t('common.save')}
