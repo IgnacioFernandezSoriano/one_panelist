@@ -51,7 +51,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     nodo_destino: initialData?.nodo_destino || "",
     producto_id: initialData?.producto_id || "",
     tipo_producto: initialData?.tipo_producto || "",
-    motivo_creacion: initialData?.motivo_creacion || "",
+    motivo_creacion: initialData?.motivo_creacion || "programado",
     estado: initialData?.estado || "PENDING",
     observaciones: initialData?.observaciones || "",
   });
@@ -535,13 +535,19 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
         {/* Motivo de Creación */}
         <div className="space-y-2">
           <Label htmlFor="motivo_creacion">{t('form.creation_reason')} *</Label>
-          <Input
-            id="motivo_creacion"
+          <Select
             value={formData.motivo_creacion}
-            onChange={(e) => setFormData({ ...formData, motivo_creacion: e.target.value })}
-            placeholder={t('form.creation_reason_placeholder')}
-            required
-          />
+            onValueChange={(value) => setFormData({ ...formData, motivo_creacion: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={t('form.select_creation_reason')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="programado">{t('creation_reason.programado')}</SelectItem>
+              <SelectItem value="compensatorio_extravio">{t('creation_reason.compensatory_loss')}</SelectItem>
+              <SelectItem value="compensatorio_no_disponible">{t('creation_reason.compensatory_unavailable')}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Estado */}
