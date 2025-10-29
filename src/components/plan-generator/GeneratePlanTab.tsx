@@ -280,33 +280,37 @@ export function GeneratePlanTab() {
       ];
       const importTemplateCSVString = Papa.unparse(importTemplateCSV);
 
-      // Generate TXT Documentation
-      const documentation = `DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
-============================================
+      // Generate TXT Documentation (Trilingual: Spanish, English, French)
+      const documentation = `═══════════════════════════════════════════════════════════════
+DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
+═══════════════════════════════════════════════════════════════
 
 1. City_Allocation_Requirements_${selectedYear}.csv
-   DESCRIPCIÓN: Requisitos de asignación de panelistas por ciudad
+   
+   DESCRIPCIÓN: Requisitos de eventos de asignación por ciudad
    COLUMNAS:
    - ciudad_codigo: Código único de la ciudad destino
    - ciudad_nombre: Nombre de la ciudad destino
    - clasificacion: Clasificación de la ciudad (A, B, o C)
-   - from_classification_a: Número de panelistas que deben llegar desde ciudades tipo A
-   - from_classification_b: Número de panelistas que deben llegar desde ciudades tipo B
-   - from_classification_c: Número de panelistas que deben llegar desde ciudades tipo C
-   - total_incoming: Total de panelistas que deben llegar a esta ciudad
+   - from_classification_a: Número de eventos que deben llegar desde ciudades tipo A
+   - from_classification_b: Número de eventos que deben llegar desde ciudades tipo B
+   - from_classification_c: Número de eventos que deben llegar desde ciudades tipo C
+   - total_incoming: Total de eventos que deben llegar a esta ciudad combinando todas las ciudades
    
-   USO: Este archivo muestra cuántos panelistas necesita recibir cada ciudad según las clasificaciones.
+   USO: Este archivo muestra cuántos eventos necesita recibir cada ciudad según las clasificaciones en el periodo.
 
 2. Product_Seasonality_Plan_${selectedYear}.csv
+   
    DESCRIPCIÓN: Distribución porcentual mensual por producto
    COLUMNAS:
    - producto_codigo: Código único del producto
    - producto_nombre: Nombre del producto
-   - jan_percentage a dec_percentage: Porcentaje de distribución para cada mes (debe sumar 100%)
+   - jan_percentage a dec_percentage: Porcentaje de distribución de eventos por producto para cada mes (debe sumar 100%)
    
-   USO: Define la estacionalidad de cada producto a lo largo del año.
+   USO: Define la estacionalidad de eventos por producto a lo largo del año.
 
 3. Current_Allocation_Plan_${selectedYear}.csv
+   
    DESCRIPCIÓN: Estado actual de asignación de nodos y panelistas
    COLUMNAS:
    - nodo_codigo: Código del nodo
@@ -318,12 +322,13 @@ export function GeneratePlanTab() {
    USO: Muestra la situación actual de asignaciones para comparar con el plan objetivo.
 
 4. Import_Format_Template_${selectedYear}.csv
+   
    DESCRIPCIÓN: Plantilla para importar requisitos de asignación de ciudades
    COLUMNAS:
    - ciudad_codigo: Código de la ciudad (debe existir en el sistema)
-   - from_classification_a: Cantidad de panelistas desde ciudades A
-   - from_classification_b: Cantidad de panelistas desde ciudades B
-   - from_classification_c: Cantidad de panelistas desde ciudades C
+   - from_classification_a: Cantidad de eventos desde ciudades A
+   - from_classification_b: Cantidad de eventos desde ciudades B
+   - from_classification_c: Cantidad de eventos desde ciudades C
    
    USO: Use este formato para importar masivamente requisitos de asignación.
         Complete con los códigos de ciudad existentes y las cantidades deseadas.
@@ -332,10 +337,125 @@ NOTAS IMPORTANTES:
 - Todos los totales deben ser coherentes entre ciudades origen y destino
 - Los porcentajes de estacionalidad deben sumar exactamente 100%
 - Los códigos de ciudad deben existir previamente en el sistema
-- La suma de asignaciones debe coincidir con el número total de nodos disponibles
+- La suma de eventos debe coincidir con el número total de nodos disponibles
 
-Fecha de generación: ${new Date().toLocaleString('es-ES')}
-Año del plan: ${selectedYear}
+
+═══════════════════════════════════════════════════════════════
+ALLOCATION PLAN FILES DOCUMENTATION
+═══════════════════════════════════════════════════════════════
+
+1. City_Allocation_Requirements_${selectedYear}.csv
+   
+   DESCRIPTION: City event allocation requirements
+   COLUMNS:
+   - ciudad_codigo: Unique destination city code
+   - ciudad_nombre: Destination city name
+   - clasificacion: City classification (A, B, or C)
+   - from_classification_a: Number of events that must arrive from type A cities
+   - from_classification_b: Number of events that must arrive from type B cities
+   - from_classification_c: Number of events that must arrive from type C cities
+   - total_incoming: Total events that must arrive to this city combining all cities
+   
+   USE: This file shows how many events each city needs to receive by classification during the period.
+
+2. Product_Seasonality_Plan_${selectedYear}.csv
+   
+   DESCRIPTION: Monthly percentage distribution by product
+   COLUMNS:
+   - producto_codigo: Unique product code
+   - producto_nombre: Product name
+   - jan_percentage to dec_percentage: Event distribution percentage by product for each month (must sum to 100%)
+   
+   USE: Defines product event seasonality throughout the year.
+
+3. Current_Allocation_Plan_${selectedYear}.csv
+   
+   DESCRIPTION: Current node and panelist allocation status
+   COLUMNS:
+   - nodo_codigo: Node code
+   - ciudad_codigo: Node city code
+   - ciudad_nombre: City name
+   - clasificacion: City classification
+   - panelista_asignado: Indicates if node has assigned panelist (Yes/No)
+   
+   USE: Shows current allocation situation to compare with target plan.
+
+4. Import_Format_Template_${selectedYear}.csv
+   
+   DESCRIPTION: Template to import city allocation requirements
+   COLUMNS:
+   - ciudad_codigo: City code (must exist in system)
+   - from_classification_a: Number of events from A cities
+   - from_classification_b: Number of events from B cities
+   - from_classification_c: Number of events from C cities
+   
+   USE: Use this format to massively import allocation requirements.
+        Fill with existing city codes and desired quantities.
+
+IMPORTANT NOTES:
+- All totals must be consistent between source and destination cities
+- Seasonality percentages must sum exactly to 100%
+- City codes must previously exist in the system
+- Event sum must match total number of available nodes
+
+
+═══════════════════════════════════════════════════════════════
+DOCUMENTATION DES FICHIERS DU PLAN D'ALLOCATION
+═══════════════════════════════════════════════════════════════
+
+1. City_Allocation_Requirements_${selectedYear}.csv
+   
+   DESCRIPTION: Besoins d'allocation d'événements par ville
+   COLONNES:
+   - ciudad_codigo: Code unique de la ville de destination
+   - ciudad_nombre: Nom de la ville de destination
+   - clasificacion: Classification de la ville (A, B ou C)
+   - from_classification_a: Nombre d'événements devant arriver des villes de type A
+   - from_classification_b: Nombre d'événements devant arriver des villes de type B
+   - from_classification_c: Nombre d'événements devant arriver des villes de type C
+   - total_incoming: Total d'événements devant arriver à cette ville en combinant toutes les villes
+   
+   UTILISATION: Ce fichier montre combien d'événements chaque ville doit recevoir selon les classifications pendant la période.
+
+2. Product_Seasonality_Plan_${selectedYear}.csv
+   
+   DESCRIPTION: Distribution en pourcentage mensuel par produit
+   COLONNES:
+   - producto_codigo: Code unique du produit
+   - producto_nombre: Nom du produit
+   - jan_percentage à dec_percentage: Pourcentage de distribution d'événements par produit pour chaque mois (doit totaliser 100%)
+   
+   UTILISATION: Définit la saisonnalité des événements par produit tout au long de l'année.
+
+3. Current_Allocation_Plan_${selectedYear}.csv
+   
+   DESCRIPTION: État actuel de l'allocation des nœuds et panélistes
+   COLONNES:
+   - nodo_codigo: Code du nœud
+   - ciudad_codigo: Code de la ville du nœud
+   - ciudad_nombre: Nom de la ville
+   - clasificacion: Classification de la ville
+   - panelista_asignado: Indique si le nœud a un panéliste assigné (Oui/Non)
+   
+   UTILISATION: Montre la situation actuelle des allocations pour comparer avec le plan objectif.
+
+4. Import_Format_Template_${selectedYear}.csv
+   
+   DESCRIPTION: Modèle pour importer les besoins d'allocation de villes
+   COLONNES:
+   - ciudad_codigo: Code de la ville (doit exister dans le système)
+   - from_classification_a: Nombre d'événements depuis les villes A
+   - from_classification_b: Nombre d'événements depuis les villes B
+   - from_classification_c: Nombre d'événements depuis les villes C
+   
+   UTILISATION: Utilisez ce format pour importer massivement les besoins d'allocation.
+                Complétez avec les codes de ville existants et les quantités désirées.
+
+NOTES IMPORTANTES:
+- Tous les totaux doivent être cohérents entre villes source et destination
+- Les pourcentages de saisonnalité doivent totaliser exactement 100%
+- Les codes de ville doivent exister préalablement dans le système
+- La somme des événements doit correspondre au nombre total de nœuds disponibles
 `;
 
       // Create ZIP file
@@ -346,7 +466,7 @@ Año del plan: ${selectedYear}
       zip.file(`Product_Seasonality_Plan_${selectedYear}_${timestamp}.csv`, productCSVString);
       zip.file(`Current_Allocation_Plan_${selectedYear}_${timestamp}.csv`, currentAllocationCSVString);
       zip.file(`Import_Format_Template_${selectedYear}_${timestamp}.csv`, importTemplateCSVString);
-      zip.file(`LEEME_Documentacion_${selectedYear}_${timestamp}.txt`, documentation);
+      zip.file(`Documentation_${selectedYear}_${timestamp}.txt`, documentation);
 
       // Generate and download ZIP
       const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -526,11 +646,11 @@ Año del plan: ${selectedYear}
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>City_Allocation_Requirements.csv:</strong> Requisitos de asignación por ciudad</span>
+              <span><strong>City_Allocation_Requirements.csv:</strong> Requisitos de eventos de asignación por ciudad</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>Product_Seasonality_Plan.csv:</strong> Distribución porcentual mensual por producto</span>
+              <span><strong>Product_Seasonality_Plan.csv:</strong> Distribución porcentual de eventos por producto mensual</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -542,7 +662,7 @@ Año del plan: ${selectedYear}
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>LEEME_Documentacion.txt:</strong> Documentación detallada de todos los archivos</span>
+              <span><strong>Documentation.txt:</strong> Documentación detallada en 3 idiomas (ES/EN/FR)</span>
             </p>
           </div>
 
