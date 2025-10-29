@@ -248,6 +248,11 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         )}
       </div>
 
+      {/* Contact Data Section */}
+      <div className="pt-4">
+        <h3 className="text-lg font-semibold mb-4 text-primary">{t('panelist.contact_data')}</h3>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="nombre_completo">{t('panelist.full_name')} *</Label>
@@ -444,6 +449,11 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
       </div>
 
+      {/* Contact Schedule Section */}
+      <div className="pt-6">
+        <h3 className="text-lg font-semibold mb-4 text-primary">{t('panelist.contact_schedule')}</h3>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="idioma">{t('panelist.language')} *</Label>
@@ -519,6 +529,11 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
               <SelectItem value="ambos">{t('panelist.both')}</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        {/* Management Data Section */}
+        <div className="pt-6">
+          <h3 className="text-lg font-semibold mb-4 text-primary">{t('panelist.management_data')}</h3>
         </div>
 
         <div className="space-y-2">
