@@ -136,17 +136,37 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
       return;
     }
 
+    if (!formData.cliente_id || formData.cliente_id === "") {
+      toast({
+        title: t('common.error'),
+        description: t('error.account_required'),
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const selectedProducto = productos.find(p => p.id.toString() === formData.producto_id);
     
     const dataToSave = {
       ...formData,
       fecha_programada: format(fechaProgramada, "yyyy-MM-dd"),
-      cliente_id: parseInt(formData.cliente_id),
-      producto_id: formData.producto_id ? parseInt(formData.producto_id) : null,
+      cliente_id: formData.cliente_id && formData.cliente_id !== "" ? parseInt(formData.cliente_id) : null,
+      producto_id: formData.producto_id && formData.producto_id !== "" ? parseInt(formData.producto_id) : null,
       tipo_producto: selectedProducto ? `${selectedProducto.codigo_producto} - ${selectedProducto.nombre_producto}` : null,
-      carrier_id: formData.carrier_id ? parseInt(formData.carrier_id) : null,
+      carrier_id: formData.carrier_id && formData.carrier_id !== "" ? parseInt(formData.carrier_id) : null,
       carrier_name: formData.carrier_id ? carriers.find(c => c.id.toString() === formData.carrier_id)?.commercial_name || carriers.find(c => c.id.toString() === formData.carrier_id)?.legal_name : null,
     };
+
+    if (!dataToSave.cliente_id) {
+      toast({
+        title: t('common.error'),
+        description: t('error.account_required'),
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       let result;
