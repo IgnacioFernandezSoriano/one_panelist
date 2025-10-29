@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WorkflowForm } from "@/components/config/forms/WorkflowForm";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function ConfigWorkflows() {
   const [data, setData] = useState([]);
@@ -13,6 +14,7 @@ export default function ConfigWorkflows() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     loadData();
@@ -59,7 +61,16 @@ export default function ConfigWorkflows() {
     { key: "id", label: "ID" },
     { key: "cliente_id", label: "Account ID" },
     { key: "producto_id", label: "Product ID" },
-    { key: "tipo_dias", label: "Day Type" },
+    { 
+      key: "tipo_dias", 
+      label: "Day Type",
+      render: (row: any) => {
+        const dayType = row.tipo_dias;
+        if (!dayType) return "-";
+        // Translate using the same keys as the form
+        return t(`workflow.day_type.${dayType}`);
+      }
+    },
     { key: "hours_sender_first_reminder", label: "Sender 1st Reminder" },
     { key: "hours_sender_second_reminder", label: "Sender 2nd Reminder" },
     { key: "hours_sender_escalation", label: "Sender Escalation" },
