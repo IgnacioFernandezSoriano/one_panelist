@@ -214,6 +214,7 @@ export function NodoForm({ onSuccess, onCancel, initialData }: NodoFormProps) {
 
       const dataToInsert = {
         codigo,
+        cliente_id: parseInt(formData.cliente_id),
         region_id: parseInt(formData.region_id),
         ciudad_id: parseInt(formData.ciudad_id),
         panelista_id: formData.panelista_id ? parseInt(formData.panelista_id) : null,
