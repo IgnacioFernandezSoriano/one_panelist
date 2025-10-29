@@ -274,6 +274,18 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
+            {/* Panelists */}
+            {canAccessMenuItem('panelistas') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/panelistas"}>
+                  <Link to="/panelistas">
+                    <Users className="w-5 h-5" />
+                    {sidebarOpen && <span>Panelists</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+
             {/* Allocation Plan Collapsible */}
             {canAccessMenuItem('envios') && (
               <SidebarMenuItem>
@@ -337,18 +349,6 @@ const AppSidebarContent = () => {
                   </SidebarGroup>
                 </CollapsibleContent>
                 </Collapsible>
-              </SidebarMenuItem>
-            )}
-
-            {/* Panelists */}
-            {canAccessMenuItem('panelistas') && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/panelistas"}>
-                  <Link to="/panelistas">
-                    <Users className="w-5 h-5" />
-                    {sidebarOpen && <span>Panelists</span>}
-                  </Link>
-                </SidebarMenuButton>
               </SidebarMenuItem>
             )}
 
