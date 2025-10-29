@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertCircle, ExternalLink, Search, Calendar, X } from "lucide-react";
 import { format } from "date-fns";
@@ -281,50 +282,71 @@ export default function UnassignedNodes() {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Search Input */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder={t('unassigned_nodes.search_placeholder')}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="search" className="text-sm font-medium">
+                      {t('unassigned_nodes.search_placeholder')}
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="search"
+                        placeholder={t('label.search')}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
                   </div>
 
                   {/* Status Filter */}
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('unassigned_nodes.status_all')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t('unassigned_nodes.status_all')}</SelectItem>
-                      <SelectItem value="activo">{t('status.active')}</SelectItem>
-                      <SelectItem value="inactivo">{t('status.inactive')}</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Label htmlFor="status" className="text-sm font-medium">
+                      {t('label.status')}
+                    </Label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger id="status">
+                        <SelectValue placeholder={t('unassigned_nodes.status_all')} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t('unassigned_nodes.status_all')}</SelectItem>
+                        <SelectItem value="activo">{t('status.active')}</SelectItem>
+                        <SelectItem value="inactivo">{t('status.inactive')}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   {/* Date From */}
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      type="date"
-                      placeholder={t('unassigned_nodes.date_from')}
-                      value={dateFrom}
-                      onChange={(e) => setDateFrom(e.target.value)}
-                      className="pl-9"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="date-from" className="text-sm font-medium">
+                      {t('unassigned_nodes.date_from')}
+                    </Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="date-from"
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
                   </div>
 
                   {/* Date To */}
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    <Input
-                      type="date"
-                      placeholder={t('unassigned_nodes.date_to')}
-                      value={dateTo}
-                      onChange={(e) => setDateTo(e.target.value)}
-                      className="pl-9"
-                    />
+                  <div className="space-y-2">
+                    <Label htmlFor="date-to" className="text-sm font-medium">
+                      {t('unassigned_nodes.date_to')}
+                    </Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                      <Input
+                        id="date-to"
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
