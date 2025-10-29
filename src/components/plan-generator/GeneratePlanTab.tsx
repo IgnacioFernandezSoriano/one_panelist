@@ -441,16 +441,36 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
         Complete con los IDs y códigos existentes en el sistema.
 
 NOTAS IMPORTANTES:
-- City_Allocation_Requirements: Los valores mostrados son exactamente los configurados en la tabla
-  (from_classification_a/b/c) sin ningún tipo de multiplicación.
-  Ejemplo: Si Barcelona está configurada para recibir 50 eventos de ciudades A, 20 de B y 5 de C,
-  el archivo mostrará exactamente esos valores (50, 20, 5).
+- City_Allocation_Requirements: Los valores mostrados son exactamente los configurados en la tabla.
+  EJEMPLO DE LÓGICA:
+  Barcelona (clasificación A) está configurada con: From A=50, From B=20, From C=5
+  Esto significa que Barcelona debe recibir 50 envíos de ciudades tipo A, 20 de tipo B y 5 de tipo C.
+  Si Madrid Capital es tipo A, entonces Madrid debe enviar 50 eventos a Barcelona.
+  Si Girona y La Palma son tipo B, entonces cada una debe enviar 20 eventos a Barcelona.
+  El total de eventos que recibe Barcelona será: 50 (Madrid) + 20 (Girona) + 20 (La Palma) + 5 (Boadilla) = 95
+  
 - Current_Allocation_Plan: Muestra todos los eventos de asignación reales creados durante
   el año seleccionado (exportación idéntica al botón "Export Allocation Plan").
+  
 - Import_Format_Template: Use este formato para crear nuevos eventos de asignación.
-  Todos los IDs (cliente_id, carrier_id, producto_id, panelista IDs) deben existir en el sistema.
+  
+  CAMPOS OBLIGATORIOS (no pueden estar vacíos):
+  • cliente_id: ID del cliente (debe existir en tabla clientes)
+  • nodo_origen: Código del nodo origen (debe existir en tabla nodos)
+  • nodo_destino: Código del nodo destino (debe existir en tabla nodos)
+  • fecha_programada: Fecha programada del envío (formato: YYYY-MM-DD)
+  • motivo_creacion: Motivo de creación del envío (texto libre)
+  
+  CAMPOS OPCIONALES (pueden dejarse vacíos):
+  • panelista_origen_id: ID del panelista origen (recomendado si existe)
+  • panelista_destino_id: ID del panelista destino (recomendado si existe)
+  • carrier_id: ID del carrier (si se asigna carrier)
+  • producto_id: ID del producto (si se especifica producto)
+  • tipo_producto: Tipo de producto (texto libre)
+  • estado: Estado del envío (si no se especifica, será 'PENDING' por defecto)
+  • numero_etiqueta: Número de etiqueta del envío
+  
 - Los porcentajes de estacionalidad deben sumar exactamente 100% por producto.
-- Los códigos de nodo (nodo_origen, nodo_destino) deben existir en la topología.
 
 
 ═══════════════════════════════════════════════════════════════
@@ -527,16 +547,36 @@ ALLOCATION PLAN FILES DOCUMENTATION
         Fill with existing IDs and codes in the system.
 
 IMPORTANT NOTES:
-- City_Allocation_Requirements: Values shown are exactly as configured in the table
-  (from_classification_a/b/c) without any multiplication.
-  Example: If Barcelona is configured to receive 50 events from A cities, 20 from B, and 5 from C,
-  the file will show exactly those values (50, 20, 5).
+- City_Allocation_Requirements: Values shown are exactly as configured in the table.
+  LOGIC EXAMPLE:
+  Barcelona (classification A) is configured with: From A=50, From B=20, From C=5
+  This means Barcelona must receive 50 shipments from type A cities, 20 from type B, and 5 from type C.
+  If Madrid Capital is type A, then Madrid must send 50 events to Barcelona.
+  If Girona and La Palma are type B, then each must send 20 events to Barcelona.
+  Total events received by Barcelona will be: 50 (Madrid) + 20 (Girona) + 20 (La Palma) + 5 (Boadilla) = 95
+  
 - Current_Allocation_Plan: Shows all real allocation events created during the selected year
   (identical export to "Export Allocation Plan" button).
+  
 - Import_Format_Template: Use this format to create new allocation events.
-  All IDs (cliente_id, carrier_id, producto_id, panelist IDs) must exist in the system.
+  
+  REQUIRED FIELDS (cannot be empty):
+  • cliente_id: Client ID (must exist in clientes table)
+  • nodo_origen: Origin node code (must exist in nodos table)
+  • nodo_destino: Destination node code (must exist in nodos table)
+  • fecha_programada: Scheduled shipment date (format: YYYY-MM-DD)
+  • motivo_creacion: Creation reason (free text)
+  
+  OPTIONAL FIELDS (can be left empty):
+  • panelista_origen_id: Origin panelist ID (recommended if exists)
+  • panelista_destino_id: Destination panelist ID (recommended if exists)
+  • carrier_id: Carrier ID (if assigning carrier)
+  • producto_id: Product ID (if specifying product)
+  • tipo_producto: Product type (free text)
+  • estado: Shipment status (if not specified, defaults to 'PENDING')
+  • numero_etiqueta: Shipment label number
+  
 - Seasonality percentages must sum exactly to 100% per product.
-- Node codes (nodo_origen, nodo_destino) must exist in the topology.
 
 
 ═══════════════════════════════════════════════════════════════
@@ -613,16 +653,36 @@ DOCUMENTATION DES FICHIERS DU PLAN D'ALLOCATION
                 Complétez avec les IDs et codes existants dans le système.
 
 NOTES IMPORTANTES:
-- City_Allocation_Requirements: Les valeurs affichées sont exactement telles que configurées dans la table
-  (from_classification_a/b/c) sans aucune multiplication.
-  Exemple: Si Barcelone est configurée pour recevoir 50 événements des villes A, 20 de B et 5 de C,
-  le fichier affichera exactement ces valeurs (50, 20, 5).
+- City_Allocation_Requirements: Les valeurs affichées sont exactement telles que configurées dans la table.
+  EXEMPLE DE LOGIQUE:
+  Barcelone (classification A) est configurée avec: From A=50, From B=20, From C=5
+  Cela signifie que Barcelone doit recevoir 50 envois des villes de type A, 20 de type B et 5 de type C.
+  Si Madrid Capital est de type A, alors Madrid doit envoyer 50 événements à Barcelone.
+  Si Gérone et La Palma sont de type B, alors chacune doit envoyer 20 événements à Barcelone.
+  Le total des événements reçus par Barcelone sera: 50 (Madrid) + 20 (Gérone) + 20 (La Palma) + 5 (Boadilla) = 95
+  
 - Current_Allocation_Plan: Affiche tous les événements d'allocation réels créés pendant l'année
   sélectionnée (exportation identique au bouton "Export Allocation Plan").
+  
 - Import_Format_Template: Utilisez ce format pour créer de nouveaux événements d'allocation.
-  Tous les IDs (cliente_id, carrier_id, producto_id, IDs des panélistes) doivent exister dans le système.
+  
+  CHAMPS OBLIGATOIRES (ne peuvent pas être vides):
+  • cliente_id: ID du client (doit exister dans la table clientes)
+  • nodo_origen: Code du nœud d'origine (doit exister dans la table nodos)
+  • nodo_destino: Code du nœud de destination (doit exister dans la table nodos)
+  • fecha_programada: Date programmée de l'envoi (format: YYYY-MM-DD)
+  • motivo_creacion: Motif de création de l'envoi (texte libre)
+  
+  CHAMPS OPTIONNELS (peuvent être laissés vides):
+  • panelista_origen_id: ID du panéliste d'origine (recommandé s'il existe)
+  • panelista_destino_id: ID du panéliste de destination (recommandé s'il existe)
+  • carrier_id: ID du transporteur (si un transporteur est assigné)
+  • producto_id: ID du produit (si un produit est spécifié)
+  • tipo_producto: Type de produit (texte libre)
+  • estado: Statut de l'envoi (si non spécifié, sera 'PENDING' par défaut)
+  • numero_etiqueta: Numéro d'étiquette de l'envoi
+  
 - Les pourcentages de saisonnalité doivent totaliser exactement 100% par produit.
-- Les codes de nœud (nodo_origen, nodo_destino) doivent exister dans la topologie.
 `;
 
       // Create ZIP file
