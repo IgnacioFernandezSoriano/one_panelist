@@ -34,7 +34,7 @@ export function CarrierProductSelector({
         .from("carriers")
         .select("id, commercial_name, operator_type")
         .eq("cliente_id", clienteId)
-        .eq("estado", "activo")
+        .eq("status", "active")
         .order("commercial_name");
 
       if (error) throw error;

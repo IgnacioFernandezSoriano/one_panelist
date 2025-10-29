@@ -44,7 +44,7 @@ export default function IntelligentPlanGenerator() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('generated_allocation_plans')
+        .from('generated_allocation_plans' as any)
         .select(`
           *,
           carriers (commercial_name),
@@ -100,7 +100,7 @@ export default function IntelligentPlanGenerator() {
   const handleExportPlan = async (planId: number) => {
     try {
       const { data: plan, error } = await supabase
-        .from('generated_allocation_plans')
+        .from('generated_allocation_plans' as any)
         .select(`
           *,
           carriers (id, commercial_name),
@@ -112,17 +112,17 @@ export default function IntelligentPlanGenerator() {
 
       if (error) throw error;
 
-      const csvRows = plan.generated_allocation_plan_details.map((detail: any) => ({
-        carrier_id: plan.carrier_id,
-        carrier_name: plan.carriers.commercial_name,
-        producto_id: plan.producto_id,
-        producto_code: plan.productos_cliente.codigo_producto,
+      const csvRows = (plan as any).generated_allocation_plan_details.map((detail: any) => ({
+        carrier_id: (plan as any).carrier_id,
+        carrier_name: (plan as any).carriers.commercial_name,
+        producto_id: (plan as any).producto_id,
+        producto_code: (plan as any).productos_cliente.codigo_producto,
         nodo_origen: detail.nodo_origen,
         nodo_destino: detail.nodo_destino,
         fecha_programada: detail.fecha_programada,
         motivo_creacion: 'programado',
         estado: 'PENDING',
-        observaciones: `Generated on ${format(new Date(plan.created_at), 'yyyy-MM-dd')}`,
+        observaciones: `Generated on ${format(new Date((plan as any).created_at), 'yyyy-MM-dd')}`,
       }));
 
       const csv = Papa.unparse(csvRows);
@@ -158,7 +158,7 @@ export default function IntelligentPlanGenerator() {
 
     try {
       const { data: plan } = await supabase
-        .from('generated_allocation_plans')
+        .from('generated_allocation_plans' as any)
         .select(`
           *,
           carriers (commercial_name),
@@ -170,30 +170,32 @@ export default function IntelligentPlanGenerator() {
 
       if (!plan) throw new Error("Plan not found");
 
+      const planData = plan as any;
+
       // Replace strategy: delete existing PENDING events
-      if (plan.merge_strategy === 'replace') {
+      if (planData.merge_strategy === 'replace') {
         await supabase
           .from('envios')
           .delete()
-          .eq('cliente_id', plan.cliente_id)
-          .eq('carrier_id', plan.carrier_id)
-          .eq('producto_id', plan.producto_id)
+          .eq('cliente_id', planData.cliente_id)
+          .eq('carrier_id', planData.carrier_id)
+          .eq('producto_id', planData.producto_id)
           .eq('estado', 'PENDING');
       }
 
       // Insert new events
-      const enviosData = plan.generated_allocation_plan_details.map((detail: any) => ({
-        cliente_id: plan.cliente_id,
-        carrier_id: plan.carrier_id,
-        carrier_name: plan.carriers.commercial_name,
-        producto_id: plan.producto_id,
-        tipo_producto: plan.productos_cliente.codigo_producto,
+      const enviosData = planData.generated_allocation_plan_details.map((detail: any) => ({
+        cliente_id: planData.cliente_id,
+        carrier_id: planData.carrier_id,
+        carrier_name: planData.carriers.commercial_name,
+        producto_id: planData.producto_id,
+        tipo_producto: planData.productos_cliente.codigo_producto,
         nodo_origen: detail.nodo_origen,
         nodo_destino: detail.nodo_destino,
         fecha_programada: detail.fecha_programada,
         motivo_creacion: 'programado',
         estado: 'PENDING',
-        observaciones: `Generated from intelligent plan #${plan.id}`,
+        observaciones: `Generated from intelligent plan #${planData.id}`,
       }));
 
       const { error: insertError } = await supabase
@@ -204,9 +206,9 @@ export default function IntelligentPlanGenerator() {
 
       // Mark plan as merged
       await supabase
-        .from('generated_allocation_plans')
+        .from('generated_allocation_plans' as any)
         .update({ status: 'merged', merged_at: new Date().toISOString() })
-        .eq('id', plan.id);
+        .eq('id', planData.id);
 
       toast({
         title: "Plan merged successfully",
@@ -231,7 +233,7 @@ export default function IntelligentPlanGenerator() {
 
     try {
       await supabase
-        .from('generated_allocation_plans')
+        .from('generated_allocation_plans' as any)
         .delete()
         .eq('id', planId);
 

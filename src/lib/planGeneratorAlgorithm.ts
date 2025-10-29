@@ -45,27 +45,27 @@ interface Node {
 }
 
 interface SeasonalityData {
-  enero: number;
-  febrero: number;
-  marzo: number;
-  abril: number;
-  mayo: number;
-  junio: number;
-  julio: number;
-  agosto: number;
-  septiembre: number;
-  octubre: number;
-  noviembre: number;
-  diciembre: number;
+  january_percentage: number;
+  february_percentage: number;
+  march_percentage: number;
+  april_percentage: number;
+  may_percentage: number;
+  june_percentage: number;
+  july_percentage: number;
+  august_percentage: number;
+  september_percentage: number;
+  october_percentage: number;
+  november_percentage: number;
+  december_percentage: number;
 }
 
 export async function validateCarrierProduct(carrier_id: number, producto_id: number): Promise<boolean> {
   const { data, error } = await supabase
-    .from('carrier_productos')
+    .from('carrier_productos' as any)
     .select('id')
     .eq('carrier_id', carrier_id)
     .eq('producto_id', producto_id)
-    .single();
+    .maybeSingle();
 
   return !error && !!data;
 }
@@ -104,40 +104,39 @@ async function loadProductSeasonality(cliente_id: number, producto_id: number, y
     .eq('cliente_id', cliente_id)
     .eq('producto_id', producto_id)
     .eq('year', year)
-    .single();
+    .maybeSingle();
 
   if (error || !data) {
-    // Default: distribute evenly
     const defaultValue = 8.33;
     return {
-      enero: defaultValue,
-      febrero: defaultValue,
-      marzo: defaultValue,
-      abril: defaultValue,
-      mayo: defaultValue,
-      junio: defaultValue,
-      julio: defaultValue,
-      agosto: defaultValue,
-      septiembre: defaultValue,
-      octubre: defaultValue,
-      noviembre: defaultValue,
-      diciembre: defaultValue,
+      january_percentage: defaultValue,
+      february_percentage: defaultValue,
+      march_percentage: defaultValue,
+      april_percentage: defaultValue,
+      may_percentage: defaultValue,
+      june_percentage: defaultValue,
+      july_percentage: defaultValue,
+      august_percentage: defaultValue,
+      september_percentage: 8.34,
+      october_percentage: 8.34,
+      november_percentage: 8.34,
+      december_percentage: 8.34,
     };
   }
 
   return {
-    enero: data.enero || 0,
-    febrero: data.febrero || 0,
-    marzo: data.marzo || 0,
-    abril: data.abril || 0,
-    mayo: data.mayo || 0,
-    junio: data.junio || 0,
-    julio: data.julio || 0,
-    agosto: data.agosto || 0,
-    septiembre: data.septiembre || 0,
-    octubre: data.octubre || 0,
-    noviembre: data.noviembre || 0,
-    diciembre: data.diciembre || 0,
+    january_percentage: data.january_percentage || 0,
+    february_percentage: data.february_percentage || 0,
+    march_percentage: data.march_percentage || 0,
+    april_percentage: data.april_percentage || 0,
+    may_percentage: data.may_percentage || 0,
+    june_percentage: data.june_percentage || 0,
+    july_percentage: data.july_percentage || 0,
+    august_percentage: data.august_percentage || 0,
+    september_percentage: data.september_percentage || 0,
+    october_percentage: data.october_percentage || 0,
+    november_percentage: data.november_percentage || 0,
+    december_percentage: data.december_percentage || 0,
   };
 }
 
@@ -181,8 +180,10 @@ function getMonthsInRange(startDate: Date, endDate: Date): Date[] {
 
 function getSeasonalityPercentage(seasonality: SeasonalityData, month: number): number {
   const monthNames: (keyof SeasonalityData)[] = [
-    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
-    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    'january_percentage', 'february_percentage', 'march_percentage', 
+    'april_percentage', 'may_percentage', 'june_percentage',
+    'july_percentage', 'august_percentage', 'september_percentage', 
+    'october_percentage', 'november_percentage', 'december_percentage'
   ];
   return seasonality[monthNames[month]] || 0;
 }
@@ -332,7 +333,7 @@ async function saveDraftPlan(
   unassignedBreakdown: UnassignedCity[]
 ) {
   const { data: plan, error: planError } = await supabase
-    .from('generated_allocation_plans')
+    .from('generated_allocation_plans' as any)
     .insert({
       cliente_id: config.cliente_id,
       carrier_id: config.carrier_id,
@@ -357,14 +358,15 @@ async function saveDraftPlan(
 
   if (planError) throw planError;
 
+  const planId = (plan as any).id;
   const details = events.map(event => ({
-    plan_id: plan.id,
+    plan_id: planId,
     ...event
   }));
 
   if (details.length > 0) {
     const { error: detailsError } = await supabase
-      .from('generated_allocation_plan_details')
+      .from('generated_allocation_plan_details' as any)
       .insert(details);
 
     if (detailsError) throw detailsError;
@@ -374,13 +376,11 @@ async function saveDraftPlan(
 }
 
 export async function generateIntelligentPlan(config: PlanConfig) {
-  // 1. Validate carrier-product relationship
   const carrierProductExists = await validateCarrierProduct(config.carrier_id, config.producto_id);
   if (!carrierProductExists) {
     throw new Error("Carrier not assigned to this product");
   }
 
-  // 2. Load base data
   const cityRequirements = await loadCityRequirements(config.cliente_id);
   if (cityRequirements.length === 0) {
     throw new Error("No city allocation requirements configured");
@@ -397,14 +397,11 @@ export async function generateIntelligentPlan(config: PlanConfig) {
     throw new Error("No active nodes configured");
   }
 
-  // 3. Calculate proportional events
   const totalDays = differenceInDays(config.end_date, config.start_date) + 1;
   const proportionalEvents = Math.round((config.total_events * totalDays) / 365);
 
-  // 4. Distribute by months
   const eventsByMonth = distributeByMonth(proportionalEvents, seasonality, config.start_date, config.end_date);
 
-  // 5. Distribute by cities and nodes
   const allEvents: GeneratedEvent[] = [];
   const unassignedBreakdown: UnassignedCity[] = [];
 
@@ -444,7 +441,6 @@ export async function generateIntelligentPlan(config: PlanConfig) {
     }
   }
 
-  // 6. Save draft plan
   const totalUnassigned = unassignedBreakdown.reduce((sum, c) => sum + c.deficit, 0);
   return await saveDraftPlan(
     config,

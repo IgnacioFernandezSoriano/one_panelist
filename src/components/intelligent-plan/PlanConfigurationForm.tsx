@@ -65,13 +65,17 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: userData } = await supabase
-        .from('usuarios')
-        .select('rol, cliente_id')
-        .eq('id', user.id)
-        .single();
+      const userId = parseInt(user.id);
 
-      const isSuperAdmin = userData?.rol === 'superadmin';
+      // Check if user is superadmin via user_roles table
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'superadmin')
+        .maybeSingle();
+
+      const isSuperAdmin = !!roleData;
       setIsSuperAdmin(isSuperAdmin);
 
       if (isSuperAdmin) {
@@ -82,8 +86,15 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           .order('nombre');
         setClientes(clientesData || []);
       } else {
-        setFormData(prev => ({ ...prev, cliente_id: userData?.cliente_id }));
+        // Get user's cliente_id from usuarios table
+        const { data: userData } = await supabase
+          .from('usuarios')
+          .select('cliente_id')
+          .eq('id', userId)
+          .maybeSingle();
+        
         if (userData?.cliente_id) {
+          setFormData(prev => ({ ...prev, cliente_id: userData.cliente_id }));
           loadCarriers(userData.cliente_id);
           loadDefaultMaxEvents(userData.cliente_id);
         }
@@ -99,10 +110,10 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
         .from('clientes')
         .select('max_events_per_panelist_week')
         .eq('id', clienteId)
-        .single();
+        .maybeSingle();
       
-      if (data) {
-        const maxEvents = data.max_events_per_panelist_week || 5;
+      if (data && (data as any).max_events_per_panelist_week) {
+        const maxEvents = (data as any).max_events_per_panelist_week || 5;
         setDefaultMaxEvents(maxEvents);
         setFormData(prev => ({ ...prev, max_events_per_week: maxEvents }));
       }
@@ -117,7 +128,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
         .from('carriers')
         .select('id, commercial_name')
         .eq('cliente_id', clienteId)
-        .eq('estado', 'activo')
+        .eq('status', 'active')
         .order('commercial_name');
 
       if (error) throw error;
@@ -130,7 +141,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
   const loadProductos = async (carrierId: number, clienteId: number) => {
     try {
       const { data, error } = await supabase
-        .from('carrier_productos')
+        .from('carrier_productos' as any)
         .select(`
           producto_id,
           productos_cliente (
@@ -145,8 +156,8 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       if (error) throw error;
       
       const productosData = (data || [])
-        .filter(item => item.productos_cliente)
-        .map(item => item.productos_cliente);
+        .filter((item: any) => item.productos_cliente)
+        .map((item: any) => item.productos_cliente);
       
       setProductos(productosData);
     } catch (error) {

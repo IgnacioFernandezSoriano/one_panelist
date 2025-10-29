@@ -66,7 +66,7 @@ export function ImportModifiedPlanCSV({ planId, onSuccess }: ImportModifiedPlanC
 
       // Delete existing details
       await supabase
-        .from('generated_allocation_plan_details')
+        .from('generated_allocation_plan_details' as any)
         .delete()
         .eq('plan_id', planId);
 
@@ -80,14 +80,14 @@ export function ImportModifiedPlanCSV({ planId, onSuccess }: ImportModifiedPlanC
       }));
 
       const { error: insertError } = await supabase
-        .from('generated_allocation_plan_details')
+        .from('generated_allocation_plan_details' as any)
         .insert(details);
 
       if (insertError) throw insertError;
 
       // Update calculated_events
       await supabase
-        .from('generated_allocation_plans')
+        .from('generated_allocation_plans' as any)
         .update({ calculated_events: details.length })
         .eq('id', planId);
 
