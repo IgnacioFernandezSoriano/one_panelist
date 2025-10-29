@@ -35,8 +35,16 @@ export default function IntelligentPlanGenerator() {
 
   const initializeUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setUserId(parseInt(user.id));
+    if (user?.email) {
+      const { data: usuario, error } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', user.email)
+        .single();
+      
+      if (!error && usuario?.id) {
+        setUserId(usuario.id);
+      }
     }
   };
 
@@ -68,7 +76,16 @@ export default function IntelligentPlanGenerator() {
   };
 
   const handleGeneratePlan = async () => {
-    if (!planConfig || !userId) return;
+    if (!planConfig) return;
+
+    if (!userId || Number.isNaN(userId)) {
+      toast({
+        title: "Error",
+        description: "No se pudo identificar al usuario. Por favor, inicia sesión nuevamente.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setGenerating(true);
     try {
