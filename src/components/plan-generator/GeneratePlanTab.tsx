@@ -136,6 +136,13 @@ export function GeneratePlanTab() {
         `)
         .eq("cliente_id", selectedCliente);
 
+      // Fetch all cities to calculate incoming allocations
+      const { data: allCities } = await supabase
+        .from("ciudades")
+        .select("id, codigo, nombre, clasificacion")
+        .eq("cliente_id", selectedCliente)
+        .eq("estado", "activo");
+
       // Fetch product seasonality
       const { data: productSeasonality } = await supabase
         .from("product_seasonality")
@@ -143,29 +150,59 @@ export function GeneratePlanTab() {
         .eq("cliente_id", selectedCliente)
         .eq("year", selectedYear);
 
-      // Fetch products separately
+      // Fetch products
       const { data: products } = await supabase
         .from("productos_cliente")
         .select("id, codigo_producto, nombre_producto")
         .eq("cliente_id", selectedCliente)
         .eq("estado", "activo");
 
-      if (!cityAllocations || !productSeasonality || !products) {
+      if (!cityAllocations || !allCities || !productSeasonality || !products) {
         throw new Error("Failed to fetch data");
       }
 
       // Create product lookup map
       const productMap = new Map(products.map(p => [p.id, p]));
 
-      // Generate CSV 1: City Allocation Plan
-      const cityCSV = cityAllocations.map(city => ({
-        ciudad_codigo: city.ciudades.codigo,
-        ciudad_nombre: city.ciudades.nombre,
-        clasificacion: city.ciudades.clasificacion,
-        allocation_a: city.from_classification_a,
-        allocation_b: city.from_classification_b,
-        allocation_c: city.from_classification_c,
-        total_allocation: city.from_classification_a + city.from_classification_b + city.from_classification_c,
+      // Calculate incoming allocations for each city
+      const cityIncomingMap = new Map();
+      
+      allCities.forEach(targetCity => {
+        let fromA = 0;
+        let fromB = 0;
+        let fromC = 0;
+
+        // Sum allocations from all source cities to this target city
+        cityAllocations.forEach(sourceCity => {
+          if (targetCity.clasificacion === 'A') {
+            fromA += sourceCity.from_classification_a;
+          } else if (targetCity.clasificacion === 'B') {
+            fromB += sourceCity.from_classification_b;
+          } else if (targetCity.clasificacion === 'C') {
+            fromC += sourceCity.from_classification_c;
+          }
+        });
+
+        cityIncomingMap.set(targetCity.id, {
+          codigo: targetCity.codigo,
+          nombre: targetCity.nombre,
+          clasificacion: targetCity.clasificacion,
+          from_a: fromA,
+          from_b: fromB,
+          from_c: fromC,
+          total: fromA + fromB + fromC,
+        });
+      });
+
+      // Generate CSV 1: City Allocation Requirements (incoming)
+      const cityCSV = Array.from(cityIncomingMap.values()).map(city => ({
+        ciudad_codigo: city.codigo,
+        ciudad_nombre: city.nombre,
+        clasificacion: city.clasificacion,
+        from_classification_a: city.from_a,
+        from_classification_b: city.from_b,
+        from_classification_c: city.from_c,
+        total_incoming: city.total,
       }));
       const cityCSVString = Papa.unparse(cityCSV);
 
@@ -173,59 +210,130 @@ export function GeneratePlanTab() {
       const productCSV = productSeasonality.map(product => {
         const productInfo = productMap.get(product.producto_id);
         return {
-        producto_codigo: productInfo?.codigo_producto || '',
-        producto_nombre: productInfo?.nombre_producto || '',
-        jan_percentage: product.january_percentage,
-        feb_percentage: product.february_percentage,
-        mar_percentage: product.march_percentage,
-        apr_percentage: product.april_percentage,
-        may_percentage: product.may_percentage,
-        jun_percentage: product.june_percentage,
-        jul_percentage: product.july_percentage,
-        aug_percentage: product.august_percentage,
-        sep_percentage: product.september_percentage,
-        oct_percentage: product.october_percentage,
-        nov_percentage: product.november_percentage,
-        dec_percentage: product.december_percentage,
-      };
+          producto_codigo: productInfo?.codigo_producto || '',
+          producto_nombre: productInfo?.nombre_producto || '',
+          jan_percentage: product.january_percentage,
+          feb_percentage: product.february_percentage,
+          mar_percentage: product.march_percentage,
+          apr_percentage: product.april_percentage,
+          may_percentage: product.may_percentage,
+          jun_percentage: product.june_percentage,
+          jul_percentage: product.july_percentage,
+          aug_percentage: product.august_percentage,
+          sep_percentage: product.september_percentage,
+          oct_percentage: product.october_percentage,
+          nov_percentage: product.november_percentage,
+          dec_percentage: product.december_percentage,
+        };
       });
       const productCSVString = Papa.unparse(productCSV);
 
-      // Generate CSV 3: Combined Allocation Matrix
-      const combinedMatrix: any[] = [];
-      cityAllocations.forEach(city => {
-        productSeasonality.forEach(product => {
-          const productInfo = productMap.get(product.producto_id);
-          const baseAllocation = city.from_classification_a + city.from_classification_b + city.from_classification_c;
-          combinedMatrix.push({
-            ciudad: city.ciudades.nombre,
-            ciudad_codigo: city.ciudades.codigo,
-            producto: productInfo?.nombre_producto || '',
-            producto_codigo: productInfo?.codigo_producto || '',
-            january: (baseAllocation * (product.january_percentage / 100)).toFixed(2),
-            february: (baseAllocation * (product.february_percentage / 100)).toFixed(2),
-            march: (baseAllocation * (product.march_percentage / 100)).toFixed(2),
-            april: (baseAllocation * (product.april_percentage / 100)).toFixed(2),
-            may: (baseAllocation * (product.may_percentage / 100)).toFixed(2),
-            june: (baseAllocation * (product.june_percentage / 100)).toFixed(2),
-            july: (baseAllocation * (product.july_percentage / 100)).toFixed(2),
-            august: (baseAllocation * (product.august_percentage / 100)).toFixed(2),
-            september: (baseAllocation * (product.september_percentage / 100)).toFixed(2),
-            october: (baseAllocation * (product.october_percentage / 100)).toFixed(2),
-            november: (baseAllocation * (product.november_percentage / 100)).toFixed(2),
-            december: (baseAllocation * (product.december_percentage / 100)).toFixed(2),
-          });
-        });
-      });
-      const combinedCSVString = Papa.unparse(combinedMatrix);
+      // Generate CSV 3: Current Allocation Plan (from nodos table)
+      const { data: nodos } = await supabase
+        .from("nodos")
+        .select(`
+          codigo,
+          ciudad,
+          panelista_id,
+          ciudades!inner(codigo, nombre, clasificacion)
+        `)
+        .eq("cliente_id", selectedCliente)
+        .eq("estado", "activo")
+        .not("panelista_id", "is", null);
+
+      const currentAllocationCSV = nodos?.map(nodo => ({
+        nodo_codigo: nodo.codigo,
+        ciudad_codigo: nodo.ciudades.codigo,
+        ciudad_nombre: nodo.ciudades.nombre,
+        clasificacion: nodo.ciudades.clasificacion,
+        panelista_asignado: nodo.panelista_id ? "Si" : "No",
+      })) || [];
+      const currentAllocationCSVString = Papa.unparse(currentAllocationCSV);
+
+      // Generate CSV 4: Import Format Template
+      const importTemplateCSV = [
+        {
+          ciudad_codigo: "BCN",
+          from_classification_a: "10",
+          from_classification_b: "5",
+          from_classification_c: "3",
+        },
+        {
+          ciudad_codigo: "MAD",
+          from_classification_a: "8",
+          from_classification_b: "6",
+          from_classification_c: "4",
+        },
+      ];
+      const importTemplateCSVString = Papa.unparse(importTemplateCSV);
+
+      // Generate TXT Documentation
+      const documentation = `DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
+============================================
+
+1. City_Allocation_Requirements_${selectedYear}.csv
+   DESCRIPCIÓN: Requisitos de asignación de panelistas por ciudad
+   COLUMNAS:
+   - ciudad_codigo: Código único de la ciudad destino
+   - ciudad_nombre: Nombre de la ciudad destino
+   - clasificacion: Clasificación de la ciudad (A, B, o C)
+   - from_classification_a: Número de panelistas que deben llegar desde ciudades tipo A
+   - from_classification_b: Número de panelistas que deben llegar desde ciudades tipo B
+   - from_classification_c: Número de panelistas que deben llegar desde ciudades tipo C
+   - total_incoming: Total de panelistas que deben llegar a esta ciudad
+   
+   USO: Este archivo muestra cuántos panelistas necesita recibir cada ciudad según las clasificaciones.
+
+2. Product_Seasonality_Plan_${selectedYear}.csv
+   DESCRIPCIÓN: Distribución porcentual mensual por producto
+   COLUMNAS:
+   - producto_codigo: Código único del producto
+   - producto_nombre: Nombre del producto
+   - jan_percentage a dec_percentage: Porcentaje de distribución para cada mes (debe sumar 100%)
+   
+   USO: Define la estacionalidad de cada producto a lo largo del año.
+
+3. Current_Allocation_Plan_${selectedYear}.csv
+   DESCRIPCIÓN: Estado actual de asignación de nodos y panelistas
+   COLUMNAS:
+   - nodo_codigo: Código del nodo
+   - ciudad_codigo: Código de la ciudad del nodo
+   - ciudad_nombre: Nombre de la ciudad
+   - clasificacion: Clasificación de la ciudad
+   - panelista_asignado: Indica si el nodo tiene panelista asignado (Si/No)
+   
+   USO: Muestra la situación actual de asignaciones para comparar con el plan objetivo.
+
+4. Import_Format_Template_${selectedYear}.csv
+   DESCRIPCIÓN: Plantilla para importar requisitos de asignación de ciudades
+   COLUMNAS:
+   - ciudad_codigo: Código de la ciudad (debe existir en el sistema)
+   - from_classification_a: Cantidad de panelistas desde ciudades A
+   - from_classification_b: Cantidad de panelistas desde ciudades B
+   - from_classification_c: Cantidad de panelistas desde ciudades C
+   
+   USO: Use este formato para importar masivamente requisitos de asignación.
+        Complete con los códigos de ciudad existentes y las cantidades deseadas.
+
+NOTAS IMPORTANTES:
+- Todos los totales deben ser coherentes entre ciudades origen y destino
+- Los porcentajes de estacionalidad deben sumar exactamente 100%
+- Los códigos de ciudad deben existir previamente en el sistema
+- La suma de asignaciones debe coincidir con el número total de nodos disponibles
+
+Fecha de generación: ${new Date().toLocaleString('es-ES')}
+Año del plan: ${selectedYear}
+`;
 
       // Create ZIP file
       const zip = new JSZip();
       const timestamp = new Date().toISOString().split('T')[0];
       
-      zip.file(`City_Allocation_Plan_${selectedYear}_${timestamp}.csv`, cityCSVString);
+      zip.file(`City_Allocation_Requirements_${selectedYear}_${timestamp}.csv`, cityCSVString);
       zip.file(`Product_Seasonality_Plan_${selectedYear}_${timestamp}.csv`, productCSVString);
-      zip.file(`Combined_Allocation_Matrix_${selectedYear}_${timestamp}.csv`, combinedCSVString);
+      zip.file(`Current_Allocation_Plan_${selectedYear}_${timestamp}.csv`, currentAllocationCSVString);
+      zip.file(`Import_Format_Template_${selectedYear}_${timestamp}.csv`, importTemplateCSVString);
+      zip.file(`LEEME_Documentacion_${selectedYear}_${timestamp}.txt`, documentation);
 
       // Generate and download ZIP
       const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -405,15 +513,23 @@ export function GeneratePlanTab() {
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>City_Allocation_Plan.csv:</strong> City allocation requirements by classification</span>
+              <span><strong>City_Allocation_Requirements.csv:</strong> Requisitos de asignación por ciudad</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>Product_Seasonality_Plan.csv:</strong> Monthly percentage distribution for each product</span>
+              <span><strong>Product_Seasonality_Plan.csv:</strong> Distribución porcentual mensual por producto</span>
             </p>
             <p className="flex items-start gap-2">
               <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <span><strong>Combined_Allocation_Matrix.csv:</strong> Combined city × product × month allocation matrix</span>
+              <span><strong>Current_Allocation_Plan.csv:</strong> Estado actual de asignaciones de nodos</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span><strong>Import_Format_Template.csv:</strong> Plantilla para importar requisitos</span>
+            </p>
+            <p className="flex items-start gap-2">
+              <FileText className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span><strong>LEEME_Documentacion.txt:</strong> Documentación detallada de todos los archivos</span>
             </p>
           </div>
 
