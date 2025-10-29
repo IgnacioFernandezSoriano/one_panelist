@@ -4,17 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Upload, Save, HelpCircle, Shuffle } from "lucide-react";
+import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Progress } from "@/components/ui/progress";
-import Papa from "papaparse";
+import { useUserRole } from "@/hooks/useUserRole";
 
-interface Seasonality {
-  id?: number;
+interface ProductSeasonalityData {
   producto_id: number;
-  year: number;
+  codigo_producto: string;
+  nombre_producto: string;
   january_percentage: number;
   february_percentage: number;
   march_percentage: number;
@@ -27,7 +25,6 @@ interface Seasonality {
   october_percentage: number;
   november_percentage: number;
   december_percentage: number;
-  cliente_id: number;
 }
 
 const MONTHS = [
@@ -37,171 +34,161 @@ const MONTHS = [
 
 const ProductSeasonalityTab = () => {
   const { t } = useTranslation();
-  const [products, setProducts] = useState<any[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
+  const { clienteId: userClienteId, isSuperAdmin } = useUserRole();
+  const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
+  const [clientes, setClientes] = useState<any[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
-  const [seasonality, setSeasonality] = useState<Seasonality | null>(null);
+  const [productData, setProductData] = useState<ProductSeasonalityData[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [clienteId, setClienteId] = useState<number | null>(null);
+
+  const clienteId = isSuperAdmin() ? selectedClienteId : userClienteId;
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  useEffect(() => {
-    if (selectedProductId && selectedYear) {
-      fetchSeasonality();
+    if (isSuperAdmin()) {
+      fetchClientes();
     }
-  }, [selectedProductId, selectedYear]);
+  }, [isSuperAdmin]);
 
-  const fetchProducts = async () => {
+  useEffect(() => {
+    if (clienteId && selectedYear) {
+      fetchProductData();
+    }
+  }, [clienteId, selectedYear]);
+
+  const fetchClientes = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No authenticated user");
-
-      const { data: userData } = await supabase
-        .from("usuarios")
-        .select("cliente_id")
-        .eq("email", user.email)
-        .single();
-
-      if (!userData?.cliente_id) throw new Error("No cliente_id found");
-      setClienteId(userData.cliente_id);
-
       const { data, error } = await supabase
+        .from("clientes")
+        .select("id, codigo, nombre")
+        .eq("estado", "activo")
+        .order("nombre");
+
+      if (error) throw error;
+      setClientes(data || []);
+    } catch (error) {
+      console.error("Error fetching clientes:", error);
+      toast.error(t('common.error_loading'));
+    }
+  };
+
+  const fetchProductData = async () => {
+    if (!clienteId) return;
+
+    try {
+      setLoading(true);
+
+      // Fetch products
+      const { data: products, error: productsError } = await supabase
         .from("productos_cliente")
-        .select("*")
-        .eq("cliente_id", userData.cliente_id)
+        .select("id, codigo_producto, nombre_producto")
+        .eq("cliente_id", clienteId)
         .eq("estado", "activo")
         .order("nombre_producto");
 
-      if (error) throw error;
-      setProducts(data || []);
-      
-      if (data && data.length > 0 && !selectedProductId) {
-        setSelectedProductId(data[0].id);
+      if (productsError) throw productsError;
+      if (!products || products.length === 0) {
+        setProductData([]);
+        return;
       }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      toast.error(t('common.error_loading'));
+
+      // Fetch existing seasonality data
+      const { data: existingSeasonality, error: seasonalityError } = await supabase
+        .from("product_seasonality")
+        .select("*")
+        .eq("cliente_id", clienteId)
+        .eq("year", selectedYear);
+
+      // Handle 404 gracefully (table might not exist yet)
+      const seasonalityMap = new Map();
+      if (!seasonalityError || (seasonalityError as any)?.code === 'PGRST116') {
+        (existingSeasonality || []).forEach((item: any) => {
+          seasonalityMap.set(item.producto_id, item);
+        });
+      } else if (seasonalityError) {
+        throw seasonalityError;
+      }
+
+      // Merge products with seasonality data
+      const merged = products.map((product) => {
+        const existing = seasonalityMap.get(product.id);
+        return {
+          producto_id: product.id,
+          codigo_producto: product.codigo_producto,
+          nombre_producto: product.nombre_producto,
+          january_percentage: existing?.january_percentage || 8.33,
+          february_percentage: existing?.february_percentage || 8.33,
+          march_percentage: existing?.march_percentage || 8.33,
+          april_percentage: existing?.april_percentage || 8.33,
+          may_percentage: existing?.may_percentage || 8.33,
+          june_percentage: existing?.june_percentage || 8.33,
+          july_percentage: existing?.july_percentage || 8.33,
+          august_percentage: existing?.august_percentage || 8.33,
+          september_percentage: existing?.september_percentage || 8.34,
+          october_percentage: existing?.october_percentage || 8.34,
+          november_percentage: existing?.november_percentage || 8.34,
+          december_percentage: existing?.december_percentage || 8.34,
+        };
+      });
+
+      setProductData(merged);
+    } catch (error: any) {
+      console.error("Error fetching product data:", error);
+      if ((error as any)?.code !== 'PGRST116') {
+        toast.error(t('common.error_loading'));
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchSeasonality = async () => {
-    if (!selectedProductId || !clienteId) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("product_seasonality" as any)
-        .select("*")
-        .eq("producto_id", selectedProductId)
-        .eq("year", selectedYear)
-        .eq("cliente_id", clienteId)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        setSeasonality(data as any);
-      } else {
-        // Initialize with default values (uniform distribution)
-        setSeasonality({
-          producto_id: selectedProductId,
-          year: selectedYear,
-          cliente_id: clienteId,
-          january_percentage: 8.33,
-          february_percentage: 8.33,
-          march_percentage: 8.33,
-          april_percentage: 8.33,
-          may_percentage: 8.33,
-          june_percentage: 8.33,
-          july_percentage: 8.33,
-          august_percentage: 8.33,
-          september_percentage: 8.34,
-          october_percentage: 8.34,
-          november_percentage: 8.34,
-          december_percentage: 8.34,
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching seasonality:", error);
-      toast.error(t('common.error_loading'));
-    }
-  };
-
-  const handlePercentageChange = (month: string, value: string) => {
-    if (!seasonality) return;
-    
+  const handlePercentageChange = (productoId: number, month: string, value: string) => {
     const numValue = parseFloat(value) || 0;
     if (numValue < 0 || numValue > 100) return;
 
-    setSeasonality({
-      ...seasonality,
-      [`${month}_percentage`]: numValue,
-    });
-  };
-
-  const calculateTotal = () => {
-    if (!seasonality) return 0;
-    return MONTHS.reduce((sum, month) => {
-      return sum + (seasonality[`${month}_percentage` as keyof Seasonality] as number || 0);
-    }, 0);
-  };
-
-  const total = calculateTotal();
-  const isValid = Math.abs(total - 100) < 0.01;
-
-  const handleAutoDistribute = () => {
-    if (!seasonality) return;
-    
-    const perMonth = 100 / 12;
-    const updated = { ...seasonality };
-    MONTHS.forEach((month, index) => {
-      // Distribute the remaining cents in the last months
-      updated[`${month}_percentage` as keyof Seasonality] = 
-        index < 8 ? parseFloat(perMonth.toFixed(2)) : parseFloat((perMonth + 0.01).toFixed(2));
-    });
-    setSeasonality(updated);
+    setProductData((prev) =>
+      prev.map((item) =>
+        item.producto_id === productoId
+          ? { ...item, [`${month}_percentage`]: numValue }
+          : item
+      )
+    );
   };
 
   const handleSave = async () => {
-    if (!seasonality || !isValid) {
-      toast.error(t('plan_generator.seasonality_not_100'));
-      return;
-    }
+    if (!clienteId || productData.length === 0) return;
 
     try {
       setSaving(true);
 
-      if (seasonality.id) {
-        await supabase
-          .from("product_seasonality" as any)
-          .update({
-            january_percentage: seasonality.january_percentage,
-            february_percentage: seasonality.february_percentage,
-            march_percentage: seasonality.march_percentage,
-            april_percentage: seasonality.april_percentage,
-            may_percentage: seasonality.may_percentage,
-            june_percentage: seasonality.june_percentage,
-            july_percentage: seasonality.july_percentage,
-            august_percentage: seasonality.august_percentage,
-            september_percentage: seasonality.september_percentage,
-            october_percentage: seasonality.october_percentage,
-            november_percentage: seasonality.november_percentage,
-            december_percentage: seasonality.december_percentage,
-          } as any)
-          .eq("id", seasonality.id);
-      } else {
-        await supabase
-          .from("product_seasonality" as any)
-          .insert(seasonality as any);
-      }
+      const upsertData = productData.map((item) => ({
+        cliente_id: clienteId,
+        producto_id: item.producto_id,
+        year: selectedYear,
+        january_percentage: item.january_percentage,
+        february_percentage: item.february_percentage,
+        march_percentage: item.march_percentage,
+        april_percentage: item.april_percentage,
+        may_percentage: item.may_percentage,
+        june_percentage: item.june_percentage,
+        july_percentage: item.july_percentage,
+        august_percentage: item.august_percentage,
+        september_percentage: item.september_percentage,
+        october_percentage: item.october_percentage,
+        november_percentage: item.november_percentage,
+        december_percentage: item.december_percentage,
+      }));
+
+      const { error } = await supabase
+        .from("product_seasonality")
+        .upsert(upsertData, {
+          onConflict: "cliente_id,producto_id,year",
+        });
+
+      if (error) throw error;
 
       toast.success(t('common.save_success'));
-      fetchSeasonality();
+      await fetchProductData();
     } catch (error: any) {
       console.error("Error saving seasonality:", error);
       toast.error(error.message || t('common.error_saving'));
@@ -210,72 +197,49 @@ const ProductSeasonalityTab = () => {
     }
   };
 
-  const handleExport = () => {
-    if (!seasonality) return;
-
-    const product = products.find(p => p.id === selectedProductId);
-    const csvData = [{
-      producto_codigo: product?.codigo_producto,
-      producto_nombre: product?.nombre_producto,
-      year: selectedYear,
-      ...MONTHS.reduce((acc, month) => ({
-        ...acc,
-        [month]: seasonality[`${month}_percentage` as keyof Seasonality]
-      }), {}),
-      total: total.toFixed(2),
-    }];
-
-    const csv = Papa.unparse(csvData);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Product_Seasonality_${product?.codigo_producto}_${selectedYear}.csv`);
-    link.click();
-    toast.success(t('plan_generator.export_success'));
-  };
-
   if (loading) {
     return <div className="text-center py-8">{t('common.loading')}</div>;
   }
 
+  if (!clienteId) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        {isSuperAdmin() ? t('common.select_client') : t('common.loading')}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-start">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">{t('plan_generator.product_seasonality')}</h3>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <HelpCircle className="h-4 w-4 text-muted-foreground" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-sm">
-                <p>{t('plan_generator.seasonality_help')}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">{t('plan_generator.product_seasonality')}</h3>
+        <Button size="sm" onClick={handleSave} disabled={saving || productData.length === 0}>
+          <Save className="h-4 w-4 mr-2" />
+          {saving ? t('common.saving') : t('common.save')}
+        </Button>
       </div>
 
       <div className="flex gap-4 items-end">
-        <div className="flex-1">
-          <label className="text-sm font-medium mb-2 block">{t('product.label')}</label>
-          <Select
-            value={selectedProductId?.toString()}
-            onValueChange={(value) => setSelectedProductId(parseInt(value))}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {products.map((product) => (
-                <SelectItem key={product.id} value={product.id.toString()}>
-                  {product.codigo_producto} - {product.nombre_producto}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {isSuperAdmin() && (
+          <div className="flex-1">
+            <label className="text-sm font-medium mb-2 block">{t('client.label')}</label>
+            <Select
+              value={selectedClienteId?.toString() || ""}
+              onValueChange={(value) => setSelectedClienteId(parseInt(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={t('common.select_client')} />
+              </SelectTrigger>
+              <SelectContent>
+                {clientes.map((cliente) => (
+                  <SelectItem key={cliente.id} value={cliente.id.toString()}>
+                    {cliente.codigo} - {cliente.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="w-32">
           <label className="text-sm font-medium mb-2 block">{t('common.year')}</label>
@@ -295,67 +259,56 @@ const ProductSeasonalityTab = () => {
             </SelectContent>
           </Select>
         </div>
-
-        <Button variant="outline" size="sm" onClick={handleAutoDistribute}>
-          <Shuffle className="h-4 w-4 mr-2" />
-          {t('plan_generator.auto_distribute')}
-        </Button>
       </div>
 
-      {seasonality && (
-        <>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>{t('plan_generator.total_percentage')}</span>
-              <span className={isValid ? "text-success" : "text-destructive"}>
-                {total.toFixed(2)}%
-              </span>
-            </div>
-            <Progress value={total} className={isValid ? "" : "bg-destructive/20"} />
-          </div>
-
-          <div className="border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('common.month')}</TableHead>
-                  <TableHead className="text-right">{t('plan_generator.percentage')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+      {productData.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground">
+          {t('plan_generator.no_products_found')}
+        </div>
+      ) : (
+        <div className="border rounded-lg overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[200px] sticky left-0 bg-background z-10">
+                  {t('product.label')}
+                </TableHead>
                 {MONTHS.map((month) => (
-                  <TableRow key={month}>
-                    <TableCell className="font-medium">
-                      {t(`month.${month}`)}
-                    </TableCell>
-                    <TableCell className="text-right">
+                  <TableHead key={month} className="text-center min-w-[100px]">
+                    {t(`month.${month}_short`)}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {productData.map((product) => (
+                <TableRow key={product.producto_id}>
+                  <TableCell className="font-medium sticky left-0 bg-background z-10">
+                    <div className="text-sm">
+                      <div className="font-semibold">{product.codigo_producto}</div>
+                      <div className="text-muted-foreground">{product.nombre_producto}</div>
+                    </div>
+                  </TableCell>
+                  {MONTHS.map((month) => (
+                    <TableCell key={month} className="text-center">
                       <Input
                         type="number"
                         step="0.01"
                         min="0"
                         max="100"
-                        value={seasonality[`${month}_percentage` as keyof Seasonality]}
-                        onChange={(e) => handlePercentageChange(month, e.target.value)}
-                        className="w-24 ml-auto text-right"
+                        value={product[`${month}_percentage` as keyof ProductSeasonalityData]}
+                        onChange={(e) =>
+                          handlePercentageChange(product.producto_id, month, e.target.value)
+                        }
+                        className="w-20 text-center mx-auto"
                       />
                     </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-2" />
-              {t('plan_generator.export_csv')}
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={saving || !isValid}>
-              <Save className="h-4 w-4 mr-2" />
-              {saving ? t('common.saving') : t('common.save')}
-            </Button>
-          </div>
-        </>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

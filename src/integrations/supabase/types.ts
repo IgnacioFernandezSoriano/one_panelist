@@ -847,6 +847,69 @@ export type Database = {
         }
         Relationships: []
       }
+      product_seasonality: {
+        Row: {
+          april_percentage: number
+          august_percentage: number
+          cliente_id: number
+          created_at: string
+          december_percentage: number
+          february_percentage: number
+          id: number
+          january_percentage: number
+          july_percentage: number
+          june_percentage: number
+          march_percentage: number
+          may_percentage: number
+          november_percentage: number
+          october_percentage: number
+          producto_id: number
+          september_percentage: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          april_percentage?: number
+          august_percentage?: number
+          cliente_id: number
+          created_at?: string
+          december_percentage?: number
+          february_percentage?: number
+          id?: number
+          january_percentage?: number
+          july_percentage?: number
+          june_percentage?: number
+          march_percentage?: number
+          may_percentage?: number
+          november_percentage?: number
+          october_percentage?: number
+          producto_id: number
+          september_percentage?: number
+          updated_at?: string
+          year?: number
+        }
+        Update: {
+          april_percentage?: number
+          august_percentage?: number
+          cliente_id?: number
+          created_at?: string
+          december_percentage?: number
+          february_percentage?: number
+          id?: number
+          january_percentage?: number
+          july_percentage?: number
+          june_percentage?: number
+          march_percentage?: number
+          may_percentage?: number
+          november_percentage?: number
+          october_percentage?: number
+          producto_id?: number
+          september_percentage?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       producto_materiales: {
         Row: {
           cantidad: number
