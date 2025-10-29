@@ -31,8 +31,9 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   const [gestorOpen, setGestorOpen] = useState(false);
   const [paisOpen, setPaisOpen] = useState(false);
   const [clienteOpen, setClienteOpen] = useState(false);
+  const [clienteNombre, setClienteNombre] = useState("");
   const { toast } = useToast();
-  const { clienteId, isSuperAdmin } = useUserRole();
+  const { clienteId, isSuperAdmin, roles } = useUserRole();
   const isEditing = !!initialData?.id;
   const [formData, setFormData] = useState({
     nombre_completo: initialData?.nombre_completo || "",
@@ -60,8 +61,10 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     loadPaises();
     if (isSuperAdmin()) {
       loadClientes();
+    } else if (clienteId) {
+      loadClienteActual(clienteId);
     }
-  }, []);
+  }, [clienteId, roles]);
 
   const loadNodos = async () => {
     const { data, error } = await supabase
@@ -125,6 +128,18 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     }
   };
 
+  const loadClienteActual = async (id: number) => {
+    const { data, error } = await supabase
+      .from("clientes")
+      .select("nombre, codigo")
+      .eq("id", id)
+      .single();
+
+    if (!error && data) {
+      setClienteNombre(data.codigo ? `${data.codigo} - ${data.nombre}` : data.nombre);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -168,9 +183,9 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-      {isSuperAdmin() && (
-        <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
-          <Label htmlFor="cliente_id">Account / Client *</Label>
+      <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
+        <Label htmlFor="cliente_id">Account / Client *</Label>
+        {isSuperAdmin() ? (
           <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -224,8 +239,12 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
               </Command>
             </PopoverContent>
           </Popover>
-        </div>
-      )}
+        ) : (
+          <div className="w-full rounded-md border bg-muted px-3 py-2 text-left">
+            {clienteNombre || "Loading account..."}
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
