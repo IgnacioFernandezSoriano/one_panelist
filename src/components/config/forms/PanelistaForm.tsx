@@ -45,7 +45,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     direccion_ciudad: initialData?.direccion_ciudad || "",
     direccion_codigo_postal: initialData?.direccion_codigo_postal || "",
     direccion_pais: initialData?.direccion_pais || "",
-    nodo_asignado: initialData?.nodo_asignado || "",
+    nodo_asignado: initialData?.nodo_asignado || null,
     idioma: initialData?.idioma || "es",
     zona_horaria: initialData?.zona_horaria || "Europe/Madrid",
     horario_inicio: initialData?.horario_inicio || "09:00:00",
@@ -154,6 +154,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     const dataToSave = {
       ...formData,
       cliente_id: finalClienteId,
+      nodo_asignado: formData.nodo_asignado || null,
       gestor_asignado_id: formData.gestor_asignado_id ? parseInt(formData.gestor_asignado_id) : null,
       ciudad_id: null, // No usamos este campo por ahora
     };
