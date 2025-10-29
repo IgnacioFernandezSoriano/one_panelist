@@ -538,9 +538,10 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
           <Select
             value={formData.motivo_creacion}
             onValueChange={(value) => setFormData({ ...formData, motivo_creacion: value })}
+            required
           >
             <SelectTrigger>
-              <SelectValue placeholder={t('form.select_creation_reason')} />
+              <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="programado">{t('creation_reason.programado')}</SelectItem>
