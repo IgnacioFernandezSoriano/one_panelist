@@ -68,31 +68,37 @@ export function GeneratePlanTab() {
 
   const fetchSummary = async (cliente: number) => {
     try {
-      // Count cities with allocations
-      const { data: cityData, count: cityCount } = await supabase
+      // Count cities with allocations (only count rows with at least one allocation > 0)
+      const { data: cityData } = await supabase
         .from("city_allocation_requirements")
-        .select("*", { count: 'exact', head: true })
+        .select("*")
         .eq("cliente_id", cliente);
 
+      const citiesWithData = cityData?.filter(city => 
+        city.from_classification_a > 0 || 
+        city.from_classification_b > 0 || 
+        city.from_classification_c > 0
+      ).length || 0;
+
       // Count products with seasonality
-      const { data: productData, count: productCount } = await supabase
+      const { data: productData } = await supabase
         .from("product_seasonality")
-        .select("*", { count: 'exact', head: true })
+        .select("*")
         .eq("cliente_id", cliente)
         .eq("year", selectedYear);
 
       // Count current events (envios created recently)
-      const { data: eventsData, count: eventsCount } = await supabase
+      const { data: eventsData } = await supabase
         .from("envios")
-        .select("*", { count: 'exact', head: true })
+        .select("id")
         .eq("cliente_id", cliente)
         .gte("fecha_creacion", new Date(selectedYear, 0, 1).toISOString())
         .lt("fecha_creacion", new Date(selectedYear + 1, 0, 1).toISOString());
 
       setSummary({
-        citiesConfigured: cityCount || 0,
-        productsConfigured: productCount || 0,
-        currentEvents: eventsCount || 0,
+        citiesConfigured: citiesWithData,
+        productsConfigured: productData?.length || 0,
+        currentEvents: eventsData?.length || 0,
       });
     } catch (error) {
       console.error("Error fetching summary:", error);
