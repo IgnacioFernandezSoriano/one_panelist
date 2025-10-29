@@ -118,6 +118,54 @@ export type Database = {
           },
         ]
       }
+      city_allocation_requirements: {
+        Row: {
+          ciudad_id: number
+          cliente_id: number
+          created_at: string
+          from_classification_a: number
+          from_classification_b: number
+          from_classification_c: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          ciudad_id: number
+          cliente_id: number
+          created_at?: string
+          from_classification_a?: number
+          from_classification_b?: number
+          from_classification_c?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          ciudad_id?: number
+          cliente_id?: number
+          created_at?: string
+          from_classification_a?: number
+          from_classification_b?: number
+          from_classification_c?: number
+          id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "city_allocation_requirements_ciudad_id_fkey"
+            columns: ["ciudad_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "city_allocation_requirements_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ciudades: {
         Row: {
           clasificacion: string

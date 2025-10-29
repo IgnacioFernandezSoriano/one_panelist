@@ -53,8 +53,6 @@ const CityRequirementsTab = () => {
         .eq("email", user.email)
         .single();
 
-      console.log("InitializeData - isSuperAdmin:", isSuperAdmin(), "userData:", userData);
-
       if (isSuperAdmin()) {
         // Load all clientes for superadmin
         const { data: clientesData } = await supabase
@@ -63,7 +61,6 @@ const CityRequirementsTab = () => {
           .eq("estado", "activo")
           .order("nombre");
         
-        console.log("Clientes loaded:", clientesData);
         setClientes(clientesData || []);
         if (clientesData && clientesData.length > 0) {
           setSelectedCliente(clientesData[0].id);
@@ -97,13 +94,16 @@ const CityRequirementsTab = () => {
 
       if (citiesError) throw citiesError;
 
-      // Fetch existing requirements
+      // Fetch existing requirements (handle 404 gracefully if table doesn't exist yet)
       const { data: existingReqs, error: reqsError } = await supabase
         .from("city_allocation_requirements" as any)
         .select("*")
         .eq("cliente_id", clienteId);
 
-      if (reqsError) throw reqsError;
+      // If table doesn't exist (404), treat as empty - this allows UI to work before first save
+      if (reqsError && reqsError.code !== 'PGRST116') {
+        throw reqsError;
+      }
 
       // Merge cities with requirements
       const merged = cities?.map(city => {
@@ -121,7 +121,6 @@ const CityRequirementsTab = () => {
         };
       }) || [];
 
-      console.log("Cities fetched:", cities?.length, "Merged requirements:", merged.length);
       setRequirements(merged);
     } catch (error) {
       console.error("Error fetching requirements:", error);
@@ -148,30 +147,23 @@ const CityRequirementsTab = () => {
     try {
       setSaving(true);
 
-      for (const req of requirements) {
-        if (req.id) {
-          // Update existing
-          await supabase
-            .from("city_allocation_requirements" as any)
-            .update({
-              from_classification_a: req.from_classification_a,
-              from_classification_b: req.from_classification_b,
-              from_classification_c: req.from_classification_c,
-            } as any)
-            .eq("id", req.id);
-        } else {
-          // Insert new
-          await supabase
-            .from("city_allocation_requirements" as any)
-            .insert({
-              cliente_id: req.cliente_id,
-              ciudad_id: req.ciudad_id,
-              from_classification_a: req.from_classification_a,
-              from_classification_b: req.from_classification_b,
-              from_classification_c: req.from_classification_c,
-            } as any);
-        }
-      }
+      // Use upsert to efficiently create/update all requirements in one call
+      const dataToSave = requirements.map(req => ({
+        cliente_id: req.cliente_id,
+        ciudad_id: req.ciudad_id,
+        from_classification_a: req.from_classification_a,
+        from_classification_b: req.from_classification_b,
+        from_classification_c: req.from_classification_c,
+      }));
+
+      const { error } = await supabase
+        .from("city_allocation_requirements" as any)
+        .upsert(dataToSave, { 
+          onConflict: 'cliente_id,ciudad_id',
+          ignoreDuplicates: false 
+        } as any);
+
+      if (error) throw error;
 
       toast.success(t('common.save_success'));
       if (selectedCliente) fetchRequirements(selectedCliente);
