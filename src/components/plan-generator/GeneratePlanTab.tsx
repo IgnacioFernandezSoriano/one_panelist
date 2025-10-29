@@ -55,9 +55,13 @@ export function GeneratePlanTab() {
         if (clientesData && clientesData.length > 0) {
           setClientes(clientesData);
           setSelectedCliente(clientesData[0].id);
+          // Fetch summary immediately for the first client
+          await fetchSummary(clientesData[0].id);
         }
       } else if (clienteId) {
         setSelectedCliente(clienteId);
+        // Fetch summary immediately for the user's client
+        await fetchSummary(clienteId);
       }
     } catch (error) {
       console.error("Error initializing data:", error);
