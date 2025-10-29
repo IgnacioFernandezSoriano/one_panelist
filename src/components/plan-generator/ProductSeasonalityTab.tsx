@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Save } from "lucide-react";
+import { Save, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUserRole } from "@/hooks/useUserRole";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface ProductSeasonalityData {
   producto_id: number;
@@ -197,6 +198,49 @@ const ProductSeasonalityTab = () => {
     }
   };
 
+  const handleReset = async () => {
+    if (!clienteId) return;
+
+    try {
+      setSaving(true);
+
+      // Reset to default distribution
+      const resetData = productData.map((item) => ({
+        cliente_id: clienteId,
+        producto_id: item.producto_id,
+        year: selectedYear,
+        january_percentage: 8.33,
+        february_percentage: 8.33,
+        march_percentage: 8.33,
+        april_percentage: 8.33,
+        may_percentage: 8.33,
+        june_percentage: 8.33,
+        july_percentage: 8.33,
+        august_percentage: 8.33,
+        september_percentage: 8.34,
+        october_percentage: 8.34,
+        november_percentage: 8.34,
+        december_percentage: 8.34,
+      }));
+
+      const { error } = await supabase
+        .from("product_seasonality")
+        .upsert(resetData, {
+          onConflict: "cliente_id,producto_id,year",
+        });
+
+      if (error) throw error;
+
+      toast.success(t('plan_generator.reset_success'));
+      await fetchProductData();
+    } catch (error: any) {
+      console.error("Error resetting seasonality:", error);
+      toast.error(t('common.error_saving'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">{t('common.loading')}</div>;
   }
@@ -211,12 +255,34 @@ const ProductSeasonalityTab = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <h3 className="text-lg font-semibold">{t('plan_generator.product_seasonality')}</h3>
-        <Button size="sm" onClick={handleSave} disabled={saving || productData.length === 0}>
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? t('common.saving') : t('common.save')}
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={handleSave} disabled={saving || productData.length === 0}>
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? t('common.saving') : t('common.save')}
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={saving || productData.length === 0}>
+                <RotateCcw className="h-4 w-4 mr-2" />
+                {t('plan_generator.reset')}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('plan_generator.reset_seasonality_title')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t('plan_generator.reset_seasonality_description')}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReset}>{t('plan_generator.reset')}</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       <div className="flex gap-4 items-end">
@@ -267,47 +333,52 @@ const ProductSeasonalityTab = () => {
         </div>
       ) : (
         <div className="border rounded-lg overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px] sticky left-0 bg-background z-10">
-                  {t('product.label')}
-                </TableHead>
-                {MONTHS.map((month) => (
-                  <TableHead key={month} className="text-center min-w-[100px]">
-                    {t(`month.${month}_short`)}
+          <div className="relative">
+            <Table>
+              <TableHeader className="sticky top-0 bg-background z-10">
+                <TableRow>
+                  <TableHead className="w-24 text-sm sticky left-0 bg-background z-20">
+                    {t('product.code')}
                   </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {productData.map((product) => (
-                <TableRow key={product.producto_id}>
-                  <TableCell className="font-medium sticky left-0 bg-background z-10">
-                    <div className="text-sm">
-                      <div className="font-semibold">{product.codigo_producto}</div>
-                      <div className="text-muted-foreground">{product.nombre_producto}</div>
-                    </div>
-                  </TableCell>
+                  <TableHead className="max-w-[150px] text-sm sticky left-24 bg-background z-20">
+                    {t('product.label')}
+                  </TableHead>
                   {MONTHS.map((month) => (
-                    <TableCell key={month} className="text-center">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        value={product[`${month}_percentage` as keyof ProductSeasonalityData]}
-                        onChange={(e) =>
-                          handlePercentageChange(product.producto_id, month, e.target.value)
-                        }
-                        className="w-20 text-center mx-auto"
-                      />
-                    </TableCell>
+                    <TableHead key={month} className="w-16 text-center text-sm">
+                      {t(`month.${month}_short`)}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {productData.map((product) => (
+                  <TableRow key={product.producto_id}>
+                    <TableCell className="text-sm font-medium sticky left-0 bg-background z-10">
+                      {product.codigo_producto}
+                    </TableCell>
+                    <TableCell className="text-sm max-w-[150px] truncate sticky left-24 bg-background z-10" title={product.nombre_producto}>
+                      {product.nombre_producto}
+                    </TableCell>
+                    {MONTHS.map((month) => (
+                      <TableCell key={month} className="text-center">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          value={product[`${month}_percentage` as keyof ProductSeasonalityData]}
+                          onChange={(e) =>
+                            handlePercentageChange(product.producto_id, month, e.target.value)
+                          }
+                          className="w-16 h-8 text-center text-sm"
+                        />
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import { Calculator } from "lucide-react";
 import CityRequirementsTab from "@/components/plan-generator/CityRequirementsTab";
 import ProductSeasonalityTab from "@/components/plan-generator/ProductSeasonalityTab";
 import CurrentEventsTab from "@/components/plan-generator/CurrentEventsTab";
+import { GeneratePlanTab } from "@/components/plan-generator/GeneratePlanTab";
 import { useTranslation } from "@/hooks/useTranslation";
 import { AppLayout } from "@/components/layout/AppLayout";
 
@@ -25,7 +26,7 @@ const PlanGenerator = () => {
 
         <Card className="p-6">
           <Tabs defaultValue="city-requirements" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="city-requirements">
                 {t('plan_generator.city_requirements')}
               </TabsTrigger>
@@ -34,6 +35,9 @@ const PlanGenerator = () => {
               </TabsTrigger>
               <TabsTrigger value="current-events">
                 {t('plan_generator.current_events')}
+              </TabsTrigger>
+              <TabsTrigger value="generate">
+                {t('plan_generator.generate_plan')}
               </TabsTrigger>
             </TabsList>
 
@@ -47,6 +51,10 @@ const PlanGenerator = () => {
 
             <TabsContent value="current-events" className="mt-6">
               <CurrentEventsTab />
+            </TabsContent>
+
+            <TabsContent value="generate" className="mt-6">
+              <GeneratePlanTab />
             </TabsContent>
           </Tabs>
         </Card>

@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Upload, Save, HelpCircle } from "lucide-react";
+import { Download, Upload, Save, HelpCircle, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useUserRole } from "@/hooks/useUserRole";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import Papa from "papaparse";
 
 interface CityRequirement {
@@ -176,6 +177,37 @@ const CityRequirementsTab = () => {
     }
   };
 
+  const handleReset = async () => {
+    try {
+      setSaving(true);
+
+      const resetData = requirements.map(req => ({
+        cliente_id: req.cliente_id,
+        ciudad_id: req.ciudad_id,
+        from_classification_a: 0,
+        from_classification_b: 0,
+        from_classification_c: 0,
+      }));
+
+      const { error } = await supabase
+        .from("city_allocation_requirements" as any)
+        .upsert(resetData, { 
+          onConflict: 'cliente_id,ciudad_id',
+          ignoreDuplicates: false 
+        } as any);
+
+      if (error) throw error;
+
+      toast.success(t('plan_generator.reset_success'));
+      if (selectedCliente) fetchRequirements(selectedCliente);
+    } catch (error) {
+      console.error("Error resetting requirements:", error);
+      toast.error(t('common.error_saving'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleExport = () => {
     const csvData = requirements.map(req => ({
       ciudad_codigo: req.ciudad_codigo,
@@ -303,17 +335,37 @@ const CityRequirementsTab = () => {
             <Save className="h-4 w-4 mr-2" />
             {saving ? t('common.saving') : t('common.save')}
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={saving}>
+                <RotateCcw className="h-4 w-4 mr-2" />
+                {t('plan_generator.reset')}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('plan_generator.reset_city_title')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t('plan_generator.reset_city_description')}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReset}>{t('plan_generator.reset')}</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border rounded-lg overflow-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('city.code')}</TableHead>
-              <TableHead>{t('city.name')}</TableHead>
-              <TableHead>{t('city.classification')}</TableHead>
-              <TableHead className="text-center">
+              <TableHead className="w-24 text-sm">{t('city.code')}</TableHead>
+              <TableHead className="max-w-[200px] text-sm">{t('city.name')}</TableHead>
+              <TableHead className="w-16 text-sm">{t('city.classification')}</TableHead>
+              <TableHead className="w-20 text-sm text-center">
                 <div className="flex items-center justify-center gap-1">
                   {t('plan_generator.from_a')}
                   <TooltipProvider>
@@ -328,7 +380,7 @@ const CityRequirementsTab = () => {
                   </TooltipProvider>
                 </div>
               </TableHead>
-              <TableHead className="text-center">
+              <TableHead className="w-20 text-sm text-center">
                 <div className="flex items-center justify-center gap-1">
                   {t('plan_generator.from_b')}
                   <TooltipProvider>
@@ -343,7 +395,7 @@ const CityRequirementsTab = () => {
                   </TooltipProvider>
                 </div>
               </TableHead>
-              <TableHead className="text-center">
+              <TableHead className="w-20 text-sm text-center">
                 <div className="flex items-center justify-center gap-1">
                   {t('plan_generator.from_c')}
                   <TooltipProvider>
@@ -363,9 +415,11 @@ const CityRequirementsTab = () => {
           <TableBody>
             {requirements.map((req) => (
               <TableRow key={req.ciudad_id}>
-                <TableCell className="font-medium">{req.ciudad_codigo}</TableCell>
-                <TableCell>{req.ciudad_nombre}</TableCell>
-                <TableCell>
+                <TableCell className="text-sm font-medium">{req.ciudad_codigo}</TableCell>
+                <TableCell className="text-sm max-w-[200px] truncate" title={req.ciudad_nombre}>
+                  {req.ciudad_nombre}
+                </TableCell>
+                <TableCell className="text-sm">
                   <span className="px-2 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                     {req.clasificacion}
                   </span>
@@ -378,7 +432,7 @@ const CityRequirementsTab = () => {
                     onChange={(e) =>
                       handleValueChange(req.ciudad_id, "from_classification_a", e.target.value)
                     }
-                    className="w-24 text-center"
+                    className="w-20 h-8 text-center text-sm"
                   />
                 </TableCell>
                 <TableCell>
@@ -389,7 +443,7 @@ const CityRequirementsTab = () => {
                     onChange={(e) =>
                       handleValueChange(req.ciudad_id, "from_classification_b", e.target.value)
                     }
-                    className="w-24 text-center"
+                    className="w-20 h-8 text-center text-sm"
                   />
                 </TableCell>
                 <TableCell>
@@ -400,7 +454,7 @@ const CityRequirementsTab = () => {
                     onChange={(e) =>
                       handleValueChange(req.ciudad_id, "from_classification_c", e.target.value)
                     }
-                    className="w-24 text-center"
+                    className="w-20 h-8 text-center text-sm"
                   />
                 </TableCell>
               </TableRow>
