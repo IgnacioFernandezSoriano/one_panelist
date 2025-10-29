@@ -184,21 +184,37 @@ export function GeneratePlanTab() {
       // Calculate incoming allocations for each city
       const cityIncomingMap = new Map();
       
+      // Count cities by classification
+      const cityCountByClassification = {
+        A: allCities.filter(c => c.clasificacion === 'A').length,
+        B: allCities.filter(c => c.clasificacion === 'B').length,
+        C: allCities.filter(c => c.clasificacion === 'C').length,
+      };
+      
       allCities.forEach(targetCity => {
-        let fromA = 0;
-        let fromB = 0;
-        let fromC = 0;
+        // Find the configuration for this target city
+        const targetRequirements = cityAllocations.find(
+          ca => ca.ciudad_id === targetCity.id
+        );
 
-        // Sum allocations from all source cities to this target city
-        cityAllocations.forEach(sourceCity => {
-          if (targetCity.clasificacion === 'A') {
-            fromA += sourceCity.from_classification_a;
-          } else if (targetCity.clasificacion === 'B') {
-            fromB += sourceCity.from_classification_b;
-          } else if (targetCity.clasificacion === 'C') {
-            fromC += sourceCity.from_classification_c;
-          }
-        });
+        if (!targetRequirements) {
+          // If no requirements configured, set zeros
+          cityIncomingMap.set(targetCity.id, {
+            codigo: targetCity.codigo,
+            nombre: targetCity.nombre,
+            clasificacion: targetCity.clasificacion,
+            from_a: 0,
+            from_b: 0,
+            from_c: 0,
+            total: 0,
+          });
+          return;
+        }
+
+        // Calculate events by multiplying requirements by number of cities of each type
+        const fromA = targetRequirements.from_classification_a * cityCountByClassification.A;
+        const fromB = targetRequirements.from_classification_b * cityCountByClassification.B;
+        const fromC = targetRequirements.from_classification_c * cityCountByClassification.C;
 
         cityIncomingMap.set(targetCity.id, {
           codigo: targetCity.codigo,
