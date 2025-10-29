@@ -90,6 +90,7 @@ const CityRequirementsTab = () => {
         .select("id, codigo, nombre, clasificacion")
         .eq("cliente_id", clienteId)
         .eq("estado", "activo")
+        .order("clasificacion")
         .order("nombre");
 
       if (citiesError) throw citiesError;
