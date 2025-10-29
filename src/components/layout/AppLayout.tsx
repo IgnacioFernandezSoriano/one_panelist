@@ -46,7 +46,8 @@ import {
   Languages,
   Shield,
   User as UserIcon,
-  FileBarChart
+  FileBarChart,
+  Brain
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -157,7 +158,8 @@ const AppSidebarContent = () => {
 
   const allocationPlanItems = [
     { icon: Send, label: "View Plan", path: "/envios" },
-    { icon: FileBarChart, label: "Plan Generator", path: "/envios/plan-generator" },
+    { icon: Brain, label: "Intelligent Plan Generator", path: "/envios/intelligent-plan-generator" },
+    { icon: FileBarChart, label: "Plan CSV Generator", path: "/envios/plan-csv-generator" },
     { icon: Upload, label: "Import Plan", path: "/envios", action: "import-csv" },
     { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
     { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
