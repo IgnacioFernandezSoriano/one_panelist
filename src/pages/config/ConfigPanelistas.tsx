@@ -126,7 +126,7 @@ export default function ConfigPanelistas() {
         />
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Panelist</DialogTitle>
             </DialogHeader>
@@ -141,7 +141,7 @@ export default function ConfigPanelistas() {
         </Dialog>
 
         <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Panelist</DialogTitle>
             </DialogHeader>

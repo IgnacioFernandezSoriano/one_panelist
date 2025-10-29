@@ -185,7 +185,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
         <Label htmlFor="cliente_id">{t('panelist.account_client')} *</Label>
         {isSuperAdmin() ? (
