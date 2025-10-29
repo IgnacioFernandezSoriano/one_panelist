@@ -235,10 +235,14 @@ export function GeneratePlanTab() {
           return;
         }
 
-        // Use configured values directly (no multiplication)
-        const fromA = targetRequirements.from_classification_a;
-        const fromB = targetRequirements.from_classification_b;
-        const fromC = targetRequirements.from_classification_c;
+        // Multiply by number of origin cities of each classification, excluding the target city itself
+        const countA = cityCountByClassification.A - (targetCity.clasificacion === 'A' ? 1 : 0);
+        const countB = cityCountByClassification.B - (targetCity.clasificacion === 'B' ? 1 : 0);
+        const countC = cityCountByClassification.C - (targetCity.clasificacion === 'C' ? 1 : 0);
+
+        const fromA = targetRequirements.from_classification_a * countA;
+        const fromB = targetRequirements.from_classification_b * countB;
+        const fromC = targetRequirements.from_classification_c * countC;
 
         cityIncomingMap.set(targetCity.id, {
           codigo: targetCity.codigo,
@@ -441,13 +445,14 @@ DOCUMENTACIÓN DE ARCHIVOS DEL PLAN DE ASIGNACIÓN
         Complete con los IDs y códigos existentes en el sistema.
 
 NOTAS IMPORTANTES:
-- City_Allocation_Requirements: Los valores mostrados son exactamente los configurados en la tabla.
+- City_Allocation_Requirements: Para cada ciudad destino, los valores se calculan como:
+  (requisito configurado) x (número de ciudades emisoras de esa clasificación), excluyendo la propia ciudad destino si pertenece a esa clasificación.
   EJEMPLO DE LÓGICA:
-  Barcelona (clasificación A) está configurada con: From A=50, From B=20, From C=5
-  Esto significa que Barcelona debe recibir 50 envíos de ciudades tipo A, 20 de tipo B y 5 de tipo C.
-  Si Madrid Capital es tipo A, entonces Madrid debe enviar 50 eventos a Barcelona.
-  Si Girona y La Palma son tipo B, entonces cada una debe enviar 20 eventos a Barcelona.
-  El total de eventos que recibe Barcelona será: 50 (Madrid) + 20 (Girona) + 20 (La Palma) + 5 (Boadilla) = 95
+  Barcelona (clasificación A) está configurada con: From A=50, From B=20, From C=5.
+  Ciudades: Madrid Capital (A), Girona (B), La Palma (B), Boadilla (C) y Barcelona (A).
+  Cálculo correcto: A → 50 x (2 A totales - 1 por ser Barcelona A) = 50 x 1 = 50.
+  B → 20 x (2 ciudades B: Girona y La Palma) = 40. C → 5 x (1 ciudad C: Boadilla) = 5.
+  Total Barcelona = 50 + 40 + 5 = 95.
   
 - Current_Allocation_Plan: Muestra todos los eventos de asignación reales creados durante
   el año seleccionado (exportación idéntica al botón "Export Allocation Plan").
@@ -547,13 +552,14 @@ ALLOCATION PLAN FILES DOCUMENTATION
         Fill with existing IDs and codes in the system.
 
 IMPORTANT NOTES:
-- City_Allocation_Requirements: Values shown are exactly as configured in the table.
+- City_Allocation_Requirements: For each destination city, values are calculated as:
+  (configured requirement) x (number of origin cities of that classification), excluding the destination city itself if it belongs to that classification.
   LOGIC EXAMPLE:
-  Barcelona (classification A) is configured with: From A=50, From B=20, From C=5
-  This means Barcelona must receive 50 shipments from type A cities, 20 from type B, and 5 from type C.
-  If Madrid Capital is type A, then Madrid must send 50 events to Barcelona.
-  If Girona and La Palma are type B, then each must send 20 events to Barcelona.
-  Total events received by Barcelona will be: 50 (Madrid) + 20 (Girona) + 20 (La Palma) + 5 (Boadilla) = 95
+  Barcelona (classification A) is configured with: From A=50, From B=20, From C=5.
+  Cities: Madrid Capital (A), Girona (B), La Palma (B), Boadilla (C) and Barcelona (A).
+  Correct calculation: A → 50 x (2 A total - 1 for Barcelona being A) = 50 x 1 = 50.
+  B → 20 x (2 B cities: Girona and La Palma) = 40. C → 5 x (1 C city: Boadilla) = 5.
+  Total Barcelona = 50 + 40 + 5 = 95.
   
 - Current_Allocation_Plan: Shows all real allocation events created during the selected year
   (identical export to "Export Allocation Plan" button).
