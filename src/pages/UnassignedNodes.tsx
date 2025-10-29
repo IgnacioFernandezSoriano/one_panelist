@@ -194,9 +194,8 @@ export default function UnassignedNodes() {
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-warning" />
-                {t('unassigned_nodes.count', { count: unassignedNodes.length.toString() })}
+              <CardTitle>
+                {unassignedNodes.length} {t('unassigned_nodes.title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
