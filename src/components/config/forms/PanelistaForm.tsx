@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface PanelistaFormProps {
   onSuccess: () => void;
@@ -34,6 +35,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   const [clienteNombre, setClienteNombre] = useState("");
   const { toast } = useToast();
   const { clienteId, isSuperAdmin, roles } = useUserRole();
+  const { t } = useTranslation();
   const isEditing = !!initialData?.id;
   const [formData, setFormData] = useState({
     nombre_completo: initialData?.nombre_completo || "",
@@ -184,7 +186,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
       <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
-        <Label htmlFor="cliente_id">Account / Client *</Label>
+        <Label htmlFor="cliente_id">{t('panelist.account_client')} *</Label>
         {isSuperAdmin() ? (
           <Popover open={clienteOpen} onOpenChange={setClienteOpen}>
             <PopoverTrigger asChild>
@@ -195,20 +197,20 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
                 className="w-full justify-between"
               >
                 {formData.cliente_id 
-                  ? clientes.find(c => c.id.toString() === formData.cliente_id)?.nombre || "Select account..."
-                  : "Select account..."}
+                  ? clientes.find(c => c.id.toString() === formData.cliente_id)?.nombre || t('panelist.select_client')
+                  : t('panelist.select_client')}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
                 <CommandInput 
-                  placeholder="Search account..." 
+                  placeholder={t('panelist.search_client')}
                   value={clienteSearch}
                   onValueChange={setClienteSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>No account found.</CommandEmpty>
+                  <CommandEmpty>{t('panelist.no_client_found')}</CommandEmpty>
                   <CommandGroup>
                     {clientes
                       .filter(c => 
@@ -241,14 +243,14 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
           </Popover>
         ) : (
           <div className="w-full rounded-md border bg-muted px-3 py-2 text-left">
-            {clienteNombre || "Loading account..."}
+            {clienteNombre || t('form.loading_account')}
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="nombre_completo">Full Name *</Label>
+          <Label htmlFor="nombre_completo">{t('panelist.full_name')} *</Label>
           <Input
             id="nombre_completo"
             value={formData.nombre_completo}
@@ -258,7 +260,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('panelist.email')}</Label>
           <Input
             id="email"
             type="email"
@@ -268,7 +270,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="telefono">Phone * (International Format)</Label>
+          <Label htmlFor="telefono">{t('panelist.phone_format')} *</Label>
           <Input
             id="telefono"
             value={formData.telefono}
@@ -276,15 +278,15 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
             placeholder="+34600123456"
             required
             pattern="^\+[1-9]\d{1,14}$"
-            title="Format: +[country code][number] (e.g., +34600123456)"
+            title={t('panelist.phone_format_hint')}
           />
           <p className="text-xs text-muted-foreground">
-            Format: +[country code][number] (e.g., +34600123456, +52155123456, +12025551234)
+            {t('panelist.phone_format_hint')}
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="nodo_asignado">Assigned Node</Label>
+          <Label htmlFor="nodo_asignado">{t('panelist.assigned_node')}</Label>
           <Popover open={nodoOpen} onOpenChange={setNodoOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -295,19 +297,19 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
               >
                 {formData.nodo_asignado 
                   ? formData.nodo_asignado
-                  : "Select node..."}
+                  : t('panelist.select_node')}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
                 <CommandInput 
-                  placeholder="Search node..." 
+                  placeholder={t('panelist.search_node')}
                   value={nodoSearch}
                   onValueChange={setNodoSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>No node found.</CommandEmpty>
+                  <CommandEmpty>{t('panelist.no_node_found')}</CommandEmpty>
                   <CommandGroup>
                     {nodos
                       .filter(n => 
@@ -341,7 +343,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="direccion_calle">Street Address *</Label>
+        <Label htmlFor="direccion_calle">{t('panelist.street_address')} *</Label>
         <Input
           id="direccion_calle"
           value={formData.direccion_calle}
@@ -352,7 +354,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
       <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="direccion_ciudad">City *</Label>
+          <Label htmlFor="direccion_ciudad">{t('panelist.city')} *</Label>
           <Input
             id="direccion_ciudad"
             value={formData.direccion_ciudad}
@@ -362,7 +364,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="direccion_codigo_postal">Postal Code *</Label>
+          <Label htmlFor="direccion_codigo_postal">{t('panelist.postal_code')} *</Label>
           <Input
             id="direccion_codigo_postal"
             value={formData.direccion_codigo_postal}
@@ -372,7 +374,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="direccion_pais">Country *</Label>
+          <Label htmlFor="direccion_pais">{t('panelist.country')} *</Label>
           <Popover open={paisOpen} onOpenChange={setPaisOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -381,21 +383,21 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
                 aria-expanded={paisOpen}
                 className="w-full justify-between"
               >
-                {formData.direccion_pais || "Select country..."}
+                {formData.direccion_pais || t('panelist.select_country')}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
                 <CommandInput 
-                  placeholder="Search country..." 
+                  placeholder={t('panelist.search_country')}
                   value={paisSearch}
                   onValueChange={setPaisSearch}
                 />
                 <CommandList>
                   <CommandEmpty>
                     <div className="p-2">
-                      <p className="text-sm text-muted-foreground mb-2">No country found.</p>
+                      <p className="text-sm text-muted-foreground mb-2">{t('panelist.no_country_found')}</p>
                       <Button
                         type="button"
                         variant="outline"
@@ -408,7 +410,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
                           }
                         }}
                       >
-                        Add "{paisSearch}"
+                        {t('button.add')} "{paisSearch}"
                       </Button>
                     </div>
                   </CommandEmpty>
@@ -444,7 +446,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="idioma">Language *</Label>
+          <Label htmlFor="idioma">{t('panelist.language')} *</Label>
           <Select value={formData.idioma} onValueChange={(value) => setFormData({ ...formData, idioma: value })}>
             <SelectTrigger>
               <SelectValue />
@@ -460,7 +462,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="zona_horaria">Timezone *</Label>
+          <Label htmlFor="zona_horaria">{t('panelist.timezone')} *</Label>
           <Input
             id="zona_horaria"
             value={formData.zona_horaria}
@@ -470,7 +472,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="horario_inicio">Start Time *</Label>
+          <Label htmlFor="horario_inicio">{t('panelist.start_time')} *</Label>
           <Input
             id="horario_inicio"
             type="time"
@@ -481,7 +483,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="horario_fin">End Time *</Label>
+          <Label htmlFor="horario_fin">{t('panelist.end_time')} *</Label>
           <Input
             id="horario_fin"
             type="time"
@@ -492,7 +494,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="plataforma_preferida">Preferred Platform *</Label>
+          <Label htmlFor="plataforma_preferida">{t('panelist.preferred_platform')} *</Label>
           <Select value={formData.plataforma_preferida} onValueChange={(value) => setFormData({ ...formData, plataforma_preferida: value })}>
             <SelectTrigger>
               <SelectValue />
@@ -505,22 +507,22 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="dias_comunicacion">Communication Days *</Label>
+      <div className="space-y-2">
+        <Label htmlFor="dias_comunicacion">{t('panelist.communication_days')} *</Label>
           <Select value={formData.dias_comunicacion} onValueChange={(value) => setFormData({ ...formData, dias_comunicacion: value })}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="dias_laborables">Weekdays</SelectItem>
-              <SelectItem value="fines_semana">Weekends</SelectItem>
-              <SelectItem value="ambos">Both</SelectItem>
+              <SelectItem value="dias_laborables">{t('panelist.weekdays')}</SelectItem>
+              <SelectItem value="fines_semana">{t('panelist.weekends')}</SelectItem>
+              <SelectItem value="ambos">{t('panelist.both')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="gestor_asignado_id">Assigned Manager</Label>
+          <Label htmlFor="gestor_asignado_id">{t('panelist.assigned_manager')}</Label>
           <Popover open={gestorOpen} onOpenChange={setGestorOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -530,20 +532,20 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
                 className="w-full justify-between"
               >
                 {formData.gestor_asignado_id 
-                  ? gestores.find(g => g.id.toString() === formData.gestor_asignado_id)?.nombre_completo || "Select manager..."
-                  : "Select manager..."}
+                  ? gestores.find(g => g.id.toString() === formData.gestor_asignado_id)?.nombre_completo || t('panelist.select_manager')
+                  : t('panelist.select_manager')}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <Command>
                 <CommandInput 
-                  placeholder="Search manager..." 
+                  placeholder={t('panelist.search_manager')}
                   value={gestorSearch}
                   onValueChange={setGestorSearch}
                 />
                 <CommandList>
-                  <CommandEmpty>No manager found.</CommandEmpty>
+                  <CommandEmpty>{t('panelist.no_manager_found')}</CommandEmpty>
                   <CommandGroup>
                     {gestores
                       .filter(g => g.nombre_completo.toLowerCase().includes(gestorSearch.toLowerCase()))
@@ -576,10 +578,10 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
 
       <div className="flex gap-2 justify-end pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {t('button.cancel')}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Panelist" : "Create Panelist")}
+          {isSubmitting ? (isEditing ? t('button.updating') : t('button.creating')) : (isEditing ? t('button.update_panelist') : t('button.add'))}
         </Button>
       </div>
     </form>
