@@ -1,12 +1,22 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Calendar, TrendingUp } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { BarChart3, Calendar, TrendingUp, ChevronDown, MapPin, User } from "lucide-react";
+import { useState } from "react";
+
+interface NodeInfo {
+  codigo: string;
+  panelista_nombre: string | null;
+  estado: string;
+}
 
 interface CityDistribution {
+  ciudad_id: number;
   ciudad_nombre: string;
   clasificacion: 'A' | 'B' | 'C';
   events: number;
   percentage: number;
+  nodos: NodeInfo[];
 }
 
 interface PlanPreviewSummaryProps {
@@ -24,6 +34,16 @@ export function PlanPreviewSummary({
   maxWeeklyCapacity,
   cityDistribution,
 }: PlanPreviewSummaryProps) {
+  const [openCities, setOpenCities] = useState<number[]>([]);
+
+  const toggleCity = (ciudadId: number) => {
+    setOpenCities(prev => 
+      prev.includes(ciudadId) 
+        ? prev.filter(id => id !== ciudadId)
+        : [...prev, ciudadId]
+    );
+  };
+
   return (
     <Card className="p-6">
       <div className="space-y-6">
@@ -60,29 +80,78 @@ export function PlanPreviewSummary({
         </div>
 
         <div>
-          <h4 className="text-md font-semibold mb-3">City Distribution</h4>
+          <h4 className="text-md font-semibold mb-3">City Distribution & Nodes</h4>
           <div className="space-y-2">
-            {cityDistribution.map((city, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Badge variant={
-                    city.clasificacion === 'A' ? 'default' :
-                    city.clasificacion === 'B' ? 'secondary' : 'outline'
-                  }>
-                    {city.clasificacion}
-                  </Badge>
-                  <span className="font-medium">{city.ciudad_nombre}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">
-                    {city.percentage.toFixed(1)}%
-                  </span>
-                  <span className="font-semibold">
-                    {city.events.toLocaleString()} events
-                  </span>
-                </div>
-              </div>
-            ))}
+            {cityDistribution.map((city) => {
+              const isOpen = openCities.includes(city.ciudad_id);
+              
+              return (
+                <Collapsible 
+                  key={city.ciudad_id}
+                  open={isOpen}
+                  onOpenChange={() => toggleCity(city.ciudad_id)}
+                >
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+                      <div className="flex items-center gap-2">
+                        <ChevronDown 
+                          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                        />
+                        <Badge variant={
+                          city.clasificacion === 'A' ? 'default' :
+                          city.clasificacion === 'B' ? 'secondary' : 'outline'
+                        }>
+                          {city.clasificacion}
+                        </Badge>
+                        <span className="font-medium">{city.ciudad_nombre}</span>
+                        <Badge variant="outline" className="ml-2">
+                          {city.nodos.length} nodes
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm text-muted-foreground">
+                          {city.percentage.toFixed(1)}%
+                        </span>
+                        <span className="font-semibold">
+                          {city.events.toLocaleString()} events
+                        </span>
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <div className="ml-6 mt-2 space-y-1">
+                      {city.nodos.length === 0 ? (
+                        <p className="text-sm text-muted-foreground p-2">
+                          No active nodes in this city
+                        </p>
+                      ) : (
+                        city.nodos.map((nodo, idx) => (
+                          <div 
+                            key={idx}
+                            className="flex items-center gap-2 p-2 bg-background rounded border border-border text-sm"
+                          >
+                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                            <span className="font-mono text-xs">{nodo.codigo}</span>
+                            <span className="text-muted-foreground">→</span>
+                            <User className="h-3 w-3 text-muted-foreground" />
+                            <span className="flex-1">
+                              {nodo.panelista_nombre || <em className="text-muted-foreground">Unassigned</em>}
+                            </span>
+                            <Badge 
+                              variant={nodo.estado === 'activo' ? 'default' : 'outline'}
+                              className="text-xs"
+                            >
+                              {nodo.estado}
+                            </Badge>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
           </div>
         </div>
       </div>

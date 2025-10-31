@@ -83,9 +83,23 @@ export default function IntelligentPlanGenerator() {
           from_classification_a,
           from_classification_b,
           from_classification_c,
-          ciudades (nombre, clasificacion)
+          ciudades (id, nombre, clasificacion)
         `)
         .eq('cliente_id', config.cliente_id);
+
+      // Load active nodes for all cities
+      const ciudadIds = cityReqs?.map(c => c.ciudad_id) || [];
+      const { data: nodos } = await supabase
+        .from('nodos')
+        .select(`
+          codigo,
+          ciudad_id,
+          estado,
+          panelistas (nombre_completo)
+        `)
+        .eq('cliente_id', config.cliente_id)
+        .in('ciudad_id', ciudadIds)
+        .eq('estado', 'activo');
 
       const totalWeeks = differenceInWeeks(config.end_date, config.start_date);
       const calculatedEvents = Math.round((config.total_events / 52) * totalWeeks);
@@ -96,11 +110,19 @@ export default function IntelligentPlanGenerator() {
       
       const cityDistribution = cityReqs?.map((city: any) => {
         const cityEvents = city.from_classification_a + city.from_classification_b + city.from_classification_c;
+        const cityNodos = nodos?.filter((n: any) => n.ciudad_id === city.ciudad_id).map((n: any) => ({
+          codigo: n.codigo,
+          panelista_nombre: n.panelistas?.nombre_completo || null,
+          estado: n.estado,
+        })) || [];
+
         return {
+          ciudad_id: city.ciudad_id,
           ciudad_nombre: city.ciudades.nombre,
           clasificacion: city.ciudades.clasificacion,
           events: Math.round((cityEvents / totalRequirements) * calculatedEvents),
           percentage: (cityEvents / totalRequirements) * 100,
+          nodos: cityNodos,
         };
       }) || [];
 
