@@ -256,13 +256,13 @@ function distributeByCitiesAndClassification(
     const citiesOfType = citiesByType[destType];
     if (citiesOfType.length === 0) return;
 
-    // Calculate events directly from absolute matrix percentages
-    const eventsFromA = Math.ceil(monthlyEvents * matrix.percentage_from_a / 100);
-    const eventsFromB = Math.ceil(monthlyEvents * matrix.percentage_from_b / 100);
-    const eventsFromC = Math.ceil(monthlyEvents * matrix.percentage_from_c / 100);
+    // Calculate events directly from absolute matrix percentages (without rounding)
+    const eventsFromA = (monthlyEvents * matrix.percentage_from_a / 100);
+    const eventsFromB = (monthlyEvents * matrix.percentage_from_b / 100);
+    const eventsFromC = (monthlyEvents * matrix.percentage_from_c / 100);
     
     const totalEventsForType = eventsFromA + eventsFromB + eventsFromC;
-    const eventsPerCity = Math.ceil(totalEventsForType / citiesOfType.length);
+    const eventsPerCity = totalEventsForType / citiesOfType.length;
 
     citiesOfType.forEach(city => {
       result[city.ciudad_id] = {
@@ -479,18 +479,18 @@ export async function generateIntelligentPlan(config: PlanConfig) {
   // 4. Distribute events by month according to seasonality
   const monthlyDistribution = distributeByMonth(calculatedEvents, seasonality, config.start_date, config.end_date);
 
-  // 5. Distribute events by cities and classification
-  const cityDistribution = distributeByCitiesAndClassification(
-    calculatedEvents,
-    classificationMatrix,
-    cityInfo
-  );
-
-  // 6. Balance events across nodes
+  // 5. Balance events across nodes (distribution by city is calculated per month)
   const generatedEvents: GeneratedEvent[] = [];
   const unassignedBreakdown: UnassignedCity[] = [];
 
   for (const [monthKey, monthEvents] of Object.entries(monthlyDistribution)) {
+    // Calculate city distribution for THIS specific month
+    const monthlyCityDistribution = distributeByCitiesAndClassification(
+      monthEvents,
+      classificationMatrix,
+      cityInfo
+    );
+
     for (const cityInf of cityInfo) {
       const cityNodes = topology.filter(n => 
         n.ciudad_id === cityInf.ciudad_id && 
@@ -498,35 +498,31 @@ export async function generateIntelligentPlan(config: PlanConfig) {
       );
 
       if (cityNodes.length === 0) {
-        const allocationBreakdown = cityDistribution[cityInf.ciudad_id];
+        const allocationBreakdown = monthlyCityDistribution[cityInf.ciudad_id];
         if (allocationBreakdown) {
-          unassignedBreakdown.push({
-            ciudad_id: cityInf.ciudad_id,
-            ciudad_nombre: cityInf.ciudad_nombre,
-            unassigned_count: Object.values(allocationBreakdown).reduce((sum, count) => sum + count, 0),
-          });
+          const totalUnassigned = allocationBreakdown.from_a + allocationBreakdown.from_b + allocationBreakdown.from_c;
+          const existing = unassignedBreakdown.find(u => u.ciudad_id === cityInf.ciudad_id);
+          if (existing) {
+            existing.unassigned_count += totalUnassigned;
+          } else {
+            unassignedBreakdown.push({
+              ciudad_id: cityInf.ciudad_id,
+              ciudad_nombre: cityInf.ciudad_nombre,
+              unassigned_count: totalUnassigned,
+            });
+          }
         }
         continue;
       }
 
-      const allocationBreakdown = cityDistribution[cityInf.ciudad_id];
+      const allocationBreakdown = monthlyCityDistribution[cityInf.ciudad_id];
       if (!allocationBreakdown) continue;
 
-      // Distribute monthly events proportionally for this city
-      const totalCityEvents = allocationBreakdown.from_a + allocationBreakdown.from_b + allocationBreakdown.from_c;
-      const monthsCount = Object.keys(monthlyDistribution).length;
-      const monthlyEventsForCity = Math.ceil(totalCityEvents / monthsCount);
-
-      // Calculate breakdown for this month
-      const totalBreakdown = allocationBreakdown.from_a + allocationBreakdown.from_b + allocationBreakdown.from_c;
-      const monthlyFromA = totalBreakdown > 0 ? Math.ceil(monthlyEventsForCity * (allocationBreakdown.from_a / totalBreakdown)) : 0;
-      const monthlyFromB = totalBreakdown > 0 ? Math.ceil(monthlyEventsForCity * (allocationBreakdown.from_b / totalBreakdown)) : 0;
-      const monthlyFromC = monthlyEventsForCity - monthlyFromA - monthlyFromB;
-
+      // Use the monthly allocation directly (already calculated for this month)
       const result = balanceBySourceClassification(
-        monthlyFromA,
-        monthlyFromB,
-        monthlyFromC,
+        allocationBreakdown.from_a,
+        allocationBreakdown.from_b,
+        allocationBreakdown.from_c,
         cityInf.ciudad_id,
         cityNodes,
         topology,
