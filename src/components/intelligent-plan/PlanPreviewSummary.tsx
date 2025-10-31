@@ -8,6 +8,7 @@ interface NodeInfo {
   codigo: string;
   panelista_nombre: string | null;
   estado: string;
+  events_per_week: number;
 }
 
 interface CityDistribution {
@@ -138,12 +139,17 @@ export function PlanPreviewSummary({
                             <span className="flex-1">
                               {nodo.panelista_nombre || <em className="text-muted-foreground">Unassigned</em>}
                             </span>
-                            <Badge 
-                              variant={nodo.estado === 'activo' ? 'default' : 'outline'}
-                              className="text-xs"
-                            >
-                              {nodo.estado}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {nodo.events_per_week.toFixed(1)} events/week
+                              </Badge>
+                              <Badge 
+                                variant={nodo.estado === 'activo' ? 'default' : 'outline'}
+                                className="text-xs"
+                              >
+                                {nodo.estado}
+                              </Badge>
+                            </div>
                           </div>
                         ))
                       )}

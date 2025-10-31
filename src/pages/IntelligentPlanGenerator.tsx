@@ -156,32 +156,44 @@ export default function IntelligentPlanGenerator() {
       
       const cityDistribution = cityReqs?.map((city: any) => {
         const cityEvents = city.from_classification_a + city.from_classification_b + city.from_classification_c;
-        const cityNodos = nodos?.filter((n: any) => n.ciudad_id === city.ciudad_id).map((n: any) => {
+        const totalCityEvents = Math.round((cityEvents / totalRequirements) * calculatedEvents);
+        
+        const cityNodesData = nodos?.filter((n: any) => n.ciudad_id === city.ciudad_id) || [];
+        const activeNodesCount = cityNodesData.length || 1; // Evitar división por cero
+        
+        const cityNodos = cityNodesData.map((n: any) => {
+          // Distribuir eventos uniformemente entre nodos activos
+          const nodeEvents = totalCityEvents / activeNodesCount;
+          const eventsPerWeek = nodeEvents / totalWeeks;
+          
           console.log('[Preview] Mapping node for ciudad', city.ciudad_id, ':', {
             codigo: n.codigo,
             ciudad_id: n.ciudad_id,
             panelista: n.panelistas?.nombre_completo,
             estado: n.estado,
+            nodeEvents,
+            eventsPerWeek,
           });
           
           return {
             codigo: n.codigo,
             panelista_nombre: n.panelistas?.nombre_completo || null,
             estado: n.estado,
+            events_per_week: eventsPerWeek,
           };
-        }) || [];
+        });
 
         console.log('[Preview] City distribution for', city.ciudades.nombre, ':', {
           ciudad_id: city.ciudad_id,
           nodosCount: cityNodos.length,
-          cityEvents,
+          totalCityEvents,
         });
 
         return {
           ciudad_id: city.ciudad_id,
           ciudad_nombre: city.ciudades.nombre,
           clasificacion: city.ciudades.clasificacion,
-          events: Math.round((cityEvents / totalRequirements) * calculatedEvents),
+          events: totalCityEvents,
           percentage: (cityEvents / totalRequirements) * 100,
           nodos: cityNodos,
         };
