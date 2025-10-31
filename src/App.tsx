@@ -38,7 +38,6 @@ import MenuPermissions from "./pages/config/MenuPermissions";
 import Mantenimiento from "./pages/config/Mantenimiento";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
-import PlanGenerator from "./pages/PlanGenerator";
 import IntelligentPlanGenerator from "./pages/IntelligentPlanGenerator";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
@@ -65,7 +64,6 @@ const App = () => {
             <Route path="/envios" element={<Envios />} />
             <Route path="/envios/nuevo" element={<NuevoEnvio />} />
             <Route path="/envios/intelligent-plan-generator" element={<IntelligentPlanGenerator />} />
-            <Route path="/envios/plan-csv-generator" element={<PlanGenerator />} />
             <Route path="/envios/massive-change" element={<MassivePanelistChange />} />
             <Route path="/envios/materials-plan" element={<PanelistMaterialsPlan />} />
             <Route path="/envios/:id" element={<EditarEnvio />} />
