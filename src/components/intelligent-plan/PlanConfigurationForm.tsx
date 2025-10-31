@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { ClassificationAllocationTable } from "./ClassificationAllocationTable";
-import { ProductSeasonalityTable } from "./ProductSeasonalityTable";
+import { ProductSeasonalityTableVertical } from "./ProductSeasonalityTableVertical";
 
 export interface PlanConfiguration {
   cliente_id: number;
@@ -406,12 +406,11 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       {/* Product Seasonality Table */}
       {formData.cliente_id && formData.producto_id && (
         <div className="space-y-2">
-          <ProductSeasonalityTable
+          <ProductSeasonalityTableVertical
             clienteId={formData.cliente_id}
             productoId={formData.producto_id}
             year={formData.start_date ? formData.start_date.getFullYear() : new Date().getFullYear()}
             onChange={(data) => {
-              // Optional: store in form data for validation
               console.log('Seasonality updated:', data);
             }}
           />

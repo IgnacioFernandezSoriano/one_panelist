@@ -10,8 +10,6 @@ import { UnassignedEventsAlert } from "@/components/intelligent-plan/UnassignedE
 import { GeneratedPlansList } from "@/components/intelligent-plan/GeneratedPlansList";
 import { PlanMergeDialog } from "@/components/intelligent-plan/PlanMergeDialog";
 import { PlanDetailsDialog } from "@/components/intelligent-plan/PlanDetailsDialog";
-import { ClassificationMatrixTab } from "@/components/plan-generator/ClassificationMatrixTab";
-import ProductSeasonalityTab from "@/components/plan-generator/ProductSeasonalityTab";
 
 import { generateIntelligentPlan } from "@/lib/planGeneratorAlgorithm";
 import { supabase } from "@/integrations/supabase/client";
@@ -487,10 +485,8 @@ export default function IntelligentPlanGenerator() {
         </div>
 
         <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="config">{t('intelligent_plan.configuration')}</TabsTrigger>
-            <TabsTrigger value="classification-matrix">Classification Matrix</TabsTrigger>
-            <TabsTrigger value="seasonality">Seasonality</TabsTrigger>
             <TabsTrigger value="review">{t('intelligent_plan.review_plans')}</TabsTrigger>
           </TabsList>
 
@@ -531,14 +527,6 @@ export default function IntelligentPlanGenerator() {
                 </Button>
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="classification-matrix" className="mt-6">
-            <ClassificationMatrixTab />
-          </TabsContent>
-
-          <TabsContent value="seasonality" className="mt-6">
-            <ProductSeasonalityTab />
           </TabsContent>
 
           <TabsContent value="review" className="mt-6 space-y-6">
