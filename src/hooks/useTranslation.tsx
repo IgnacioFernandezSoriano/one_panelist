@@ -68,13 +68,21 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
   translations.forEach(t => translationMap.set(t.clave, t.texto));
 
   const t = (key: string, params?: Record<string, string>): string => {
+    // If still loading, return formatted placeholder
+    if (isLoading && translations.length === 0) {
+      const parts = key.split('.');
+      return parts[parts.length - 1].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    
     let text = translationMap.get(key);
     
     if (!text) {
       if (import.meta.env.DEV) {
         console.warn(`Translation missing for key: ${key} (language: ${currentLanguage})`);
       }
-      return key;
+      // Return formatted version of key as fallback
+      const parts = key.split('.');
+      return parts[parts.length - 1].replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
 
     // Simple interpolation: replace {{variable}} with params
@@ -151,7 +159,11 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
         isLoading 
       }}
     >
-      {children}
+      {userLanguageLoaded ? children : (
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
+      )}
     </TranslationContext.Provider>
   );
 }
