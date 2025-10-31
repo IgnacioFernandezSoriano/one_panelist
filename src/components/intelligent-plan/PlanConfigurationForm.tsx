@@ -413,7 +413,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           {t('intelligent_plan.preview_plan')}
         </Button>
         <Button variant="outline" onClick={onCancel}>
-          Cancel
+          {t('action.cancel')}
         </Button>
       </div>
     </div>
