@@ -572,13 +572,17 @@ export type Database = {
           created_at: string
           created_by: number | null
           end_date: string
+          generation_params: Json | null
           id: number
+          max_events_per_week: number | null
           merge_strategy: string
           merged_at: string | null
           producto_id: number
           start_date: string
           status: string
           total_events: number
+          unassigned_breakdown: Json | null
+          unassigned_events: number | null
         }
         Insert: {
           calculated_events?: number
@@ -587,13 +591,17 @@ export type Database = {
           created_at?: string
           created_by?: number | null
           end_date: string
+          generation_params?: Json | null
           id?: number
+          max_events_per_week?: number | null
           merge_strategy?: string
           merged_at?: string | null
           producto_id: number
           start_date: string
           status?: string
           total_events: number
+          unassigned_breakdown?: Json | null
+          unassigned_events?: number | null
         }
         Update: {
           calculated_events?: number
@@ -602,13 +610,17 @@ export type Database = {
           created_at?: string
           created_by?: number | null
           end_date?: string
+          generation_params?: Json | null
           id?: number
+          max_events_per_week?: number | null
           merge_strategy?: string
           merged_at?: string | null
           producto_id?: number
           start_date?: string
           status?: string
           total_events?: number
+          unassigned_breakdown?: Json | null
+          unassigned_events?: number | null
         }
         Relationships: [
           {
