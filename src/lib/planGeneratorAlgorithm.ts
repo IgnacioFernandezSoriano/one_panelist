@@ -17,8 +17,6 @@ export interface GeneratedEvent {
   nodo_origen: string;
   nodo_destino: string;
   fecha_programada: string;
-  ciudad_origen_id: number;
-  ciudad_destino_id: number;
 }
 
 export interface UnassignedCity {
@@ -240,19 +238,19 @@ function getRandomDateInMonth(monthKey: string): string {
   return format(addDays(start, randomDay), 'yyyy-MM-dd');
 }
 
-function selectRandomDestination(topology: Node[], excludeNode: string): { codigo: string; ciudad_id: number } {
+function selectRandomDestination(topology: Node[], excludeNode: string): string {
   const availableNodes = topology.filter(n => 
     n.codigo !== excludeNode && 
     n.estado === 'activo'
   );
   
   if (availableNodes.length === 0) {
-    return { codigo: excludeNode, ciudad_id: 0 };
+    return excludeNode;
   }
   
   const randomIndex = Math.floor(Math.random() * availableNodes.length);
   const selected = availableNodes[randomIndex];
-  return { codigo: selected.codigo, ciudad_id: selected.ciudad_id };
+  return selected.codigo;
 }
 
 function balanceByClassification(
@@ -304,10 +302,8 @@ function balanceByClassification(
       
       assigned.push({
         nodo_origen: node.codigo,
-        nodo_destino: destination.codigo,
+        nodo_destino: destination,
         fecha_programada: randomDate,
-        ciudad_origen_id: node.ciudad_id,
-        ciudad_destino_id: destination.ciudad_id,
       });
 
       nodeCounts[node.codigo] = currentCount + 1;
