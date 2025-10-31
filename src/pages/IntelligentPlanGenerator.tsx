@@ -122,7 +122,7 @@ export default function IntelligentPlanGenerator() {
           codigo,
           ciudad_id,
           estado,
-          panelistas (nombre_completo)
+          panelistas!fk_nodos_panelista (nombre_completo)
         `)
         .eq('cliente_id', config.cliente_id)
         .in('ciudad_id', ciudadIds)
