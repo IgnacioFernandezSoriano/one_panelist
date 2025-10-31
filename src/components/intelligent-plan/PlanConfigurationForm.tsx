@@ -13,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { CityAllocationTable } from "./CityAllocationTable";
+import { ProductSeasonalityTable } from "./ProductSeasonalityTable";
 
 export interface PlanConfiguration {
   cliente_id: number;
@@ -386,6 +388,34 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           </Alert>
         )}
       </div>
+
+      {/* City Allocation Requirements Table */}
+      {formData.cliente_id && (
+        <div className="space-y-2">
+          <CityAllocationTable 
+            clienteId={formData.cliente_id}
+            onChange={(data) => {
+              // Optional: store in form data for validation
+              console.log('City allocations updated:', data);
+            }}
+          />
+        </div>
+      )}
+
+      {/* Product Seasonality Table */}
+      {formData.cliente_id && formData.producto_id && (
+        <div className="space-y-2">
+          <ProductSeasonalityTable
+            clienteId={formData.cliente_id}
+            productoId={formData.producto_id}
+            year={formData.start_date ? formData.start_date.getFullYear() : new Date().getFullYear()}
+            onChange={(data) => {
+              // Optional: store in form data for validation
+              console.log('Seasonality updated:', data);
+            }}
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label>{t('intelligent_plan.merge_strategy')} *</Label>

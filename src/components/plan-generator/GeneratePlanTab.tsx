@@ -109,9 +109,9 @@ export function GeneratePlanTab() {
       console.log("City data fetched:", cityData, "error:", cityError);
 
       const citiesWithData = cityData?.filter(city => 
-        city.from_classification_a > 0 || 
-        city.from_classification_b > 0 || 
-        city.from_classification_c > 0
+        city.percentage_from_a > 0 || 
+        city.percentage_from_b > 0 || 
+        city.percentage_from_c > 0
       ).length || 0;
 
       console.log("Cities with data:", citiesWithData);
@@ -255,10 +255,10 @@ export function GeneratePlanTab() {
         const countB = cityCountByClassification.B - (targetCity.clasificacion === 'B' ? 1 : 0);
         const countC = cityCountByClassification.C - (targetCity.clasificacion === 'C' ? 1 : 0);
 
-        // Use configured per-origin-city values for columns
-        const fromAConfig = targetRequirements.from_classification_a || 0;
-        const fromBConfig = targetRequirements.from_classification_b || 0;
-        const fromCConfig = targetRequirements.from_classification_c || 0;
+        // Use configured percentages
+        const fromAConfig = targetRequirements.percentage_from_a || 0;
+        const fromBConfig = targetRequirements.percentage_from_b || 0;
+        const fromCConfig = targetRequirements.percentage_from_c || 0;
 
         // Total incoming = configured values * number of origin cities of each class
         const totalIncoming = (fromAConfig * countA) + (fromBConfig * countB) + (fromCConfig * countC);

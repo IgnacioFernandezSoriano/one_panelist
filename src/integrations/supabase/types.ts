@@ -169,30 +169,30 @@ export type Database = {
           ciudad_id: number
           cliente_id: number
           created_at: string
-          from_classification_a: number
-          from_classification_b: number
-          from_classification_c: number
           id: number
+          percentage_from_a: number | null
+          percentage_from_b: number | null
+          percentage_from_c: number | null
           updated_at: string
         }
         Insert: {
           ciudad_id: number
           cliente_id: number
           created_at?: string
-          from_classification_a?: number
-          from_classification_b?: number
-          from_classification_c?: number
           id?: number
+          percentage_from_a?: number | null
+          percentage_from_b?: number | null
+          percentage_from_c?: number | null
           updated_at?: string
         }
         Update: {
           ciudad_id?: number
           cliente_id?: number
           created_at?: string
-          from_classification_a?: number
-          from_classification_b?: number
-          from_classification_c?: number
           id?: number
+          percentage_from_a?: number | null
+          percentage_from_b?: number | null
+          percentage_from_c?: number | null
           updated_at?: string
         }
         Relationships: [

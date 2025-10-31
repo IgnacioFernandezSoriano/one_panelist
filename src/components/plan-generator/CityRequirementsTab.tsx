@@ -18,9 +18,9 @@ interface CityRequirement {
   ciudad_nombre: string;
   ciudad_codigo: string;
   clasificacion: string;
-  from_classification_a: number;
-  from_classification_b: number;
-  from_classification_c: number;
+  percentage_from_a: number;
+  percentage_from_b: number;
+  percentage_from_c: number;
   cliente_id: number;
 }
 
@@ -116,9 +116,9 @@ const CityRequirementsTab = () => {
           ciudad_nombre: city.nombre,
           ciudad_codigo: city.codigo,
           clasificacion: city.clasificacion || "C",
-          from_classification_a: req?.from_classification_a || 0,
-          from_classification_b: req?.from_classification_b || 0,
-          from_classification_c: req?.from_classification_c || 0,
+          percentage_from_a: req?.percentage_from_a || 33.33,
+          percentage_from_b: req?.percentage_from_b || 33.33,
+          percentage_from_c: req?.percentage_from_c || 33.34,
           cliente_id: clienteId,
         };
       }) || [];
@@ -133,8 +133,8 @@ const CityRequirementsTab = () => {
   };
 
   const handleValueChange = (ciudadId: number, field: string, value: string) => {
-    const numValue = parseInt(value) || 0;
-    if (numValue < 0) return;
+    const numValue = parseFloat(value) || 0;
+    if (numValue < 0 || numValue > 100) return;
 
     setRequirements(prev =>
       prev.map(req =>
@@ -153,9 +153,9 @@ const CityRequirementsTab = () => {
       const dataToSave = requirements.map(req => ({
         cliente_id: req.cliente_id,
         ciudad_id: req.ciudad_id,
-        from_classification_a: req.from_classification_a,
-        from_classification_b: req.from_classification_b,
-        from_classification_c: req.from_classification_c,
+        percentage_from_a: req.percentage_from_a,
+        percentage_from_b: req.percentage_from_b,
+        percentage_from_c: req.percentage_from_c,
       }));
 
       const { error } = await supabase
@@ -184,9 +184,9 @@ const CityRequirementsTab = () => {
       const resetData = requirements.map(req => ({
         cliente_id: req.cliente_id,
         ciudad_id: req.ciudad_id,
-        from_classification_a: 0,
-        from_classification_b: 0,
-        from_classification_c: 0,
+        percentage_from_a: 33.33,
+        percentage_from_b: 33.33,
+        percentage_from_c: 33.34,
       }));
 
       const { error } = await supabase
@@ -359,10 +359,12 @@ const CityRequirementsTab = () => {
                 <TableCell>
                   <Input
                     type="number"
+                    step="0.01"
                     min="0"
-                    value={req.from_classification_a}
+                    max="100"
+                    value={req.percentage_from_a}
                     onChange={(e) =>
-                      handleValueChange(req.ciudad_id, "from_classification_a", e.target.value)
+                      handleValueChange(req.ciudad_id, "percentage_from_a", e.target.value)
                     }
                     className="w-20 h-8 text-center text-sm"
                   />
@@ -370,10 +372,12 @@ const CityRequirementsTab = () => {
                 <TableCell>
                   <Input
                     type="number"
+                    step="0.01"
                     min="0"
-                    value={req.from_classification_b}
+                    max="100"
+                    value={req.percentage_from_b}
                     onChange={(e) =>
-                      handleValueChange(req.ciudad_id, "from_classification_b", e.target.value)
+                      handleValueChange(req.ciudad_id, "percentage_from_b", e.target.value)
                     }
                     className="w-20 h-8 text-center text-sm"
                   />
@@ -381,10 +385,12 @@ const CityRequirementsTab = () => {
                 <TableCell>
                   <Input
                     type="number"
+                    step="0.01"
                     min="0"
-                    value={req.from_classification_c}
+                    max="100"
+                    value={req.percentage_from_c}
                     onChange={(e) =>
-                      handleValueChange(req.ciudad_id, "from_classification_c", e.target.value)
+                      handleValueChange(req.ciudad_id, "percentage_from_c", e.target.value)
                     }
                     className="w-20 h-8 text-center text-sm"
                   />

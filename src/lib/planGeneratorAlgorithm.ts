@@ -28,9 +28,9 @@ export interface UnassignedCity {
 interface CityRequirement {
   ciudad_id: number;
   ciudad_nombre: string;
-  from_classification_a: number;
-  from_classification_b: number;
-  from_classification_c: number;
+  percentage_from_a: number;
+  percentage_from_b: number;
+  percentage_from_c: number;
   clasificacion: 'A' | 'B' | 'C';
 }
 
@@ -73,9 +73,9 @@ async function loadCityRequirements(cliente_id: number): Promise<CityRequirement
     .from('city_allocation_requirements')
     .select(`
       ciudad_id,
-      from_classification_a,
-      from_classification_b,
-      from_classification_c,
+      percentage_from_a,
+      percentage_from_b,
+      percentage_from_c,
       ciudades (
         nombre,
         clasificacion
@@ -88,9 +88,9 @@ async function loadCityRequirements(cliente_id: number): Promise<CityRequirement
   return (data || []).map((row: any) => ({
     ciudad_id: row.ciudad_id,
     ciudad_nombre: row.ciudades?.nombre || 'Unknown',
-    from_classification_a: row.from_classification_a || 0,
-    from_classification_b: row.from_classification_b || 0,
-    from_classification_c: row.from_classification_c || 0,
+    percentage_from_a: row.percentage_from_a || 0,
+    percentage_from_b: row.percentage_from_b || 0,
+    percentage_from_c: row.percentage_from_c || 0,
     clasificacion: row.ciudades?.clasificacion || 'C'
   }));
 }
@@ -215,15 +215,10 @@ function distributeByCities(
 ): Record<number, number> {
   const result: Record<number, number> = {};
   
-  const totalWeight = cityRequirements.reduce((sum, city) => {
-    return sum + city.from_classification_a + city.from_classification_b + city.from_classification_c;
-  }, 0);
-
-  if (totalWeight === 0) return result;
-
+  // Use percentages directly (should sum to 100)
   cityRequirements.forEach(city => {
-    const cityWeight = city.from_classification_a + city.from_classification_b + city.from_classification_c;
-    result[city.ciudad_id] = Math.round((monthlyEvents * cityWeight) / totalWeight);
+    const cityPercentage = city.percentage_from_a + city.percentage_from_b + city.percentage_from_c;
+    result[city.ciudad_id] = Math.round((monthlyEvents * cityPercentage) / 100);
   });
 
   return result;

@@ -95,9 +95,9 @@ export default function IntelligentPlanGenerator() {
         .from('city_allocation_requirements')
         .select(`
           ciudad_id,
-          from_classification_a,
-          from_classification_b,
-          from_classification_c,
+          percentage_from_a,
+          percentage_from_b,
+          percentage_from_c,
           ciudades (id, nombre, clasificacion)
         `)
         .eq('cliente_id', config.cliente_id);
@@ -173,13 +173,13 @@ export default function IntelligentPlanGenerator() {
       const totalWeeks = differenceInWeeks(config.end_date, config.start_date);
       const calculatedEvents = Math.round((config.total_events / 52) * totalWeeks);
       
-      // Calculate distribution by cities
-      const totalRequirements = cityReqs?.reduce((sum: number, city: any) => 
-        sum + city.from_classification_a + city.from_classification_b + city.from_classification_c, 0) || 1;
+      // Calculate distribution by cities using percentages
+      const totalPercentage = cityReqs?.reduce((sum: number, city: any) => 
+        sum + (city.percentage_from_a + city.percentage_from_b + city.percentage_from_c), 0) || 100;
       
       const cityDistribution = cityReqs?.map((city: any) => {
-        const cityEvents = city.from_classification_a + city.from_classification_b + city.from_classification_c;
-        const totalCityEvents = Math.round((cityEvents / totalRequirements) * calculatedEvents);
+        const cityPercentage = city.percentage_from_a + city.percentage_from_b + city.percentage_from_c;
+        const totalCityEvents = Math.round((cityPercentage / 100) * calculatedEvents);
         
         const cityNodesData = nodos?.filter((n: any) => n.ciudad_id === city.ciudad_id) || [];
         const activeNodesCount = cityNodesData.length || 1;
@@ -224,7 +224,7 @@ export default function IntelligentPlanGenerator() {
           ciudad_nombre: city.ciudades.nombre,
           clasificacion: city.ciudades.clasificacion,
           events: totalCityEvents,
-          percentage: (cityEvents / totalRequirements) * 100,
+          percentage: cityPercentage,
           nodos: cityNodos,
         };
       }) || [];
