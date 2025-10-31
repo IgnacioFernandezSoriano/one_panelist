@@ -215,6 +215,15 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       return;
     }
 
+    if (!formData.max_events_per_week || formData.max_events_per_week < 1) {
+      toast({
+        title: t('intelligent_plan.validation_error'),
+        description: 'Max events per week must be at least 1',
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (formData.end_date <= formData.start_date) {
       toast({
         title: t('intelligent_plan.validation_error'),
@@ -370,8 +379,14 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           id="max_events_per_week"
           type="number"
           min="1"
-          value={formData.max_events_per_week || ''}
-          onChange={(e) => setFormData({ ...formData, max_events_per_week: parseInt(e.target.value) || 1 })}
+          value={formData.max_events_per_week ?? ''}
+          onChange={(e) => {
+            const value = e.target.value;
+            setFormData({ 
+              ...formData, 
+              max_events_per_week: value === '' ? undefined : parseInt(value) 
+            });
+          }}
         />
         {formData.max_events_per_week && formData.max_events_per_week < 3 && (
           <Alert variant="destructive" className="mt-2">
