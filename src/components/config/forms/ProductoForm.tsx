@@ -399,7 +399,7 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Material Type</TableHead>
+                  <TableHead>{t("product.material_type_label")}</TableHead>
                   <TableHead>Quantity</TableHead>
                   <TableHead>Required</TableHead>
                   <TableHead>Notes</TableHead>
