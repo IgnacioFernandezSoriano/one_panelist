@@ -403,19 +403,28 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
         </div>
       )}
 
-      {/* Product Seasonality Table */}
-      {formData.cliente_id && formData.producto_id && (
-        <div className="space-y-2">
-          <ProductSeasonalityTableVertical
-            clienteId={formData.cliente_id}
-            productoId={formData.producto_id}
-            year={formData.start_date ? formData.start_date.getFullYear() : new Date().getFullYear()}
-            onChange={(data) => {
-              console.log('Seasonality updated:', data);
-            }}
-          />
-        </div>
-      )}
+          {/* Product Seasonality Table */}
+          {formData.cliente_id && !formData.producto_id && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                {t('intelligent_plan.seasonality_after_product_selection')}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {formData.cliente_id && formData.producto_id && (
+            <div className="space-y-2">
+              <ProductSeasonalityTableVertical
+                clienteId={formData.cliente_id}
+                productoId={formData.producto_id}
+                year={formData.start_date ? formData.start_date.getFullYear() : new Date().getFullYear()}
+                onChange={(data) => {
+                  console.log('Seasonality updated:', data);
+                }}
+              />
+            </div>
+          )}
 
       <div className="space-y-2">
         <Label>{t('intelligent_plan.merge_strategy')} *</Label>
