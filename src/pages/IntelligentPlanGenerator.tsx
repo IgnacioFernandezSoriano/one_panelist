@@ -186,6 +186,7 @@ export default function IntelligentPlanGenerator() {
           const newEvents = Math.round(totalCityEvents / activeNodesCount);
           const existingEvents = eventCountByNode[n.codigo] || 0;
           const totalEvents = existingEvents + newEvents;
+          const eventsPerWeek = totalEvents / totalWeeks;
           
           console.log('[Preview] Mapping node for ciudad', city.ciudad_id, ':', {
             codigo: n.codigo,
@@ -195,6 +196,7 @@ export default function IntelligentPlanGenerator() {
             existingEvents,
             newEvents,
             totalEvents,
+            eventsPerWeek,
           });
           
           return {
@@ -204,6 +206,7 @@ export default function IntelligentPlanGenerator() {
             existing_events: existingEvents,
             new_events: newEvents,
             total_events: totalEvents,
+            events_per_week: eventsPerWeek,
           };
         });
 

@@ -11,6 +11,7 @@ interface NodeInfo {
   existing_events: number;
   new_events: number;
   total_events: number;
+  events_per_week: number;
 }
 
 interface CityDistribution {
@@ -132,7 +133,7 @@ export function PlanPreviewSummary({
                         city.nodos.map((nodo, idx) => (
                           <div 
                             key={idx}
-                            className="grid grid-cols-[auto,1fr,auto,auto,auto,auto] gap-3 items-center p-3 bg-background rounded border border-border text-sm"
+                            className="grid grid-cols-[auto,1fr,auto,auto,auto,auto,auto] gap-3 items-center p-3 bg-background rounded border border-border text-sm"
                           >
                             <MapPin className="h-3 w-3 text-muted-foreground" />
                             <div className="flex items-center gap-2">
@@ -155,6 +156,10 @@ export function PlanPreviewSummary({
                             <div className="text-xs text-right">
                               <div className="text-muted-foreground">Total</div>
                               <div className="font-bold">{nodo.total_events}</div>
+                            </div>
+                            <div className="text-xs text-right">
+                              <div className="text-muted-foreground">Per Week</div>
+                              <div className="font-semibold text-muted-foreground">{nodo.events_per_week.toFixed(2)}</div>
                             </div>
                             <Badge 
                               variant={nodo.estado === 'activo' ? 'default' : 'outline'}
