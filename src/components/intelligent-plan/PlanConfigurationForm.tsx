@@ -66,7 +66,19 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const userId = parseInt(user.id);
+      // ✅ Obtener el usuario de la tabla 'usuarios' usando el email
+      const { data: userData, error: userError } = await supabase
+        .from('usuarios')
+        .select('id, cliente_id')
+        .eq('email', user.email)
+        .maybeSingle();
+      
+      if (userError || !userData) {
+        console.error("Error loading user data:", userError);
+        return;
+      }
+
+      const userId = userData.id; // ✅ Este es un integer, no UUID
 
       // Check if user is superadmin via user_roles table
       const { data: roleData } = await supabase
@@ -80,6 +92,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       setIsSuperAdmin(isSuperAdmin);
 
       if (isSuperAdmin) {
+        // Cargar lista de clientes
         const { data: clientesData } = await supabase
           .from('clientes')
           .select('id, nombre')
@@ -87,19 +100,20 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           .order('nombre');
         setClientes(clientesData || []);
       } else {
-        // Get user's cliente_id from usuarios table
-        const { data: userData } = await supabase
-          .from('usuarios')
-          .select('cliente_id')
-          .eq('id', userId)
-          .maybeSingle();
-        
-        if (userData?.cliente_id) {
+        // Para usuarios no-superadmin, establecer su cliente_id
+        if (userData.cliente_id) {
           setFormData(prev => ({ ...prev, cliente_id: userData.cliente_id }));
           loadCarriers(userData.cliente_id);
           loadDefaultMaxEvents(userData.cliente_id);
         }
       }
+
+      console.log('[PlanConfigForm] Initialized:', {
+        isSuperAdmin,
+        userId: userData.id,
+        clienteId: userData.cliente_id,
+        carriersCount: carriers.length
+      });
     } catch (error) {
       console.error("Error initializing form:", error);
     }
@@ -134,6 +148,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
       if (error) throw error;
       setCarriers(data || []);
+      console.log('[PlanConfigForm] Loaded carriers:', data?.length || 0);
     } catch (error) {
       console.error("Error loading carriers:", error);
     }
@@ -141,28 +156,42 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
   const loadProductos = async (carrierId: number, clienteId: number) => {
     try {
-      const { data, error } = await supabase
-        .from('carrier_productos' as any)
-        .select(`
-          producto_id,
-          productos_cliente (
-            id,
-            nombre_producto,
-            codigo_producto
-          )
-        `)
+      // Primero obtener los IDs de productos asociados al carrier
+      const { data: carrierProductsData, error: cpError } = await supabase
+        .from('carrier_productos')
+        .select('producto_id')
         .eq('carrier_id', carrierId)
         .eq('cliente_id', clienteId);
 
-      if (error) throw error;
+      if (cpError) throw cpError;
       
-      const productosData = (data || [])
-        .filter((item: any) => item.productos_cliente)
-        .map((item: any) => item.productos_cliente);
-      
-      setProductos(productosData);
+      if (!carrierProductsData || carrierProductsData.length === 0) {
+        setProductos([]);
+        console.log('[PlanConfigForm] No products found for carrier');
+        return;
+      }
+
+      // Extraer los IDs de productos
+      const productIds = carrierProductsData.map((cp: any) => cp.producto_id);
+
+      // Obtener los detalles de los productos
+      const { data: productosData, error: pError } = await supabase
+        .from('productos_cliente')
+        .select('id, nombre_producto, codigo_producto')
+        .in('id', productIds)
+        .eq('estado', 'activo')
+        .order('nombre_producto');
+
+      if (pError) throw pError;
+      setProductos(productosData || []);
+      console.log('[PlanConfigForm] Loaded products:', productosData?.length || 0);
     } catch (error) {
       console.error("Error loading productos:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load products for this carrier",
+        variant: "destructive",
+      });
     }
   };
 
