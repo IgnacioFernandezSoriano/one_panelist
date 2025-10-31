@@ -21,6 +21,7 @@ export default function IntelligentPlanGenerator() {
   const { toast } = useToast();
   const [currentTab, setCurrentTab] = useState<'config' | 'review'>('config');
   const [planConfig, setPlanConfig] = useState<PlanConfiguration | null>(null);
+  const [planPreview, setPlanPreview] = useState<any>(null);
   const [generating, setGenerating] = useState(false);
   const [draftPlans, setDraftPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,9 +71,54 @@ export default function IntelligentPlanGenerator() {
     }
   };
 
-  const handleConfigSubmit = (config: PlanConfiguration) => {
+  const handleConfigSubmit = async (config: PlanConfiguration) => {
     setPlanConfig(config);
-    // Stay on config tab to show the Generate Plan button
+    
+    // Calculate preview
+    try {
+      const { data: cityReqs } = await supabase
+        .from('city_allocation_requirements')
+        .select(`
+          ciudad_id,
+          from_classification_a,
+          from_classification_b,
+          from_classification_c,
+          ciudades (nombre, clasificacion)
+        `)
+        .eq('cliente_id', config.cliente_id);
+
+      const totalWeeks = differenceInWeeks(config.end_date, config.start_date);
+      const calculatedEvents = Math.round((config.total_events / 52) * totalWeeks);
+      
+      // Calculate distribution by cities
+      const totalRequirements = cityReqs?.reduce((sum: number, city: any) => 
+        sum + city.from_classification_a + city.from_classification_b + city.from_classification_c, 0) || 1;
+      
+      const cityDistribution = cityReqs?.map((city: any) => {
+        const cityEvents = city.from_classification_a + city.from_classification_b + city.from_classification_c;
+        return {
+          ciudad_nombre: city.ciudades.nombre,
+          clasificacion: city.ciudades.clasificacion,
+          events: Math.round((cityEvents / totalRequirements) * calculatedEvents),
+          percentage: (cityEvents / totalRequirements) * 100,
+        };
+      }) || [];
+
+      setPlanPreview({
+        totalEvents: config.total_events,
+        calculatedEvents,
+        totalWeeks,
+        maxWeeklyCapacity: Math.round(calculatedEvents / totalWeeks),
+        cityDistribution,
+      });
+    } catch (error) {
+      console.error("Error calculating preview:", error);
+      toast({
+        title: "Preview Error",
+        description: "Could not calculate plan preview",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleGeneratePlan = async () => {
@@ -100,6 +146,7 @@ export default function IntelligentPlanGenerator() {
       });
 
       setPlanConfig(null);
+      setPlanPreview(null);
       setCurrentTab('review');
       await loadDraftPlans();
     } catch (error: any) {
@@ -294,11 +341,20 @@ export default function IntelligentPlanGenerator() {
               <PlanConfigurationForm
                 initialConfig={planConfig || undefined}
                 onSubmit={handleConfigSubmit}
-                onCancel={() => setPlanConfig(null)}
+                onCancel={() => {
+                  setPlanConfig(null);
+                  setPlanPreview(null);
+                }}
               />
             </Card>
 
-            {planConfig && (
+            {planPreview && (
+              <div className="mt-6">
+                <PlanPreviewSummary {...planPreview} />
+              </div>
+            )}
+
+            {planConfig && planPreview && (
               <div className="mt-6 space-y-4">
                 <Button
                   onClick={handleGeneratePlan}
