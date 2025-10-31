@@ -40,8 +40,8 @@ export default function PanelistMaterialsPlan() {
 
     setLoading(true);
     try {
-      // Fetch envios with panelist details and product materials
-      const { data: enviosData, error } = await supabase
+      // Fetch from envios table
+      const { data: enviosData, error: enviosError } = await supabase
         .from("envios")
         .select(`
           id,
@@ -74,10 +74,74 @@ export default function PanelistMaterialsPlan() {
         .not("panelista_destino_id", "is", null)
         .not("producto_id", "is", null);
 
-      if (error) throw error;
+      if (enviosError) throw enviosError;
+
+      // Fetch from allocation plan details
+      const { data: planData, error: planError } = await supabase
+        .from("generated_allocation_plan_details")
+        .select(`
+          id,
+          nodo_destino,
+          producto_id,
+          productos_cliente!inner (
+            id,
+            nombre_producto,
+            producto_materiales (
+              cantidad,
+              tipos_material (
+                codigo,
+                nombre,
+                unidad_medida
+              )
+            )
+          )
+        `)
+        .gte("fecha_programada", startDate)
+        .lte("fecha_programada", endDate)
+        .not("producto_id", "is", null);
+
+      if (planError) throw planError;
+
+      // Get panelist info for allocation plan events
+      const nodos = planData?.map(p => p.nodo_destino).filter(Boolean) || [];
+      const { data: nodosData } = await supabase
+        .from("nodos")
+        .select(`
+          codigo,
+          panelista_id,
+          panelistas (
+            id,
+            nombre_completo,
+            direccion_calle,
+            direccion_ciudad,
+            direccion_codigo_postal,
+            direccion_pais
+          )
+        `)
+        .in("codigo", nodos);
+
+      // Map nodos to panelists
+      const nodoToPanelist = new Map();
+      nodosData?.forEach(n => {
+        if (n.panelistas) {
+          nodoToPanelist.set(n.codigo, n.panelistas);
+        }
+      });
+
+      // Transform plan data to match envios structure
+      const transformedPlanData = planData?.map(item => ({
+        id: item.id,
+        panelista_destino_id: nodoToPanelist.get(item.nodo_destino)?.id,
+        panelistas: nodoToPanelist.get(item.nodo_destino),
+        producto_id: item.producto_id,
+        productos_cliente: item.productos_cliente
+      })).filter(item => item.panelistas) || [];
+
+      // Combine both data sources
+      const allData = [...(enviosData || []), ...transformedPlanData];
 
       // Group by panelist and calculate materials
-      const grouped = enviosData.reduce((acc: Record<number, MaterialsByPanelist>, envio: any) => {
+      const grouped = allData.reduce((acc: Record<number, MaterialsByPanelist>, envio: any) => {
         const panelistaId = envio.panelista_destino_id;
         const panelista = envio.panelistas;
         
