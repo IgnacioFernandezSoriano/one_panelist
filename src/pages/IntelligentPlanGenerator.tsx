@@ -153,8 +153,6 @@ export default function IntelligentPlanGenerator() {
         .from('envios')
         .select('nodo_destino')
         .eq('cliente_id', config.cliente_id)
-        .eq('carrier_id', config.carrier_id)
-        .eq('producto_id', config.producto_id)
         .gte('fecha_programada', config.start_date.toISOString().split('T')[0])
         .lte('fecha_programada', config.end_date.toISOString().split('T')[0])
         .in('nodo_destino', nodeCodes);
