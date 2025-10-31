@@ -357,6 +357,9 @@ async function saveDraftPlan(
   const planId = (plan as any).id;
   const details = events.map(event => ({
     plan_id: planId,
+    producto_id: config.producto_id,
+    carrier_id: config.carrier_id,
+    cliente_id: config.cliente_id,
     ...event
   }));
 
