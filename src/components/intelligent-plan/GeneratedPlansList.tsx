@@ -21,7 +21,7 @@ interface GeneratedPlan {
 
 interface GeneratedPlansListProps {
   plans: GeneratedPlan[];
-  onMerge: (planId: number) => void;
+  onMerge: (plan: GeneratedPlan) => void;
   onDelete: (planId: number) => void;
   onExport: (planId: number) => void;
   onViewDetails: (planId: number) => void;
@@ -82,12 +82,12 @@ export function GeneratedPlansList({ plans, onMerge, onDelete, onExport, onViewD
               </Button>
               {plan.status === 'draft' && (
                 <>
-                  <Button
-                    size="sm"
-                    onClick={() => onMerge(plan.id)}
-                  >
-                    <Merge className="h-4 w-4 mr-1" />
-                    Merge
+              <Button
+                size="sm"
+                onClick={() => onMerge(plan)}
+              >
+                <Merge className="h-4 w-4 mr-1" />
+                Merge
                   </Button>
                   <Button
                     size="sm"
