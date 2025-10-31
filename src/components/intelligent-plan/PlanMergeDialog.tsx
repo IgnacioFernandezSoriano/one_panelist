@@ -62,7 +62,11 @@ export function PlanMergeDialog({ open, plan, pendingToDelete = 0, onConfirm, on
                 <div>
                   <span className="text-muted-foreground">Period:</span>
                   <p className="font-medium text-foreground">
-                    {format(new Date(plan.start_date), 'MMM dd, yyyy')} - {format(new Date(plan.end_date), 'MMM dd, yyyy')}
+                    {plan.start_date && plan.end_date ? (
+                      `${format(new Date(plan.start_date), 'MMM dd, yyyy')} - ${format(new Date(plan.end_date), 'MMM dd, yyyy')}`
+                    ) : (
+                      'Date not available'
+                    )}
                   </p>
                 </div>
               </div>
