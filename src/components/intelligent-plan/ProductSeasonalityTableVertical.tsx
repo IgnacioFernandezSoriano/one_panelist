@@ -4,7 +4,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
@@ -33,22 +32,22 @@ interface ProductSeasonalityTableVerticalProps {
 
 const MONTH_GROUPS = [
   [
-    { key: 'january_percentage', label_key: 'month.january' },
-    { key: 'february_percentage', label_key: 'month.february' },
-    { key: 'march_percentage', label_key: 'month.march' },
-    { key: 'april_percentage', label_key: 'month.april' },
+    { key: 'january_percentage', label: 'Ene' },
+    { key: 'february_percentage', label: 'Feb' },
+    { key: 'march_percentage', label: 'Mar' },
+    { key: 'april_percentage', label: 'Abr' },
   ],
   [
-    { key: 'may_percentage', label_key: 'month.may' },
-    { key: 'june_percentage', label_key: 'month.june' },
-    { key: 'july_percentage', label_key: 'month.july' },
-    { key: 'august_percentage', label_key: 'month.august' },
+    { key: 'may_percentage', label: 'May' },
+    { key: 'june_percentage', label: 'Jun' },
+    { key: 'july_percentage', label: 'Jul' },
+    { key: 'august_percentage', label: 'Ago' },
   ],
   [
-    { key: 'september_percentage', label_key: 'month.september' },
-    { key: 'october_percentage', label_key: 'month.october' },
-    { key: 'november_percentage', label_key: 'month.november' },
-    { key: 'december_percentage', label_key: 'month.december' },
+    { key: 'september_percentage', label: 'Sep' },
+    { key: 'october_percentage', label: 'Oct' },
+    { key: 'november_percentage', label: 'Nov' },
+    { key: 'december_percentage', label: 'Dic' },
   ],
 ] as const;
 
@@ -186,60 +185,50 @@ export function ProductSeasonalityTableVertical({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {/* Grid de 3 columnas para los meses */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-3">
+          {/* Grid de 3 columnas para los meses - sin headers de tabla */}
+          <div className="grid grid-cols-3 gap-3">
             {MONTH_GROUPS.map((group, groupIndex) => (
-              <div key={groupIndex} className="border rounded-lg overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-sm">{t('intelligent_plan.month_column')}</TableHead>
-                      <TableHead className="text-right text-sm w-24">{t('intelligent_plan.percentage_column')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {group.map((month) => (
-                      <TableRow key={month.key}>
-                        <TableCell className="font-medium py-2">{t(month.label_key)}</TableCell>
-                        <TableCell className="py-2">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            max="100"
-                            value={seasonality?.[month.key] || 0}
-                            onChange={(e) => handleValueChange(month.key, e.target.value)}
-                            className="w-full text-right"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+              <div key={groupIndex} className="space-y-1.5">
+                {group.map((month) => (
+                  <div key={month.key} className="flex items-center gap-2">
+                    <label className="text-sm font-medium w-10 flex-shrink-0">
+                      {month.label}
+                    </label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="100"
+                      value={seasonality?.[month.key] || 0}
+                      onChange={(e) => handleValueChange(month.key, e.target.value)}
+                      className="h-8 text-right text-sm"
+                    />
+                  </div>
+                ))}
               </div>
             ))}
           </div>
 
-          {/* Indicador de validación y total */}
-          <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
+          {/* Indicador de validación y total - más compacto */}
+          <div className="flex items-center justify-between gap-3 p-3 border rounded-lg bg-muted/30">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-lg">{t('intelligent_plan.total_row')}:</span>
-              <span className={`font-bold text-lg ${isValid ? 'text-green-600' : 'text-destructive'}`}>
+              <span className="font-semibold">{t('intelligent_plan.total_row')}:</span>
+              <span className={`font-bold ${isValid ? 'text-green-600' : 'text-destructive'}`}>
                 {total.toFixed(2)}%
               </span>
             </div>
-            <div className="flex-shrink-0">
+            <div className="flex items-center gap-2">
               {isValid ? (
-                <div className="flex items-center gap-2 text-green-600">
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span className="font-medium">{t('intelligent_plan.valid_distribution')}</span>
-                </div>
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-600">{t('intelligent_plan.valid_distribution')}</span>
+                </>
               ) : (
-                <div className="flex items-center gap-2 text-destructive">
-                  <AlertCircle className="h-5 w-5" />
-                  <span className="font-medium">{t('intelligent_plan.invalid_distribution')}</span>
-                </div>
+                <>
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  <span className="text-sm font-medium text-destructive">{t('intelligent_plan.invalid_distribution')}</span>
+                </>
               )}
             </div>
           </div>
