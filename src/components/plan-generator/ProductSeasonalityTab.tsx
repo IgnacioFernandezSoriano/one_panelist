@@ -256,33 +256,35 @@ const ProductSeasonalityTab = () => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          <h3 className="text-lg font-semibold">{t('plan_generator.product_seasonality')}</h3>
+        <h3 className="text-lg font-semibold">{t('plan_generator.product_seasonality')}</h3>
+        
+        <div className="flex items-center gap-2">
           <Button size="sm" onClick={handleSave} disabled={saving || productData.length === 0}>
             <Save className="h-4 w-4 mr-2" />
             {saving ? t('common.saving') : t('common.save')}
           </Button>
+          
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={saving || productData.length === 0}>
+                <RotateCcw className="h-4 w-4 mr-2" />
+                {t('plan_generator.reset')}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{t('plan_generator.reset_seasonality_title')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {t('plan_generator.reset_seasonality_description')}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleReset}>{t('plan_generator.reset')}</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline" size="sm" disabled={saving || productData.length === 0}>
-              <RotateCcw className="h-4 w-4 mr-2" />
-              {t('plan_generator.reset')}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('plan_generator.reset_seasonality_title')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t('plan_generator.reset_seasonality_description')}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleReset}>{t('plan_generator.reset')}</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
 
       <div className="flex gap-4 items-end">
@@ -332,7 +334,7 @@ const ProductSeasonalityTab = () => {
           {t('plan_generator.no_products_found')}
         </div>
       ) : (
-        <div className="border rounded-lg overflow-auto">
+        <div className="border rounded-lg overflow-auto max-h-[600px]">
           <div className="relative">
             <Table>
               <TableHeader className="sticky top-0 bg-background z-10">

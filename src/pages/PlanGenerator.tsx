@@ -25,27 +25,29 @@ const PlanGenerator = () => {
 
         <Card className="p-6">
           <Tabs defaultValue="city-requirements" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="city-requirements">
-                {t('plan_generator.city_requirements')}
-              </TabsTrigger>
-              <TabsTrigger value="seasonality">
-                {t('plan_generator.product_seasonality')}
-              </TabsTrigger>
-              <TabsTrigger value="generate">
-                {t('plan_generator.generate_plan')}
-              </TabsTrigger>
-            </TabsList>
+            <div className="sticky top-0 z-20 bg-background pb-4 -mx-6 px-6 -mt-6 pt-6 border-b mb-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="city-requirements">
+                  {t('plan_generator.city_requirements')}
+                </TabsTrigger>
+                <TabsTrigger value="seasonality">
+                  {t('plan_generator.product_seasonality')}
+                </TabsTrigger>
+                <TabsTrigger value="generate">
+                  {t('plan_generator.generate_plan')}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            <TabsContent value="city-requirements" className="mt-6">
+            <TabsContent value="city-requirements">
               <CityRequirementsTab />
             </TabsContent>
 
-            <TabsContent value="seasonality" className="mt-6">
+            <TabsContent value="seasonality">
               <ProductSeasonalityTab />
             </TabsContent>
 
-            <TabsContent value="generate" className="mt-6">
+            <TabsContent value="generate">
               <GeneratePlanTab />
             </TabsContent>
           </Tabs>
