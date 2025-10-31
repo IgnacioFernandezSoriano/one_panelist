@@ -225,7 +225,7 @@ function distributeByMonth(
   monthsInPeriod.forEach(month => {
     const monthKey = format(month, 'yyyy-MM');
     const percentage = getSeasonalityPercentage(seasonality, getMonth(month));
-    result[monthKey] = Math.round((totalEvents * percentage) / totalWeight);
+    result[monthKey] = Math.ceil((totalEvents * percentage) / totalWeight);
   });
 
   return result;
@@ -257,18 +257,18 @@ function distributeByCitiesAndClassification(
     if (citiesOfType.length === 0) return;
 
     // Calculate events directly from absolute matrix percentages
-    const eventsFromA = Math.round(monthlyEvents * matrix.percentage_from_a / 100);
-    const eventsFromB = Math.round(monthlyEvents * matrix.percentage_from_b / 100);
-    const eventsFromC = Math.round(monthlyEvents * matrix.percentage_from_c / 100);
+    const eventsFromA = Math.ceil(monthlyEvents * matrix.percentage_from_a / 100);
+    const eventsFromB = Math.ceil(monthlyEvents * matrix.percentage_from_b / 100);
+    const eventsFromC = Math.ceil(monthlyEvents * matrix.percentage_from_c / 100);
     
     const totalEventsForType = eventsFromA + eventsFromB + eventsFromC;
-    const eventsPerCity = Math.round(totalEventsForType / citiesOfType.length);
+    const eventsPerCity = Math.ceil(totalEventsForType / citiesOfType.length);
 
     citiesOfType.forEach(city => {
       result[city.ciudad_id] = {
-        from_a: Math.round(eventsPerCity * (eventsFromA / totalEventsForType)),
-        from_b: Math.round(eventsPerCity * (eventsFromB / totalEventsForType)),
-        from_c: Math.round(eventsPerCity * (eventsFromC / totalEventsForType)),
+        from_a: Math.ceil(eventsPerCity * (eventsFromA / totalEventsForType)),
+        from_b: Math.ceil(eventsPerCity * (eventsFromB / totalEventsForType)),
+        from_c: Math.ceil(eventsPerCity * (eventsFromC / totalEventsForType)),
       };
     });
   });
@@ -466,7 +466,7 @@ export async function generateIntelligentPlan(config: PlanConfig) {
 
   // 3. Calculate events based on date range
   const totalDays = differenceInDays(config.end_date, config.start_date) + 1;
-  const calculatedEvents = Math.round((config.total_events * totalDays) / 365);
+  const calculatedEvents = Math.ceil((config.total_events * totalDays) / 365);
 
   // Calculate theoretical capacity
   const totalWeeks = Math.ceil(differenceInDays(config.end_date, config.start_date) / 7);
@@ -515,12 +515,12 @@ export async function generateIntelligentPlan(config: PlanConfig) {
       // Distribute monthly events proportionally for this city
       const totalCityEvents = allocationBreakdown.from_a + allocationBreakdown.from_b + allocationBreakdown.from_c;
       const monthsCount = Object.keys(monthlyDistribution).length;
-      const monthlyEventsForCity = Math.round(totalCityEvents / monthsCount);
+      const monthlyEventsForCity = Math.ceil(totalCityEvents / monthsCount);
 
       // Calculate breakdown for this month
       const totalBreakdown = allocationBreakdown.from_a + allocationBreakdown.from_b + allocationBreakdown.from_c;
-      const monthlyFromA = totalBreakdown > 0 ? Math.round(monthlyEventsForCity * (allocationBreakdown.from_a / totalBreakdown)) : 0;
-      const monthlyFromB = totalBreakdown > 0 ? Math.round(monthlyEventsForCity * (allocationBreakdown.from_b / totalBreakdown)) : 0;
+      const monthlyFromA = totalBreakdown > 0 ? Math.ceil(monthlyEventsForCity * (allocationBreakdown.from_a / totalBreakdown)) : 0;
+      const monthlyFromB = totalBreakdown > 0 ? Math.ceil(monthlyEventsForCity * (allocationBreakdown.from_b / totalBreakdown)) : 0;
       const monthlyFromC = monthlyEventsForCity - monthlyFromA - monthlyFromB;
 
       const result = balanceBySourceClassification(
