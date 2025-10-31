@@ -21,7 +21,7 @@ export interface PlanConfiguration {
   end_date: Date;
   total_events: number;
   max_events_per_week: number;
-  merge_strategy: 'append' | 'replace';
+  merge_strategy: 'add' | 'replace';
 }
 
 interface PlanConfigurationFormProps {
@@ -39,7 +39,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
   const [defaultMaxEvents, setDefaultMaxEvents] = useState(5);
   
   const [formData, setFormData] = useState<Partial<PlanConfiguration>>({
-    merge_strategy: 'append',
+    merge_strategy: 'add',
     max_events_per_week: 5,
     ...initialConfig,
   });
@@ -389,12 +389,12 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
         <Label>Merge Strategy *</Label>
         <RadioGroup
           value={formData.merge_strategy}
-          onValueChange={(value: 'append' | 'replace') => setFormData({ ...formData, merge_strategy: value })}
+          onValueChange={(value: 'add' | 'replace') => setFormData({ ...formData, merge_strategy: value })}
         >
           <div className="flex items-center space-x-2">
-            <RadioGroupItem value="append" id="append" />
-            <Label htmlFor="append" className="font-normal cursor-pointer">
-              Append - Add to existing events
+            <RadioGroupItem value="add" id="add" />
+            <Label htmlFor="add" className="font-normal cursor-pointer">
+              Add - Add to existing events
             </Label>
           </div>
           <div className="flex items-center space-x-2">

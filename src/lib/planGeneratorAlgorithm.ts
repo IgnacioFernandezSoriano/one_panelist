@@ -9,7 +9,7 @@ export interface PlanConfig {
   end_date: Date;
   total_events: number;
   max_events_per_week: number;
-  merge_strategy: 'append' | 'replace';
+  merge_strategy: 'add' | 'replace';
   created_by: number;
 }
 
