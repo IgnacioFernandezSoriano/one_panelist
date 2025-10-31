@@ -31,19 +31,25 @@ interface ProductSeasonalityTableVerticalProps {
   onChange?: (data: ProductSeasonality | null) => void;
 }
 
-const MONTHS = [
-  { key: 'january_percentage', label_key: 'month.january' },
-  { key: 'february_percentage', label_key: 'month.february' },
-  { key: 'march_percentage', label_key: 'month.march' },
-  { key: 'april_percentage', label_key: 'month.april' },
-  { key: 'may_percentage', label_key: 'month.may' },
-  { key: 'june_percentage', label_key: 'month.june' },
-  { key: 'july_percentage', label_key: 'month.july' },
-  { key: 'august_percentage', label_key: 'month.august' },
-  { key: 'september_percentage', label_key: 'month.september' },
-  { key: 'october_percentage', label_key: 'month.october' },
-  { key: 'november_percentage', label_key: 'month.november' },
-  { key: 'december_percentage', label_key: 'month.december' },
+const MONTH_GROUPS = [
+  [
+    { key: 'january_percentage', label_key: 'month.january' },
+    { key: 'february_percentage', label_key: 'month.february' },
+    { key: 'march_percentage', label_key: 'month.march' },
+    { key: 'april_percentage', label_key: 'month.april' },
+  ],
+  [
+    { key: 'may_percentage', label_key: 'month.may' },
+    { key: 'june_percentage', label_key: 'month.june' },
+    { key: 'july_percentage', label_key: 'month.july' },
+    { key: 'august_percentage', label_key: 'month.august' },
+  ],
+  [
+    { key: 'september_percentage', label_key: 'month.september' },
+    { key: 'october_percentage', label_key: 'month.october' },
+    { key: 'november_percentage', label_key: 'month.november' },
+    { key: 'december_percentage', label_key: 'month.december' },
+  ],
 ] as const;
 
 export function ProductSeasonalityTableVertical({ 
@@ -180,67 +186,62 @@ export function ProductSeasonalityTableVertical({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-4">
-          {/* Tabla principal */}
-          <div className="flex-1">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('intelligent_plan.month_column')}</TableHead>
-                  <TableHead className="text-right">{t('intelligent_plan.percentage_column')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {MONTHS.map((month) => (
-                  <TableRow key={month.key}>
-                    <TableCell className="font-medium">{t(month.label_key)}</TableCell>
-                    <TableCell className="text-right">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        max="100"
-                        value={seasonality?.[month.key] || 0}
-                        onChange={(e) => handleValueChange(month.key, e.target.value)}
-                        className="w-24 text-right ml-auto"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {/* Fila de total */}
-                <TableRow className="border-t-2 font-bold bg-muted/50">
-                  <TableCell>{t('intelligent_plan.total_row')}</TableCell>
-                  <TableCell className="text-right">
-                    <span className={isValid ? 'text-green-600' : 'text-destructive'}>
-                      {total.toFixed(2)}%
-                    </span>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+        <div className="space-y-4">
+          {/* Grid de 3 columnas para los meses */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {MONTH_GROUPS.map((group, groupIndex) => (
+              <div key={groupIndex} className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-sm">{t('intelligent_plan.month_column')}</TableHead>
+                      <TableHead className="text-right text-sm w-24">{t('intelligent_plan.percentage_column')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {group.map((month) => (
+                      <TableRow key={month.key}>
+                        <TableCell className="font-medium py-2">{t(month.label_key)}</TableCell>
+                        <TableCell className="py-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={seasonality?.[month.key] || 0}
+                            onChange={(e) => handleValueChange(month.key, e.target.value)}
+                            className="w-full text-right"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ))}
           </div>
 
-          {/* Indicador de validación lateral */}
-          <div className="w-48 flex-shrink-0">
-            {isValid ? (
-              <Alert className="border-green-500 bg-green-50 dark:bg-green-950/20">
-                <CheckCircle2 className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-600 dark:text-green-400">
-                  {t('intelligent_plan.valid_distribution')}
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {t('intelligent_plan.invalid_distribution')}
-                  <br />
-                  <span className="font-medium">
-                    {t('intelligent_plan.current')}: {total.toFixed(2)}%
-                  </span>
-                </AlertDescription>
-              </Alert>
-            )}
+          {/* Indicador de validación y total */}
+          <div className="flex items-center justify-between gap-4 p-4 border rounded-lg bg-muted/30">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-lg">{t('intelligent_plan.total_row')}:</span>
+              <span className={`font-bold text-lg ${isValid ? 'text-green-600' : 'text-destructive'}`}>
+                {total.toFixed(2)}%
+              </span>
+            </div>
+            <div className="flex-shrink-0">
+              {isValid ? (
+                <div className="flex items-center gap-2 text-green-600">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span className="font-medium">{t('intelligent_plan.valid_distribution')}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-5 w-5" />
+                  <span className="font-medium">{t('intelligent_plan.invalid_distribution')}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
