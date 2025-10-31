@@ -10,10 +10,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Download, Calendar } from "lucide-react";
 import { format } from "date-fns";
 
-interface MaterialsByPanelist {
-  panelista_id: number;
-  panelista_nombre: string;
-  direccion_completa: string;
+interface MaterialsGroup {
+  type: 'panelist' | 'node';
+  id: string;
+  nombre: string;
+  direccion_completa?: string;
+  ciudad?: string;
+  pais?: string;
   total_envios: number;
   materiales: Record<string, {
     cantidad: number;
@@ -24,7 +27,11 @@ interface MaterialsByPanelist {
 export default function PanelistMaterialsPlan() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [data, setData] = useState<MaterialsByPanelist[]>([]);
+  const [data, setData] = useState<{
+    panelistas: MaterialsGroup[];
+    nodos: MaterialsGroup[];
+    totals: Record<string, { cantidad: number; unidad_medida: string }>;
+  }>({ panelistas: [], nodos: [], totals: {} });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -40,42 +47,6 @@ export default function PanelistMaterialsPlan() {
 
     setLoading(true);
     try {
-      // Fetch from envios table
-      const { data: enviosData, error: enviosError } = await supabase
-        .from("envios")
-        .select(`
-          id,
-          tipo_producto,
-          panelista_destino_id,
-          producto_id,
-          panelistas!envios_panelista_destino_id_fkey (
-            id,
-            nombre_completo,
-            direccion_calle,
-            direccion_ciudad,
-            direccion_codigo_postal,
-            direccion_pais
-          ),
-          productos_cliente!inner (
-            id,
-            nombre_producto,
-            producto_materiales (
-              cantidad,
-              tipos_material (
-                codigo,
-                nombre,
-                unidad_medida
-              )
-            )
-          )
-        `)
-        .gte("fecha_programada", startDate)
-        .lte("fecha_programada", endDate)
-        .not("panelista_destino_id", "is", null)
-        .not("producto_id", "is", null);
-
-      if (enviosError) throw enviosError;
-
       // Fetch from allocation plan details
       const { data: planData, error: planError } = await supabase
         .from("generated_allocation_plan_details")
@@ -102,12 +73,14 @@ export default function PanelistMaterialsPlan() {
 
       if (planError) throw planError;
 
-      // Get panelist info for allocation plan events
-      const nodos = planData?.map(p => p.nodo_destino).filter(Boolean) || [];
-      const { data: nodosData } = await supabase
+      // Get nodos info with panelist assignments
+      const nodoCodigos = planData?.map(p => p.nodo_destino).filter(Boolean) || [];
+      const { data: nodosData, error: nodosError } = await supabase
         .from("nodos")
         .select(`
           codigo,
+          ciudad,
+          pais,
           panelista_id,
           panelistas (
             id,
@@ -118,77 +91,95 @@ export default function PanelistMaterialsPlan() {
             direccion_pais
           )
         `)
-        .in("codigo", nodos);
+        .in("codigo", nodoCodigos);
 
-      // Map nodos to panelists
-      const nodoToPanelist = new Map();
-      nodosData?.forEach(n => {
-        if (n.panelistas) {
-          nodoToPanelist.set(n.codigo, n.panelistas);
-        }
-      });
+      if (nodosError) throw nodosError;
 
-      // Transform plan data to match envios structure
-      const transformedPlanData = planData?.map(item => ({
-        id: item.id,
-        panelista_destino_id: nodoToPanelist.get(item.nodo_destino)?.id,
-        panelistas: nodoToPanelist.get(item.nodo_destino),
-        producto_id: item.producto_id,
-        productos_cliente: item.productos_cliente
-      })).filter(item => item.panelistas) || [];
+      // Create nodo lookup map
+      const nodoMap = new Map();
+      nodosData?.forEach(n => nodoMap.set(n.codigo, n));
 
-      // Combine both data sources
-      const allData = [...(enviosData || []), ...transformedPlanData];
+      // Group by panelist OR node
+      const grouped = planData?.reduce((acc: Record<string, MaterialsGroup>, item: any) => {
+        const nodo = nodoMap.get(item.nodo_destino);
+        if (!nodo) return acc;
 
-      // Group by panelist and calculate materials
-      const grouped = allData.reduce((acc: Record<number, MaterialsByPanelist>, envio: any) => {
-        const panelistaId = envio.panelista_destino_id;
-        const panelista = envio.panelistas;
-        
-        if (!panelista) return acc;
+        let groupKey: string;
+        let groupData: Partial<MaterialsGroup>;
 
-        if (!acc[panelistaId]) {
-          acc[panelistaId] = {
-            panelista_id: panelistaId,
-            panelista_nombre: panelista.nombre_completo,
-            direccion_completa: `${panelista.direccion_calle}, ${panelista.direccion_ciudad}, ${panelista.direccion_codigo_postal}, ${panelista.direccion_pais}`,
-            total_envios: 0,
-            materiales: {},
+        if (nodo.panelista_id && nodo.panelistas) {
+          // Group by PANELIST
+          groupKey = `panelist-${nodo.panelista_id}`;
+          groupData = {
+            type: 'panelist',
+            id: String(nodo.panelista_id),
+            nombre: nodo.panelistas.nombre_completo,
+            direccion_completa: `${nodo.panelistas.direccion_calle}, ${nodo.panelistas.direccion_ciudad}, ${nodo.panelistas.direccion_codigo_postal}, ${nodo.panelistas.direccion_pais}`,
+          };
+        } else {
+          // Group by NODE (no panelist assigned)
+          groupKey = `node-${nodo.codigo}`;
+          groupData = {
+            type: 'node',
+            id: nodo.codigo,
+            nombre: nodo.codigo,
+            ciudad: nodo.ciudad,
+            pais: nodo.pais,
           };
         }
 
-        // Count total envios
-        acc[panelistaId].total_envios += 1;
+        // Initialize group if not exists
+        if (!acc[groupKey]) {
+          acc[groupKey] = {
+            ...groupData,
+            total_envios: 0,
+            materiales: {},
+          } as MaterialsGroup;
+        }
 
-        // Calculate materials from product configuration
-        if (envio.productos_cliente?.producto_materiales) {
-          envio.productos_cliente.producto_materiales.forEach((pm: any) => {
+        // Count shipments
+        acc[groupKey].total_envios += 1;
+
+        // Sum materials
+        if (item.productos_cliente?.producto_materiales) {
+          item.productos_cliente.producto_materiales.forEach((pm: any) => {
             const material = pm.tipos_material;
             if (!material) return;
 
             const key = `${material.codigo} - ${material.nombre}`;
-            if (!acc[panelistaId].materiales[key]) {
-              acc[panelistaId].materiales[key] = {
+            if (!acc[groupKey].materiales[key]) {
+              acc[groupKey].materiales[key] = {
                 cantidad: 0,
                 unidad_medida: material.unidad_medida,
               };
             }
-            acc[panelistaId].materiales[key].cantidad += pm.cantidad;
+            acc[groupKey].materiales[key].cantidad += pm.cantidad;
           });
         }
 
         return acc;
       }, {});
 
-      const result = Object.values(grouped).sort((a, b) => 
-        a.panelista_nombre.localeCompare(b.panelista_nombre)
-      );
+      const result = Object.values(grouped || {});
+      const panelistas = result.filter(g => g.type === 'panelist').sort((a, b) => a.nombre.localeCompare(b.nombre));
+      const nodos = result.filter(g => g.type === 'node').sort((a, b) => a.nombre.localeCompare(b.nombre));
 
-      setData(result);
+      // Calculate total materials
+      const totalMaterials: Record<string, { cantidad: number; unidad_medida: string }> = {};
+      result.forEach(group => {
+        Object.entries(group.materiales).forEach(([material, info]) => {
+          if (!totalMaterials[material]) {
+            totalMaterials[material] = { cantidad: 0, unidad_medida: info.unidad_medida };
+          }
+          totalMaterials[material].cantidad += info.cantidad;
+        });
+      });
+
+      setData({ panelistas, nodos, totals: totalMaterials });
       
       toast({
         title: "Data loaded successfully",
-        description: `Found ${result.length} panelists with shipments`,
+        description: `Found ${panelistas.length} panelists and ${nodos.length} nodes`,
       });
     } catch (error: any) {
       console.error("Error loading data:", error);
@@ -203,7 +194,7 @@ export default function PanelistMaterialsPlan() {
   };
 
   const exportToCSV = () => {
-    if (data.length === 0) {
+    if (data.panelistas.length === 0 && data.nodos.length === 0) {
       toast({
         title: "No data to export",
         description: "Please load data first",
@@ -212,48 +203,93 @@ export default function PanelistMaterialsPlan() {
       return;
     }
 
+    const allData = [...data.panelistas, ...data.nodos];
+    
     // Get all unique material types
     const allMaterials = new Set<string>();
-    data.forEach(item => {
+    allData.forEach(item => {
       Object.keys(item.materiales).forEach(material => allMaterials.add(material));
     });
     const sortedMaterials = Array.from(allMaterials).sort();
 
-    // Build CSV header
-    const headers = [
-      "Panelist ID",
-      "Panelist Name",
-      "Address",
-      "Total Shipments",
-      ...sortedMaterials.flatMap(material => [`${material} (Qty)`, `${material} (Unit)`])
-    ];
+    // Build CSV sections
+    let csv = "";
 
-    // Build CSV rows
-    const rows = data.map(item => {
-      const materialValues = sortedMaterials.flatMap(material => {
-        const mat = item.materiales[material];
-        return [mat?.cantidad || 0, mat?.unidad_medida || ''];
-      });
-      
-      const row = [
-        item.panelista_id,
-        `"${item.panelista_nombre}"`,
-        `"${item.direccion_completa}"`,
-        item.total_envios,
-        ...materialValues
+    // Section 1: Panelistas
+    if (data.panelistas.length > 0) {
+      csv += "MATERIALS BY PANELIST\n";
+      const panelistHeaders = [
+        "Type",
+        "Panelist ID",
+        "Name",
+        "Address",
+        "Total Shipments",
+        ...sortedMaterials.flatMap(material => [`${material} (Qty)`, `${material} (Unit)`])
       ];
-      return row.join(",");
-    });
+      csv += panelistHeaders.join(",") + "\n";
+      
+      data.panelistas.forEach(item => {
+        const materialValues = sortedMaterials.flatMap(material => {
+          const mat = item.materiales[material];
+          return [mat?.cantidad || 0, mat?.unidad_medida || ''];
+        });
+        const row = [
+          "Panelist",
+          item.id,
+          `"${item.nombre}"`,
+          `"${item.direccion_completa}"`,
+          item.total_envios,
+          ...materialValues
+        ];
+        csv += row.join(",") + "\n";
+      });
+      csv += "\n";
+    }
 
-    // Combine header and rows
-    const csv = [headers.join(","), ...rows].join("\n");
+    // Section 2: Nodos sin panelista
+    if (data.nodos.length > 0) {
+      csv += "MATERIALS BY NODE (NO PANELIST ASSIGNED)\n";
+      const nodeHeaders = [
+        "Type",
+        "Node Code",
+        "City",
+        "Country",
+        "Total Shipments",
+        ...sortedMaterials.flatMap(material => [`${material} (Qty)`, `${material} (Unit)`])
+      ];
+      csv += nodeHeaders.join(",") + "\n";
+      
+      data.nodos.forEach(item => {
+        const materialValues = sortedMaterials.flatMap(material => {
+          const mat = item.materiales[material];
+          return [mat?.cantidad || 0, mat?.unidad_medida || ''];
+        });
+        const row = [
+          "Node",
+          item.id,
+          `"${item.ciudad}"`,
+          `"${item.pais}"`,
+          item.total_envios,
+          ...materialValues
+        ];
+        csv += row.join(",") + "\n";
+      });
+      csv += "\n";
+    }
+
+    // Section 3: Totals
+    csv += "TOTAL MATERIALS TO PURCHASE\n";
+    csv += "Material,Total Quantity,Unit\n";
+    Object.entries(data.totals).forEach(([material, info]) => {
+      csv += `"${material}",${info.cantidad},${info.unidad_medida}\n`;
+    });
 
     // Download file
     const blob = new Blob(['\uFEFF' + csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `panelist_materials_plan_${startDate}_to_${endDate}.csv`);
+    link.setAttribute("download", `materials_plan_${startDate}_to_${endDate}.csv`);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -261,7 +297,7 @@ export default function PanelistMaterialsPlan() {
 
     toast({
       title: "CSV exported successfully",
-      description: `Exported ${data.length} panelist records`,
+      description: `Exported ${data.panelistas.length} panelists, ${data.nodos.length} nodes`,
     });
   };
 
@@ -322,7 +358,7 @@ export default function PanelistMaterialsPlan() {
                 </Button>
                 <Button
                   onClick={exportToCSV}
-                  disabled={data.length === 0}
+                  disabled={data.panelistas.length === 0 && data.nodos.length === 0}
                   variant="outline"
                 >
                   <Download className="h-4 w-4 mr-2" />
@@ -333,12 +369,39 @@ export default function PanelistMaterialsPlan() {
           </CardContent>
         </Card>
 
-        {data.length > 0 && (
+        {/* Total Materials Summary */}
+        {Object.keys(data.totals).length > 0 && (
+          <Card className="border-2 border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-2xl">Total Materials to Purchase</CardTitle>
+              <CardDescription>
+                Complete materials summary for period {format(new Date(startDate), "PP")} to {format(new Date(endDate), "PP")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Object.entries(data.totals)
+                  .sort(([a], [b]) => a.localeCompare(b))
+                  .map(([material, info]) => (
+                    <div key={material} className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                      <span className="font-medium">{material}</span>
+                      <span className="text-2xl font-bold text-primary">
+                        {info.cantidad} {info.unidad_medida}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Materials by Panelist */}
+        {data.panelistas.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Materials Summary</CardTitle>
+              <CardTitle>Materials by Panelist</CardTitle>
               <CardDescription>
-                {data.length} panelists with shipments between {format(new Date(startDate), "PP")} and {format(new Date(endDate), "PP")}
+                {data.panelistas.length} panelists with assigned nodes
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -353,10 +416,10 @@ export default function PanelistMaterialsPlan() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.map((item) => (
-                      <TableRow key={item.panelista_id}>
+                    {data.panelistas.map((item) => (
+                      <TableRow key={item.id}>
                         <TableCell className="font-medium">
-                          {item.panelista_nombre}
+                          {item.nombre}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground max-w-xs">
                           {item.direccion_completa}
@@ -374,11 +437,6 @@ export default function PanelistMaterialsPlan() {
                                 {material}: {info.cantidad} {info.unidad_medida}
                               </span>
                             ))}
-                            {Object.keys(item.materiales).length === 0 && (
-                              <span className="text-sm text-muted-foreground">
-                                No materials configured
-                              </span>
-                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -390,7 +448,60 @@ export default function PanelistMaterialsPlan() {
           </Card>
         )}
 
-        {data.length === 0 && !loading && (
+        {/* Materials by Node (no panelist) */}
+        {data.nodos.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Materials by Node (No Panelist Assigned)</CardTitle>
+              <CardDescription>
+                {data.nodos.length} nodes without panelist assignment
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Node Code</TableHead>
+                      <TableHead>City</TableHead>
+                      <TableHead>Country</TableHead>
+                      <TableHead className="text-right">Total Shipments</TableHead>
+                      <TableHead>Materials Required</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.nodos.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="font-medium">
+                          {item.nombre}
+                        </TableCell>
+                        <TableCell>{item.ciudad}</TableCell>
+                        <TableCell>{item.pais}</TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {item.total_envios}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(item.materiales).map(([material, info]) => (
+                              <span
+                                key={material}
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary/50 text-secondary-foreground"
+                              >
+                                {material}: {info.cantidad} {info.unidad_medida}
+                              </span>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {data.panelistas.length === 0 && data.nodos.length === 0 && !loading && (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Calendar className="h-16 w-16 text-muted-foreground mb-4" />
