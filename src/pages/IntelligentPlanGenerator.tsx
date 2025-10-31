@@ -338,8 +338,30 @@ export default function IntelligentPlanGenerator() {
   };
 
   const handleMergePlan = async (plan: any) => {
-    setSelectedPlanForMerge(plan);
-    setMergeDialogOpen(true);
+    try {
+      // Recargar el plan con todas sus relaciones para asegurar datos completos
+      const { data: fullPlan, error } = await supabase
+        .from('generated_allocation_plans' as any)
+        .select(`
+          *,
+          carriers (commercial_name),
+          productos_cliente (codigo_producto, nombre_producto)
+        `)
+        .eq('id', plan.id)
+        .single();
+
+      if (error) throw error;
+      
+      setSelectedPlanForMerge(fullPlan);
+      setMergeDialogOpen(true);
+    } catch (error: any) {
+      console.error("Error loading plan details:", error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los detalles del plan",
+        variant: "destructive",
+      });
+    }
   };
 
   const confirmMerge = async () => {
