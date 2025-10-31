@@ -7,6 +7,7 @@ import { ConfigDataTable } from "@/components/config/ConfigDataTable";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TipoMaterialForm } from "@/components/config/forms/TipoMaterialForm";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export default function TiposMateriales() {
   const [materiales, setMateriales] = useState<any[]>([]);
@@ -14,20 +15,29 @@ export default function TiposMateriales() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
   const { toast } = useToast();
+  const { clienteId, isSuperAdmin } = useUserRole();
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (clienteId !== null) {
+      loadData();
+    }
+  }, [clienteId]);
 
   const loadData = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("tipos_material")
         .select(`
           *,
           clientes:cliente_id (nombre)
-        `)
-        .order("codigo", { ascending: true });
+        `);
+
+      // Filter by user's cliente_id unless superadmin
+      if (!isSuperAdmin() && clienteId) {
+        query = query.eq("cliente_id", clienteId);
+      }
+
+      const { data, error } = await query.order("codigo", { ascending: true});
 
       if (error) throw error;
       
