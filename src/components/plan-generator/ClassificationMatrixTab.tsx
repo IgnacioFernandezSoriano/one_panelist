@@ -40,9 +40,9 @@ export function ClassificationMatrixTab() {
   const [selectedCliente, setSelectedCliente] = useState<number | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [matrix, setMatrix] = useState<ClassificationMatrix[]>([
-    { destination_classification: 'A', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
-    { destination_classification: 'B', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
-    { destination_classification: 'C', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
+    { destination_classification: 'A', percentage_from_a: 11.11, percentage_from_b: 11.11, percentage_from_c: 11.12 },
+    { destination_classification: 'B', percentage_from_a: 11.11, percentage_from_b: 11.11, percentage_from_c: 11.12 },
+    { destination_classification: 'C', percentage_from_a: 11.11, percentage_from_b: 11.11, percentage_from_c: 11.12 },
   ]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -152,16 +152,19 @@ export function ClassificationMatrixTab() {
     ));
   };
 
-  const getTotalPercentage = (row: ClassificationMatrix): number => {
-    return row.percentage_from_a + row.percentage_from_b + row.percentage_from_c;
+  const getMatrixTotalPercentage = (): number => {
+    return matrix.reduce((sum, row) => 
+      sum + row.percentage_from_a + row.percentage_from_b + row.percentage_from_c, 
+      0
+    );
   };
 
-  const isValidRow = (row: ClassificationMatrix): boolean => {
-    const total = getTotalPercentage(row);
+  const isMatrixValid = (): boolean => {
+    const total = getMatrixTotalPercentage();
     return Math.abs(total - 100) < 0.1;
   };
 
-  const allValid = matrix.every(isValidRow);
+  const allValid = isMatrixValid();
 
   const handleSave = async () => {
     if (!selectedCliente) {
@@ -176,7 +179,7 @@ export function ClassificationMatrixTab() {
     if (!allValid) {
       toast({
         title: "Validation Error",
-        description: "All rows must sum to 100%",
+        description: `The entire matrix must sum to 100%. Current total: ${getMatrixTotalPercentage().toFixed(2)}%`,
         variant: "destructive",
       });
       return;
@@ -235,7 +238,8 @@ export function ClassificationMatrixTab() {
         <CardHeader>
           <CardTitle>Classification Allocation Matrix</CardTitle>
           <CardDescription>
-            Define how events are distributed to cities based on their classification (A, B, C)
+            Define how events are distributed to cities based on their classification (A, B, C).
+            The entire matrix (all 9 cells) must sum to 100%.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -265,7 +269,9 @@ export function ClassificationMatrixTab() {
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>How it works:</strong> For each destination city type (A, B, or C), specify what percentage of events should come from cities of type A, B, and C. Each row must sum to 100%.
+                  <strong>How it works:</strong> The entire matrix represents 100% of all events. 
+                  Each cell shows what percentage of total events go from source classification to destination classification.
+                  For example: 25% in "Cities Type A → From Type A" means 25% of all events originate and end in Type A cities.
                 </AlertDescription>
               </Alert>
 
@@ -284,75 +290,82 @@ export function ClassificationMatrixTab() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {matrix.map((row) => {
-                        const total = getTotalPercentage(row);
-                        const isValid = isValidRow(row);
-                        const rowClass = !isValid ? "bg-destructive/10" : "";
-
-                        return (
-                          <TableRow key={row.destination_classification} className={rowClass}>
-                            <TableCell className="font-medium">
-                              Cities Type {row.destination_classification}
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                value={row.percentage_from_a}
-                                onChange={(e) =>
-                                  handleValueChange(
-                                    row.destination_classification,
-                                    'percentage_from_a',
-                                    e.target.value
-                                  )
-                                }
-                                className="text-center"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                value={row.percentage_from_b}
-                                onChange={(e) =>
-                                  handleValueChange(
-                                    row.destination_classification,
-                                    'percentage_from_b',
-                                    e.target.value
-                                  )
-                                }
-                                className="text-center"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                value={row.percentage_from_c}
-                                onChange={(e) =>
-                                  handleValueChange(
-                                    row.destination_classification,
-                                    'percentage_from_c',
-                                    e.target.value
-                                  )
-                                }
-                                className="text-center"
-                              />
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <span className={!isValid ? "text-destructive font-bold" : "text-muted-foreground"}>
-                                {total.toFixed(2)}%
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {matrix.map((row) => (
+                        <TableRow key={row.destination_classification}>
+                          <TableCell className="font-medium">
+                            Cities Type {row.destination_classification}
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              value={row.percentage_from_a}
+                              onChange={(e) =>
+                                handleValueChange(
+                                  row.destination_classification,
+                                  'percentage_from_a',
+                                  e.target.value
+                                )
+                              }
+                              className="text-center"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              value={row.percentage_from_b}
+                              onChange={(e) =>
+                                handleValueChange(
+                                  row.destination_classification,
+                                  'percentage_from_b',
+                                  e.target.value
+                                )
+                              }
+                              className="text-center"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              value={row.percentage_from_c}
+                              onChange={(e) =>
+                                handleValueChange(
+                                  row.destination_classification,
+                                  'percentage_from_c',
+                                  e.target.value
+                                )
+                              }
+                              className="text-center"
+                            />
+                          </TableCell>
+                          <TableCell className="text-center font-medium">
+                            {(row.percentage_from_a + row.percentage_from_b + row.percentage_from_c).toFixed(2)}%
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      <TableRow className="border-t-2 font-bold bg-muted/50">
+                        <TableCell>Column Totals</TableCell>
+                        <TableCell className="text-center">
+                          {matrix.reduce((sum, r) => sum + r.percentage_from_a, 0).toFixed(2)}%
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {matrix.reduce((sum, r) => sum + r.percentage_from_b, 0).toFixed(2)}%
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {matrix.reduce((sum, r) => sum + r.percentage_from_c, 0).toFixed(2)}%
+                        </TableCell>
+                        <TableCell className="text-center text-lg">
+                          {getMatrixTotalPercentage().toFixed(2)}%
+                        </TableCell>
+                      </TableRow>
                     </TableBody>
                   </Table>
 
@@ -360,7 +373,7 @@ export function ClassificationMatrixTab() {
                     <Alert variant="destructive">
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
-                        All rows must sum to 100%. Please adjust the percentages.
+                        The entire matrix must sum to 100%. Current total: {getMatrixTotalPercentage().toFixed(2)}%
                       </AlertDescription>
                     </Alert>
                   )}

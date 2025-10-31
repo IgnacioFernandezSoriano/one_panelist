@@ -86,11 +86,11 @@ async function loadClassificationMatrix(cliente_id: number): Promise<Classificat
   }
 
   if (!data || data.length === 0) {
-    // Return default matrix if none exists
+    // Return default matrix if none exists (sum to 100%)
     return [
-      { destination_classification: 'A', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
-      { destination_classification: 'B', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
-      { destination_classification: 'C', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
+      { destination_classification: 'A', percentage_from_a: 11.11, percentage_from_b: 11.11, percentage_from_c: 11.12 },
+      { destination_classification: 'B', percentage_from_a: 11.11, percentage_from_b: 11.11, percentage_from_c: 11.12 },
+      { destination_classification: 'C', percentage_from_a: 11.11, percentage_from_b: 11.11, percentage_from_c: 11.12 },
     ];
   }
 
@@ -248,14 +248,7 @@ function distributeByCitiesAndClassification(
   const totalCities = cityInfo.length;
   if (totalCities === 0) return result;
 
-  // Distribute events proportionally among city types based on count
-  const eventsPerType: Record<'A' | 'B' | 'C', number> = {
-    A: Math.round((monthlyEvents * citiesByType.A.length) / totalCities),
-    B: Math.round((monthlyEvents * citiesByType.B.length) / totalCities),
-    C: Math.round((monthlyEvents * citiesByType.C.length) / totalCities),
-  };
-
-  // For each destination type, distribute events according to classification matrix
+  // For each destination type, calculate absolute events from matrix percentages
   (['A', 'B', 'C'] as const).forEach(destType => {
     const matrix = classificationMatrix.find(m => m.destination_classification === destType);
     if (!matrix) return;
@@ -263,14 +256,19 @@ function distributeByCitiesAndClassification(
     const citiesOfType = citiesByType[destType];
     if (citiesOfType.length === 0) return;
 
-    const totalEventsForType = eventsPerType[destType];
+    // Calculate events directly from absolute matrix percentages
+    const eventsFromA = Math.round(monthlyEvents * matrix.percentage_from_a / 100);
+    const eventsFromB = Math.round(monthlyEvents * matrix.percentage_from_b / 100);
+    const eventsFromC = Math.round(monthlyEvents * matrix.percentage_from_c / 100);
+    
+    const totalEventsForType = eventsFromA + eventsFromB + eventsFromC;
     const eventsPerCity = Math.round(totalEventsForType / citiesOfType.length);
 
     citiesOfType.forEach(city => {
       result[city.ciudad_id] = {
-        from_a: Math.round((eventsPerCity * matrix.percentage_from_a) / 100),
-        from_b: Math.round((eventsPerCity * matrix.percentage_from_b) / 100),
-        from_c: Math.round((eventsPerCity * matrix.percentage_from_c) / 100),
+        from_a: Math.round(eventsPerCity * (eventsFromA / totalEventsForType)),
+        from_b: Math.round(eventsPerCity * (eventsFromB / totalEventsForType)),
+        from_c: Math.round(eventsPerCity * (eventsFromC / totalEventsForType)),
       };
     });
   });
