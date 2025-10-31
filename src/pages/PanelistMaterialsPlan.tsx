@@ -82,7 +82,7 @@ export default function PanelistMaterialsPlan() {
           ciudad,
           pais,
           panelista_id,
-          panelistas (
+          panelistas!fk_nodos_panelista (
             id,
             nombre_completo,
             direccion_calle,
