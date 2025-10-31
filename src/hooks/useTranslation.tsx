@@ -59,7 +59,8 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
       return data as Translation[];
     },
     enabled: !!currentLanguage,
-    staleTime: 0, // Always fetch fresh data when language changes
+    staleTime: 5 * 60 * 1000, // Cache translations for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in garbage collection for 10 minutes
   });
 
   // Convert translations array to map for faster lookup

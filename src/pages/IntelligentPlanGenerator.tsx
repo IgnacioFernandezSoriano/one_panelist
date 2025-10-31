@@ -3,13 +3,14 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Loader2 } from "lucide-react";
+import { Brain, Loader2, HelpCircle } from "lucide-react";
 import { PlanConfigurationForm, PlanConfiguration } from "@/components/intelligent-plan/PlanConfigurationForm";
 import { PlanPreviewSummary } from "@/components/intelligent-plan/PlanPreviewSummary";
 import { UnassignedEventsAlert } from "@/components/intelligent-plan/UnassignedEventsAlert";
 import { GeneratedPlansList } from "@/components/intelligent-plan/GeneratedPlansList";
 import { PlanMergeDialog } from "@/components/intelligent-plan/PlanMergeDialog";
 import { PlanDetailsDialog } from "@/components/intelligent-plan/PlanDetailsDialog";
+import { SeasonalityHelpDialog } from "@/components/intelligent-plan/SeasonalityHelpDialog";
 
 import { generateIntelligentPlan } from "@/lib/planGeneratorAlgorithm";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +34,7 @@ export default function IntelligentPlanGenerator() {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedPlanForDetails, setSelectedPlanForDetails] = useState<number | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
   useEffect(() => {
     initializeUser();
@@ -474,14 +476,26 @@ export default function IntelligentPlanGenerator() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <Brain className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">{t('intelligent_plan.title')}</h1>
-            <p className="text-muted-foreground">
-              {t('intelligent_plan.description')}
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Brain className="h-8 w-8 text-primary" />
+            <div>
+              <h1 className="text-3xl font-bold">{t('intelligent_plan.title')}</h1>
+              <p className="text-muted-foreground">
+                {t('intelligent_plan.description')}
+              </p>
+            </div>
           </div>
+          
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => setHelpDialogOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <HelpCircle className="h-5 w-5" />
+            {t('intelligent_plan.help_calculation')}
+          </Button>
         </div>
 
         <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as any)}>
@@ -567,6 +581,11 @@ export default function IntelligentPlanGenerator() {
             setDetailsDialogOpen(false);
             setSelectedPlanForDetails(null);
           }}
+        />
+
+        <SeasonalityHelpDialog 
+          open={helpDialogOpen} 
+          onOpenChange={setHelpDialogOpen} 
         />
       </div>
     </AppLayout>

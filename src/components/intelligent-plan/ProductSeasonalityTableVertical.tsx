@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Loader2, HelpCircle } from "lucide-react";
-import { SeasonalityHelpDialog } from "./SeasonalityHelpDialog";
+import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 
 interface ProductSeasonality {
   producto_id: number;
@@ -60,10 +59,9 @@ export function ProductSeasonalityTableVertical({
   onChange 
 }: ProductSeasonalityTableVerticalProps) {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, isLoading: translationsLoading } = useTranslation();
   const [seasonality, setSeasonality] = useState<ProductSeasonality | null>(null);
   const [loading, setLoading] = useState(false);
-  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
   useEffect(() => {
     if (clienteId && productoId) {
@@ -157,6 +155,16 @@ export function ProductSeasonalityTableVertical({
   const total = getTotalPercentage();
   const isValid = Math.abs(total - 100) < 0.1;
 
+  if (translationsLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-8">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (loading) {
     return (
       <Card>
@@ -180,25 +188,12 @@ export function ProductSeasonalityTableVertical({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <CardTitle className="text-lg">
-              {t('intelligent_plan.seasonality_title')} ({year})
-            </CardTitle>
-            <CardDescription>
-              {t('intelligent_plan.seasonality_description')}
-            </CardDescription>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setHelpDialogOpen(true)}
-            className="flex items-center gap-2 shrink-0"
-          >
-            <HelpCircle className="h-4 w-4" />
-            {t('intelligent_plan.help_calculation')}
-          </Button>
-        </div>
+        <CardTitle className="text-lg">
+          {t('intelligent_plan.seasonality_title')} ({year})
+        </CardTitle>
+        <CardDescription>
+          {t('intelligent_plan.seasonality_description')}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -250,11 +245,6 @@ export function ProductSeasonalityTableVertical({
           </div>
         </div>
       </CardContent>
-      
-      <SeasonalityHelpDialog 
-        open={helpDialogOpen} 
-        onOpenChange={setHelpDialogOpen} 
-      />
     </Card>
   );
 }

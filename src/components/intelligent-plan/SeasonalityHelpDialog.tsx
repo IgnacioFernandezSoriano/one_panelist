@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Printer } from "lucide-react";
+import { Printer, Loader2 } from "lucide-react";
 
 interface SeasonalityHelpDialogProps {
   open: boolean;
@@ -9,11 +9,23 @@ interface SeasonalityHelpDialogProps {
 }
 
 export function SeasonalityHelpDialog({ open, onOpenChange }: SeasonalityHelpDialogProps) {
-  const { t } = useTranslation();
+  const { t, isLoading } = useTranslation();
 
   const handlePrint = () => {
     window.print();
   };
+
+  if (isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl">
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
