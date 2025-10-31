@@ -74,9 +74,19 @@ export default function IntelligentPlanGenerator() {
   const handleConfigSubmit = async (config: PlanConfiguration) => {
     setPlanConfig(config);
     
+    console.log('[Preview] Starting preview calculation with config:', {
+      cliente_id: config.cliente_id,
+      carrier_id: config.carrier_id,
+      producto_id: config.producto_id,
+      start_date: config.start_date,
+      end_date: config.end_date,
+      total_events: config.total_events,
+    });
+    
     // Calculate preview
     try {
-      const { data: cityReqs } = await supabase
+      // 1. Load city requirements
+      const { data: cityReqs, error: cityReqsError } = await supabase
         .from('city_allocation_requirements')
         .select(`
           ciudad_id,
@@ -87,9 +97,26 @@ export default function IntelligentPlanGenerator() {
         `)
         .eq('cliente_id', config.cliente_id);
 
-      // Load active nodes for all cities
+      if (cityReqsError) {
+        console.error('[Preview] Error loading city requirements:', cityReqsError);
+        throw cityReqsError;
+      }
+
+      console.log('[Preview] City requirements loaded:', {
+        count: cityReqs?.length || 0,
+        cityReqs: cityReqs?.map(c => ({
+          ciudad_id: c.ciudad_id,
+          nombre: (c.ciudades as any)?.nombre,
+          clasificacion: (c.ciudades as any)?.clasificacion,
+        }))
+      });
+
+      // 2. Load active nodes for all cities
       const ciudadIds = cityReqs?.map(c => c.ciudad_id) || [];
-      const { data: nodos } = await supabase
+      
+      console.log('[Preview] Loading nodes for cities:', ciudadIds);
+
+      const { data: nodos, error: nodosError } = await supabase
         .from('nodos')
         .select(`
           codigo,
@@ -101,6 +128,25 @@ export default function IntelligentPlanGenerator() {
         .in('ciudad_id', ciudadIds)
         .eq('estado', 'activo');
 
+      if (nodosError) {
+        console.error('[Preview] Error loading nodos:', nodosError);
+        throw nodosError;
+      }
+
+      console.log('[Preview] Nodos loaded:', {
+        total: nodos?.length || 0,
+        nodos: nodos?.map(n => ({
+          codigo: n.codigo,
+          ciudad_id: n.ciudad_id,
+          estado: n.estado,
+          panelista: (n.panelistas as any)?.nombre_completo,
+        })),
+        byCity: ciudadIds.map(cid => ({
+          ciudad_id: cid,
+          count: nodos?.filter((n: any) => n.ciudad_id === cid).length || 0,
+        }))
+      });
+
       const totalWeeks = differenceInWeeks(config.end_date, config.start_date);
       const calculatedEvents = Math.round((config.total_events / 52) * totalWeeks);
       
@@ -110,11 +156,26 @@ export default function IntelligentPlanGenerator() {
       
       const cityDistribution = cityReqs?.map((city: any) => {
         const cityEvents = city.from_classification_a + city.from_classification_b + city.from_classification_c;
-        const cityNodos = nodos?.filter((n: any) => n.ciudad_id === city.ciudad_id).map((n: any) => ({
-          codigo: n.codigo,
-          panelista_nombre: n.panelistas?.nombre_completo || null,
-          estado: n.estado,
-        })) || [];
+        const cityNodos = nodos?.filter((n: any) => n.ciudad_id === city.ciudad_id).map((n: any) => {
+          console.log('[Preview] Mapping node for ciudad', city.ciudad_id, ':', {
+            codigo: n.codigo,
+            ciudad_id: n.ciudad_id,
+            panelista: n.panelistas?.nombre_completo,
+            estado: n.estado,
+          });
+          
+          return {
+            codigo: n.codigo,
+            panelista_nombre: n.panelistas?.nombre_completo || null,
+            estado: n.estado,
+          };
+        }) || [];
+
+        console.log('[Preview] City distribution for', city.ciudades.nombre, ':', {
+          ciudad_id: city.ciudad_id,
+          nodosCount: cityNodos.length,
+          cityEvents,
+        });
 
         return {
           ciudad_id: city.ciudad_id,
@@ -126,6 +187,8 @@ export default function IntelligentPlanGenerator() {
         };
       }) || [];
 
+      console.log('[Preview] Final city distribution:', cityDistribution);
+
       setPlanPreview({
         totalEvents: config.total_events,
         calculatedEvents,
@@ -134,7 +197,7 @@ export default function IntelligentPlanGenerator() {
         cityDistribution,
       });
     } catch (error) {
-      console.error("Error calculating preview:", error);
+      console.error("[Preview] Error calculating preview:", error);
       toast({
         title: "Preview Error",
         description: "Could not calculate plan preview",
