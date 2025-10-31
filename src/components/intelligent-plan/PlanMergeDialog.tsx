@@ -80,7 +80,7 @@ export function PlanMergeDialog({ open, plan, pendingToDelete = 0, onConfirm, on
                     </li>
                   )}
                   <li className="text-foreground">
-                    • Insert {plan.calculated_events.toLocaleString()} new events
+                    • Insert {(plan.calculated_events ?? 0).toLocaleString()} new events
                   </li>
                 </ul>
               </div>
