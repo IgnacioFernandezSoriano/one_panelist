@@ -287,6 +287,47 @@ export type Database = {
           },
         ]
       }
+      classification_allocation_matrix: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          destination_classification: string
+          id: number
+          percentage_from_a: number
+          percentage_from_b: number
+          percentage_from_c: number
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          destination_classification: string
+          id?: number
+          percentage_from_a?: number
+          percentage_from_b?: number
+          percentage_from_c?: number
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          destination_classification?: string
+          id?: number
+          percentage_from_a?: number
+          percentage_from_b?: number
+          percentage_from_c?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classification_allocation_matrix_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           codigo: string

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
-import { CityAllocationTable } from "./CityAllocationTable";
+import { ClassificationAllocationTable } from "./ClassificationAllocationTable";
 import { ProductSeasonalityTable } from "./ProductSeasonalityTable";
 
 export interface PlanConfiguration {
@@ -64,6 +64,10 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       loadProductos(formData.carrier_id, formData.cliente_id);
     }
   }, [formData.carrier_id, formData.cliente_id]);
+
+  const handleClassificationMatrixChange = (data: any) => {
+    console.log('Classification matrix changed:', data);
+  };
 
   const initializeForm = async () => {
     try {
@@ -389,15 +393,12 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
         )}
       </div>
 
-      {/* City Allocation Requirements Table */}
+      {/* Classification Allocation Matrix */}
       {formData.cliente_id && (
         <div className="space-y-2">
-          <CityAllocationTable 
+          <ClassificationAllocationTable 
             clienteId={formData.cliente_id}
-            onChange={(data) => {
-              // Optional: store in form data for validation
-              console.log('City allocations updated:', data);
-            }}
+            onChange={handleClassificationMatrixChange}
           />
         </div>
       )}

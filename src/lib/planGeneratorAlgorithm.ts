@@ -22,15 +22,20 @@ export interface GeneratedEvent {
 export interface UnassignedCity {
   ciudad_id: number;
   ciudad_nombre: string;
-  deficit: number;
+  unassigned_count: number;
 }
 
-interface CityRequirement {
-  ciudad_id: number;
-  ciudad_nombre: string;
+interface ClassificationMatrix {
+  destination_classification: 'A' | 'B' | 'C';
   percentage_from_a: number;
   percentage_from_b: number;
   percentage_from_c: number;
+}
+
+interface CityInfo {
+  ciudad_id: number;
+  ciudad_nombre: string;
+  ciudad_codigo: string;
   clasificacion: 'A' | 'B' | 'C';
 }
 
@@ -68,30 +73,47 @@ export async function validateCarrierProduct(carrier_id: number, producto_id: nu
   return !error && !!data;
 }
 
-async function loadCityRequirements(cliente_id: number): Promise<CityRequirement[]> {
+async function loadClassificationMatrix(cliente_id: number): Promise<ClassificationMatrix[]> {
   const { data, error } = await supabase
-    .from('city_allocation_requirements')
-    .select(`
-      ciudad_id,
-      percentage_from_a,
-      percentage_from_b,
-      percentage_from_c,
-      ciudades (
-        nombre,
-        clasificacion
-      )
-    `)
-    .eq('cliente_id', cliente_id);
+    .from('classification_allocation_matrix')
+    .select('*')
+    .eq('cliente_id', cliente_id)
+    .order('destination_classification');
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error loading classification matrix:', error);
+    throw new Error('Failed to load classification matrix');
+  }
 
-  return (data || []).map((row: any) => ({
-    ciudad_id: row.ciudad_id,
-    ciudad_nombre: row.ciudades?.nombre || 'Unknown',
-    percentage_from_a: row.percentage_from_a || 0,
-    percentage_from_b: row.percentage_from_b || 0,
-    percentage_from_c: row.percentage_from_c || 0,
-    clasificacion: row.ciudades?.clasificacion || 'C'
+  if (!data || data.length === 0) {
+    // Return default matrix if none exists
+    return [
+      { destination_classification: 'A', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
+      { destination_classification: 'B', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
+      { destination_classification: 'C', percentage_from_a: 33.33, percentage_from_b: 33.33, percentage_from_c: 33.34 },
+    ];
+  }
+
+  return data as ClassificationMatrix[];
+}
+
+async function loadCityInfo(cliente_id: number): Promise<CityInfo[]> {
+  const { data, error } = await supabase
+    .from('ciudades')
+    .select('id, nombre, codigo, clasificacion')
+    .eq('cliente_id', cliente_id)
+    .eq('estado', 'activo');
+
+  if (error) {
+    console.error('Error loading cities:', error);
+    throw new Error('Failed to load cities');
+  }
+
+  return (data || []).map(city => ({
+    ciudad_id: city.id,
+    ciudad_nombre: city.nombre,
+    ciudad_codigo: city.codigo,
+    clasificacion: city.clasificacion as 'A' | 'B' | 'C',
   }));
 }
 
@@ -209,16 +231,48 @@ function distributeByMonth(
   return result;
 }
 
-function distributeByCities(
+function distributeByCitiesAndClassification(
   monthlyEvents: number,
-  cityRequirements: CityRequirement[]
-): Record<number, number> {
-  const result: Record<number, number> = {};
-  
-  // Use percentages directly (should sum to 100)
-  cityRequirements.forEach(city => {
-    const cityPercentage = city.percentage_from_a + city.percentage_from_b + city.percentage_from_c;
-    result[city.ciudad_id] = Math.round((monthlyEvents * cityPercentage) / 100);
+  classificationMatrix: ClassificationMatrix[],
+  cityInfo: CityInfo[]
+): Record<number, { from_a: number; from_b: number; from_c: number }> {
+  const result: Record<number, { from_a: number; from_b: number; from_c: number }> = {};
+
+  // Group cities by classification
+  const citiesByType: Record<'A' | 'B' | 'C', CityInfo[]> = {
+    A: cityInfo.filter(c => c.clasificacion === 'A'),
+    B: cityInfo.filter(c => c.clasificacion === 'B'),
+    C: cityInfo.filter(c => c.clasificacion === 'C'),
+  };
+
+  const totalCities = cityInfo.length;
+  if (totalCities === 0) return result;
+
+  // Distribute events proportionally among city types based on count
+  const eventsPerType: Record<'A' | 'B' | 'C', number> = {
+    A: Math.round((monthlyEvents * citiesByType.A.length) / totalCities),
+    B: Math.round((monthlyEvents * citiesByType.B.length) / totalCities),
+    C: Math.round((monthlyEvents * citiesByType.C.length) / totalCities),
+  };
+
+  // For each destination type, distribute events according to classification matrix
+  (['A', 'B', 'C'] as const).forEach(destType => {
+    const matrix = classificationMatrix.find(m => m.destination_classification === destType);
+    if (!matrix) return;
+
+    const citiesOfType = citiesByType[destType];
+    if (citiesOfType.length === 0) return;
+
+    const totalEventsForType = eventsPerType[destType];
+    const eventsPerCity = Math.round(totalEventsForType / citiesOfType.length);
+
+    citiesOfType.forEach(city => {
+      result[city.ciudad_id] = {
+        from_a: Math.round((eventsPerCity * matrix.percentage_from_a) / 100),
+        from_b: Math.round((eventsPerCity * matrix.percentage_from_b) / 100),
+        from_c: Math.round((eventsPerCity * matrix.percentage_from_c) / 100),
+      };
+    });
   });
 
   return result;
@@ -226,94 +280,106 @@ function distributeByCities(
 
 function getRandomDateInMonth(monthKey: string): string {
   const [year, month] = monthKey.split('-').map(Number);
-  const start = startOfMonth(new Date(year, month - 1));
-  const end = endOfMonth(new Date(year, month - 1));
-  const daysInMonth = differenceInDays(end, start) + 1;
-  const randomDay = Math.floor(Math.random() * daysInMonth);
-  return format(addDays(start, randomDay), 'yyyy-MM-dd');
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 0);
+  const randomDay = Math.floor(Math.random() * (endDate.getDate() - startDate.getDate() + 1)) + startDate.getDate();
+  return format(new Date(year, month - 1, randomDay), 'yyyy-MM-dd');
 }
 
-function selectRandomDestination(topology: Node[], excludeNode: string): string {
-  const availableNodes = topology.filter(n => 
-    n.codigo !== excludeNode && 
+function selectRandomOriginByClassification(
+  topology: Node[],
+  classification: 'A' | 'B' | 'C',
+  excludeNode: string
+): string | null {
+  const availableNodes = topology.filter(n =>
+    n.clasificacion === classification &&
+    n.codigo !== excludeNode &&
     n.estado === 'activo'
   );
-  
-  if (availableNodes.length === 0) {
-    return excludeNode;
-  }
-  
+
+  if (availableNodes.length === 0) return null;
+
   const randomIndex = Math.floor(Math.random() * availableNodes.length);
-  const selected = availableNodes[randomIndex];
-  return selected.codigo;
+  return availableNodes[randomIndex].codigo;
 }
 
-function balanceByClassification(
-  cityEvents: number,
-  cityNodes: Node[],
-  classification: 'A' | 'B' | 'C',
+function getWeekKey(monthKey: string): string {
+  return monthKey;
+}
+
+function balanceBySourceClassification(
+  eventsFromA: number,
+  eventsFromB: number,
+  eventsFromC: number,
+  destinationCityId: number,
+  destinationNodes: Node[],
   allTopology: Node[],
   maxEventsPerWeek: number,
   monthKey: string
 ): { assigned: GeneratedEvent[], unassigned: number } {
   const assigned: GeneratedEvent[] = [];
-  let remaining = cityEvents;
+  const weekKey = getWeekKey(monthKey);
+  const weeklyEventCount: Record<string, number> = {};
 
-  let nodesToBalance: Node[] = [];
-  
-  if (classification === 'A' || classification === 'B') {
-    nodesToBalance = cityNodes.filter(n => n.estado === 'activo');
-  } else if (classification === 'C') {
-    const regionId = cityNodes[0]?.region_id;
-    const currentCityId = cityNodes[0]?.ciudad_id;
-    
-    nodesToBalance = allTopology.filter(n => 
-      n.region_id === regionId &&
-      n.clasificacion === 'C' &&
-      n.estado === 'activo' &&
-      n.ciudad_id !== currentCityId
-    );
-  }
+  const shuffledNodes = [...destinationNodes].sort(() => Math.random() - 0.5);
 
-  if (nodesToBalance.length === 0) {
-    return { assigned: [], unassigned: cityEvents };
-  }
+  // Helper function to assign events from specific classification
+  const assignFromClassification = (
+    count: number,
+    sourceClassification: 'A' | 'B' | 'C'
+  ): number => {
+    let assignedCount = 0;
+    let attempts = 0;
+    const maxAttempts = count * 10;
 
-  const weeksInMonth = 4;
-  const maxPerNode = maxEventsPerWeek * weeksInMonth;
-  const nodeCounts: Record<string, number> = {};
-
-  let nodeIndex = 0;
-  let attempts = 0;
-  const maxAttempts = remaining * nodesToBalance.length * 2;
-
-  while (remaining > 0 && attempts < maxAttempts) {
-    const node = nodesToBalance[nodeIndex % nodesToBalance.length];
-    const currentCount = nodeCounts[node.codigo] || 0;
-
-    if (currentCount < maxPerNode) {
-      const randomDate = getRandomDateInMonth(monthKey);
-      const destination = selectRandomDestination(allTopology, node.codigo);
+    while (assignedCount < count && attempts < maxAttempts) {
+      attempts++;
       
+      const node = shuffledNodes[Math.floor(Math.random() * shuffledNodes.length)];
+      if (!node) continue;
+
+      const nodeWeekKey = `${weekKey}_${node.codigo}`;
+      const currentWeekCount = weeklyEventCount[nodeWeekKey] || 0;
+
+      if (currentWeekCount >= maxEventsPerWeek) {
+        continue;
+      }
+
+      const randomOrigin = selectRandomOriginByClassification(
+        allTopology,
+        sourceClassification,
+        node.codigo
+      );
+      
+      if (!randomOrigin) continue;
+
       assigned.push({
-        nodo_origen: node.codigo,
-        nodo_destino: destination,
-        fecha_programada: randomDate,
+        nodo_origen: randomOrigin,
+        nodo_destino: node.codigo,
+        fecha_programada: getRandomDateInMonth(monthKey),
       });
 
-      nodeCounts[node.codigo] = currentCount + 1;
-      remaining--;
+      weeklyEventCount[nodeWeekKey] = currentWeekCount + 1;
+      assignedCount++;
     }
 
-    nodeIndex++;
-    attempts++;
+    return assignedCount;
+  };
 
-    if (nodeIndex >= nodesToBalance.length && Object.values(nodeCounts).every(count => count >= maxPerNode)) {
-      break;
-    }
-  }
+  // Assign events from each classification type
+  const assignedFromA = assignFromClassification(eventsFromA, 'A');
+  const assignedFromB = assignFromClassification(eventsFromB, 'B');
+  const assignedFromC = assignFromClassification(eventsFromC, 'C');
 
-  return { assigned, unassigned: remaining };
+  const totalUnassigned = 
+    (eventsFromA - assignedFromA) +
+    (eventsFromB - assignedFromB) +
+    (eventsFromC - assignedFromC);
+
+  return {
+    assigned,
+    unassigned: totalUnassigned,
+  };
 }
 
 async function saveDraftPlan(
@@ -340,7 +406,7 @@ async function saveDraftPlan(
       status: 'draft',
       created_by: config.created_by,
       generation_params: {
-        algorithm_version: '1.0',
+        algorithm_version: '2.0',
         timestamp: new Date().toISOString()
       }
     })
@@ -370,14 +436,26 @@ async function saveDraftPlan(
 }
 
 export async function generateIntelligentPlan(config: PlanConfig) {
+  // 1. Validate carrier-product association
   const carrierProductExists = await validateCarrierProduct(config.carrier_id, config.producto_id);
   if (!carrierProductExists) {
     throw new Error("Carrier not assigned to this product");
   }
 
-  const cityRequirements = await loadCityRequirements(config.cliente_id);
-  if (cityRequirements.length === 0) {
-    throw new Error("No city allocation requirements configured");
+  // 2. Load classification matrix, city info, seasonality, and topology
+  const [classificationMatrix, cityInfo, seasonality, topology] = await Promise.all([
+    loadClassificationMatrix(config.cliente_id),
+    loadCityInfo(config.cliente_id),
+    loadProductSeasonality(config.cliente_id, config.producto_id, getYear(config.start_date)),
+    loadTopology(config.cliente_id),
+  ]);
+
+  if (cityInfo.length === 0) {
+    throw new Error("No active cities configured");
+  }
+
+  if (topology.length === 0) {
+    throw new Error("No active nodes configured");
   }
 
   // Log capacity warning if max_events_per_week is too low
@@ -388,85 +466,109 @@ export async function generateIntelligentPlan(config: PlanConfig) {
     );
   }
 
-  const seasonality = await loadProductSeasonality(
-    config.cliente_id,
-    config.producto_id,
-    getYear(config.start_date)
-  );
-
-  const topology = await loadTopology(config.cliente_id);
-  if (topology.length === 0) {
-    throw new Error("No active nodes configured");
-  }
+  // 3. Calculate events based on date range
+  const totalDays = differenceInDays(config.end_date, config.start_date) + 1;
+  const calculatedEvents = Math.round((config.total_events * totalDays) / 365);
 
   // Calculate theoretical capacity
   const totalWeeks = Math.ceil(differenceInDays(config.end_date, config.start_date) / 7);
   const theoreticalCapacity = topology.length * config.max_events_per_week * totalWeeks;
   console.log(
     `📊 Plan capacity: ${topology.length} nodes × ${config.max_events_per_week} events/week × ${totalWeeks} weeks = ` +
-    `${theoreticalCapacity} max events (requested: ${config.total_events})`
+    `${theoreticalCapacity} max events (requested: ${calculatedEvents})`
   );
 
-  const totalDays = differenceInDays(config.end_date, config.start_date) + 1;
-  const proportionalEvents = Math.round((config.total_events * totalDays) / 365);
+  // 4. Distribute events by month according to seasonality
+  const monthlyDistribution = distributeByMonth(calculatedEvents, seasonality, config.start_date, config.end_date);
 
-  const eventsByMonth = distributeByMonth(proportionalEvents, seasonality, config.start_date, config.end_date);
+  // 5. Distribute events by cities and classification
+  const cityDistribution = distributeByCitiesAndClassification(
+    calculatedEvents,
+    classificationMatrix,
+    cityInfo
+  );
 
-  const allEvents: GeneratedEvent[] = [];
+  // 6. Balance events across nodes
+  const generatedEvents: GeneratedEvent[] = [];
   const unassignedBreakdown: UnassignedCity[] = [];
 
-  for (const [monthKey, monthlyEvents] of Object.entries(eventsByMonth)) {
-    const eventsByCity = distributeByCities(monthlyEvents, cityRequirements);
+  for (const [monthKey, monthEvents] of Object.entries(monthlyDistribution)) {
+    for (const cityInf of cityInfo) {
+      const cityNodes = topology.filter(n => 
+        n.ciudad_id === cityInf.ciudad_id && 
+        n.estado === 'activo'
+      );
 
-    for (const [ciudadIdStr, cityEvents] of Object.entries(eventsByCity)) {
-      const ciudadId = parseInt(ciudadIdStr);
-      const cityTopology = topology.filter(n => n.ciudad_id === ciudadId);
-      const ciudadInfo = cityRequirements.find(c => c.ciudad_id === ciudadId);
+      if (cityNodes.length === 0) {
+        const allocationBreakdown = cityDistribution[cityInf.ciudad_id];
+        if (allocationBreakdown) {
+          unassignedBreakdown.push({
+            ciudad_id: cityInf.ciudad_id,
+            ciudad_nombre: cityInf.ciudad_nombre,
+            unassigned_count: Object.values(allocationBreakdown).reduce((sum, count) => sum + count, 0),
+          });
+        }
+        continue;
+      }
 
-      if (!ciudadInfo || cityTopology.length === 0) continue;
+      const allocationBreakdown = cityDistribution[cityInf.ciudad_id];
+      if (!allocationBreakdown) continue;
 
-      const balancedEvents = balanceByClassification(
-        cityEvents,
-        cityTopology,
-        ciudadInfo.clasificacion,
+      // Distribute monthly events proportionally for this city
+      const totalCityEvents = allocationBreakdown.from_a + allocationBreakdown.from_b + allocationBreakdown.from_c;
+      const monthsCount = Object.keys(monthlyDistribution).length;
+      const monthlyEventsForCity = Math.round(totalCityEvents / monthsCount);
+
+      // Calculate breakdown for this month
+      const totalBreakdown = allocationBreakdown.from_a + allocationBreakdown.from_b + allocationBreakdown.from_c;
+      const monthlyFromA = totalBreakdown > 0 ? Math.round(monthlyEventsForCity * (allocationBreakdown.from_a / totalBreakdown)) : 0;
+      const monthlyFromB = totalBreakdown > 0 ? Math.round(monthlyEventsForCity * (allocationBreakdown.from_b / totalBreakdown)) : 0;
+      const monthlyFromC = monthlyEventsForCity - monthlyFromA - monthlyFromB;
+
+      const result = balanceBySourceClassification(
+        monthlyFromA,
+        monthlyFromB,
+        monthlyFromC,
+        cityInf.ciudad_id,
+        cityNodes,
         topology,
         config.max_events_per_week,
         monthKey
       );
 
-      allEvents.push(...balancedEvents.assigned);
-      
-      if (balancedEvents.unassigned > 0) {
-        const existingCity = unassignedBreakdown.find(c => c.ciudad_id === ciudadId);
-        if (existingCity) {
-          existingCity.deficit += balancedEvents.unassigned;
+      generatedEvents.push(...result.assigned);
+
+      if (result.unassigned > 0) {
+        const existing = unassignedBreakdown.find(u => u.ciudad_id === cityInf.ciudad_id);
+        if (existing) {
+          existing.unassigned_count += result.unassigned;
         } else {
           unassignedBreakdown.push({
-            ciudad_id: ciudadId,
-            ciudad_nombre: ciudadInfo.ciudad_nombre,
-            deficit: balancedEvents.unassigned
+            ciudad_id: cityInf.ciudad_id,
+            ciudad_nombre: cityInf.ciudad_nombre,
+            unassigned_count: result.unassigned,
           });
         }
       }
     }
   }
 
-  const totalUnassigned = unassignedBreakdown.reduce((sum, c) => sum + c.deficit, 0);
+  const totalUnassigned = unassignedBreakdown.reduce((sum, c) => sum + c.unassigned_count, 0);
   
   // Log results
   if (totalUnassigned > 0) {
     console.warn(
-      `⚠️ ${totalUnassigned} events could not be assigned (${((totalUnassigned / proportionalEvents) * 100).toFixed(1)}% of plan). ` +
-      `Consider increasing max_events_per_panelist_week (current: ${config.max_events_per_week}) or adding more active nodes.`
+      `⚠️ ${totalUnassigned} events could not be assigned (${((totalUnassigned / calculatedEvents) * 100).toFixed(1)}% of plan). ` +
+      `Consider increasing max_events_per_week (current: ${config.max_events_per_week}) or adding more active nodes.`
     );
   } else {
-    console.log(`✅ All ${allEvents.length} events successfully assigned!`);
+    console.log(`✅ All ${generatedEvents.length} events successfully assigned!`);
   }
   
   return await saveDraftPlan(
     config,
-    proportionalEvents,
-    allEvents,
+    calculatedEvents,
+    generatedEvents,
     totalUnassigned,
     unassignedBreakdown
   );
