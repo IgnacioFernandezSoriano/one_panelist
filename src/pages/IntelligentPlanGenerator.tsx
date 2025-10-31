@@ -122,7 +122,7 @@ export default function IntelligentPlanGenerator() {
           codigo,
           ciudad_id,
           estado,
-          panelistas!fk_nodos_panelista (nombre_completo)
+          panelista_id
         `)
         .eq('cliente_id', config.cliente_id)
         .in('ciudad_id', ciudadIds)
@@ -139,13 +139,33 @@ export default function IntelligentPlanGenerator() {
           codigo: n.codigo,
           ciudad_id: n.ciudad_id,
           estado: n.estado,
-          panelista: (n.panelistas as any)?.nombre_completo,
+          has_panelista: n.panelista_id !== null,
         })),
         byCity: ciudadIds.map(cid => ({
           ciudad_id: cid,
           count: nodos?.filter((n: any) => n.ciudad_id === cid).length || 0,
         }))
       });
+
+      // 3. Count existing events for each node in the date range
+      const nodeCodes = nodos?.map((n: any) => n.codigo) || [];
+      const { data: existingEvents } = await supabase
+        .from('envios')
+        .select('nodo_destino')
+        .eq('cliente_id', config.cliente_id)
+        .eq('carrier_id', config.carrier_id)
+        .eq('producto_id', config.producto_id)
+        .gte('fecha_programada', config.start_date.toISOString().split('T')[0])
+        .lte('fecha_programada', config.end_date.toISOString().split('T')[0])
+        .in('nodo_destino', nodeCodes);
+
+      // Count events per node
+      const eventCountByNode = (existingEvents || []).reduce((acc: Record<string, number>, event: any) => {
+        acc[event.nodo_destino] = (acc[event.nodo_destino] || 0) + 1;
+        return acc;
+      }, {});
+
+      console.log('[Preview] Existing events by node:', eventCountByNode);
 
       const totalWeeks = differenceInWeeks(config.end_date, config.start_date);
       const calculatedEvents = Math.round((config.total_events / 52) * totalWeeks);
@@ -159,27 +179,31 @@ export default function IntelligentPlanGenerator() {
         const totalCityEvents = Math.round((cityEvents / totalRequirements) * calculatedEvents);
         
         const cityNodesData = nodos?.filter((n: any) => n.ciudad_id === city.ciudad_id) || [];
-        const activeNodesCount = cityNodesData.length || 1; // Evitar división por cero
+        const activeNodesCount = cityNodesData.length || 1;
         
         const cityNodos = cityNodesData.map((n: any) => {
-          // Distribuir eventos uniformemente entre nodos activos
-          const nodeEvents = totalCityEvents / activeNodesCount;
-          const eventsPerWeek = nodeEvents / totalWeeks;
+          // Calculate new events to be distributed to this node
+          const newEvents = Math.round(totalCityEvents / activeNodesCount);
+          const existingEvents = eventCountByNode[n.codigo] || 0;
+          const totalEvents = existingEvents + newEvents;
           
           console.log('[Preview] Mapping node for ciudad', city.ciudad_id, ':', {
             codigo: n.codigo,
             ciudad_id: n.ciudad_id,
-            panelista: n.panelistas?.nombre_completo,
+            has_panelista: n.panelista_id !== null,
             estado: n.estado,
-            nodeEvents,
-            eventsPerWeek,
+            existingEvents,
+            newEvents,
+            totalEvents,
           });
           
           return {
             codigo: n.codigo,
-            panelista_nombre: n.panelistas?.nombre_completo || null,
+            has_panelista: n.panelista_id !== null,
             estado: n.estado,
-            events_per_week: eventsPerWeek,
+            existing_events: existingEvents,
+            new_events: newEvents,
+            total_events: totalEvents,
           };
         });
 

@@ -6,9 +6,11 @@ import { useState } from "react";
 
 interface NodeInfo {
   codigo: string;
-  panelista_nombre: string | null;
+  has_panelista: boolean;
   estado: string;
-  events_per_week: number;
+  existing_events: number;
+  new_events: number;
+  total_events: number;
 }
 
 interface CityDistribution {
@@ -130,26 +132,36 @@ export function PlanPreviewSummary({
                         city.nodos.map((nodo, idx) => (
                           <div 
                             key={idx}
-                            className="flex items-center gap-2 p-2 bg-background rounded border border-border text-sm"
+                            className="grid grid-cols-[auto,1fr,auto,auto,auto,auto] gap-3 items-center p-3 bg-background rounded border border-border text-sm"
                           >
                             <MapPin className="h-3 w-3 text-muted-foreground" />
-                            <span className="font-mono text-xs">{nodo.codigo}</span>
-                            <span className="text-muted-foreground">→</span>
-                            <User className="h-3 w-3 text-muted-foreground" />
-                            <span className="flex-1">
-                              {nodo.panelista_nombre || <em className="text-muted-foreground">Unassigned</em>}
-                            </span>
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-xs">
-                                {nodo.events_per_week.toFixed(1)} events/week
-                              </Badge>
+                              <span className="font-mono text-xs">{nodo.codigo}</span>
                               <Badge 
-                                variant={nodo.estado === 'activo' ? 'default' : 'outline'}
+                                variant={nodo.has_panelista ? 'default' : 'secondary'}
                                 className="text-xs"
                               >
-                                {nodo.estado}
+                                {nodo.has_panelista ? 'Assigned' : 'Unassigned'}
                               </Badge>
                             </div>
+                            <div className="text-xs text-right">
+                              <div className="text-muted-foreground">Current</div>
+                              <div className="font-semibold">{nodo.existing_events}</div>
+                            </div>
+                            <div className="text-xs text-right">
+                              <div className="text-muted-foreground">New</div>
+                              <div className="font-semibold text-primary">+{nodo.new_events}</div>
+                            </div>
+                            <div className="text-xs text-right">
+                              <div className="text-muted-foreground">Total</div>
+                              <div className="font-bold">{nodo.total_events}</div>
+                            </div>
+                            <Badge 
+                              variant={nodo.estado === 'activo' ? 'default' : 'outline'}
+                              className="text-xs"
+                            >
+                              {nodo.estado}
+                            </Badge>
                           </div>
                         ))
                       )}
