@@ -221,30 +221,45 @@ export default function IntelligentPlanGenerator() {
         return result;
       };
 
-      // 9. Helper to fill nodes sequentially
+      // 9. Helper to fill nodes sequentially considering existing events
       const fillNodesSequentially = (
         cityNodes: any[],
-        totalEvents: number,
-        maxEventsPerWeek: number
-      ): Record<string, number> => {
-        const nodeEvents: Record<string, number> = {};
-        cityNodes.forEach(n => { nodeEvents[n.codigo] = 0; });
+        totalNewEvents: number,
+        maxEventsPerWeek: number,
+        eventCountByNode: Record<string, number>
+      ): { newEvents: Record<string, number>, totalEvents: Record<string, number> } => {
+        const nodeAssignment: Record<string, number> = {};
+        cityNodes.forEach(n => { nodeAssignment[n.codigo] = 0; });
         
         const sortedNodes = [...cityNodes].sort((a, b) => a.codigo.localeCompare(b.codigo));
-        let remaining = totalEvents;
+        let remaining = totalNewEvents;
         let nodeIndex = 0;
 
         while (remaining > 0 && nodeIndex < sortedNodes.length) {
           const node = sortedNodes[nodeIndex];
-          if (nodeEvents[node.codigo] < maxEventsPerWeek) {
-            nodeEvents[node.codigo]++;
+          const existingEvents = eventCountByNode[node.codigo] || 0;
+          const currentAssigned = nodeAssignment[node.codigo];
+          const totalAfterAssignment = existingEvents + currentAssigned + 1;
+          
+          if (totalAfterAssignment <= maxEventsPerWeek) {
+            nodeAssignment[node.codigo]++;
             remaining--;
           } else {
             nodeIndex++;
           }
         }
 
-        return nodeEvents;
+        // Calculate totals
+        const newEvents: Record<string, number> = {};
+        const totalEvents: Record<string, number> = {};
+        cityNodes.forEach(n => {
+          const existing = eventCountByNode[n.codigo] || 0;
+          const assigned = nodeAssignment[n.codigo] || 0;
+          newEvents[n.codigo] = assigned;
+          totalEvents[n.codigo] = existing + assigned;
+        });
+
+        return { newEvents, totalEvents };
       };
 
       // 10. Calculate distribution per city
@@ -261,8 +276,8 @@ export default function IntelligentPlanGenerator() {
 
           const cityNodes = nodos?.filter(n => n.ciudad_id === ciudadId) || [];
           if (cityNodes.length > 0) {
-            const monthlyNodeEvents = fillNodesSequentially(cityNodes, cityTotal, config.max_events_per_week);
-            for (const [codigo, events] of Object.entries(monthlyNodeEvents)) {
+            const { newEvents } = fillNodesSequentially(cityNodes, cityTotal, config.max_events_per_week, eventCountByNode);
+            for (const [codigo, events] of Object.entries(newEvents)) {
               nodeAssignments[codigo] = (nodeAssignments[codigo] || 0) + events;
             }
           }
@@ -288,6 +303,7 @@ export default function IntelligentPlanGenerator() {
             new_events: newEvents,
             total_events: totalEvents,
             events_per_week: eventsPerWeek,
+            exceeds_capacity: totalEvents > config.max_events_per_week,
           };
         });
 

@@ -12,6 +12,7 @@ interface NodeInfo {
   new_events: number;
   total_events: number;
   events_per_week: number;
+  exceeds_capacity?: boolean;
 }
 
 interface CityDistribution {
@@ -133,7 +134,11 @@ export function PlanPreviewSummary({
                         city.nodos.map((nodo, idx) => (
                           <div 
                             key={idx}
-                            className="grid grid-cols-[auto,1fr,auto,auto,auto,auto,auto] gap-3 items-center p-3 bg-background rounded border border-border text-sm"
+                            className={`grid grid-cols-[auto,1fr,auto,auto,auto,auto,auto] gap-3 items-center p-3 rounded border text-sm ${
+                              nodo.exceeds_capacity 
+                                ? 'bg-destructive/10 border-destructive' 
+                                : 'bg-background border-border'
+                            }`}
                           >
                             <MapPin className="h-3 w-3 text-muted-foreground" />
                             <div className="flex items-center gap-2">
@@ -155,7 +160,9 @@ export function PlanPreviewSummary({
                             </div>
                             <div className="text-xs text-right">
                               <div className="text-muted-foreground">Total</div>
-                              <div className="font-bold">{nodo.total_events}</div>
+                              <div className={`font-bold ${nodo.exceeds_capacity ? 'text-destructive' : ''}`}>
+                                {nodo.total_events}
+                              </div>
                             </div>
                             <div className="text-xs text-right">
                               <div className="text-muted-foreground">Per Week</div>
