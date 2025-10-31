@@ -3,9 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, HelpCircle } from "lucide-react";
+import { SeasonalityHelpDialog } from "./SeasonalityHelpDialog";
 
 interface ProductSeasonality {
   producto_id: number;
@@ -32,22 +34,22 @@ interface ProductSeasonalityTableVerticalProps {
 
 const MONTH_GROUPS = [
   [
-    { key: 'january_percentage', label: 'Ene' },
-    { key: 'february_percentage', label: 'Feb' },
-    { key: 'march_percentage', label: 'Mar' },
-    { key: 'april_percentage', label: 'Abr' },
+    { key: 'january_percentage', labelKey: 'intelligent_plan.month_jan' },
+    { key: 'february_percentage', labelKey: 'intelligent_plan.month_feb' },
+    { key: 'march_percentage', labelKey: 'intelligent_plan.month_mar' },
+    { key: 'april_percentage', labelKey: 'intelligent_plan.month_apr' },
   ],
   [
-    { key: 'may_percentage', label: 'May' },
-    { key: 'june_percentage', label: 'Jun' },
-    { key: 'july_percentage', label: 'Jul' },
-    { key: 'august_percentage', label: 'Ago' },
+    { key: 'may_percentage', labelKey: 'intelligent_plan.month_may' },
+    { key: 'june_percentage', labelKey: 'intelligent_plan.month_jun' },
+    { key: 'july_percentage', labelKey: 'intelligent_plan.month_jul' },
+    { key: 'august_percentage', labelKey: 'intelligent_plan.month_aug' },
   ],
   [
-    { key: 'september_percentage', label: 'Sep' },
-    { key: 'october_percentage', label: 'Oct' },
-    { key: 'november_percentage', label: 'Nov' },
-    { key: 'december_percentage', label: 'Dic' },
+    { key: 'september_percentage', labelKey: 'intelligent_plan.month_sep' },
+    { key: 'october_percentage', labelKey: 'intelligent_plan.month_oct' },
+    { key: 'november_percentage', labelKey: 'intelligent_plan.month_nov' },
+    { key: 'december_percentage', labelKey: 'intelligent_plan.month_dec' },
   ],
 ] as const;
 
@@ -61,6 +63,7 @@ export function ProductSeasonalityTableVertical({
   const { t } = useTranslation();
   const [seasonality, setSeasonality] = useState<ProductSeasonality | null>(null);
   const [loading, setLoading] = useState(false);
+  const [helpDialogOpen, setHelpDialogOpen] = useState(false);
 
   useEffect(() => {
     if (clienteId && productoId) {
@@ -177,12 +180,25 @@ export function ProductSeasonalityTableVertical({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">
-          {t('intelligent_plan.seasonality_title')} ({year})
-        </CardTitle>
-        <CardDescription>
-          {t('intelligent_plan.seasonality_description')}
-        </CardDescription>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <CardTitle className="text-lg">
+              {t('intelligent_plan.seasonality_title')} ({year})
+            </CardTitle>
+            <CardDescription>
+              {t('intelligent_plan.seasonality_description')}
+            </CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setHelpDialogOpen(true)}
+            className="flex items-center gap-2 shrink-0"
+          >
+            <HelpCircle className="h-4 w-4" />
+            {t('intelligent_plan.help_calculation')}
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -191,10 +207,10 @@ export function ProductSeasonalityTableVertical({
             {MONTH_GROUPS.map((group, groupIndex) => (
               <div key={groupIndex} className="space-y-1.5">
                 {group.map((month) => (
-                  <div key={month.key} className="flex items-center gap-2">
-                    <label className="text-sm font-medium w-10 flex-shrink-0">
-                      {month.label}
-                    </label>
+              <div key={month.key} className="flex items-center gap-2">
+                <label className="text-sm font-medium w-10 flex-shrink-0">
+                  {t(month.labelKey)}
+                </label>
                     <Input
                       type="number"
                       step="0.01"
@@ -234,6 +250,11 @@ export function ProductSeasonalityTableVertical({
           </div>
         </div>
       </CardContent>
+      
+      <SeasonalityHelpDialog 
+        open={helpDialogOpen} 
+        onOpenChange={setHelpDialogOpen} 
+      />
     </Card>
   );
 }

@@ -117,3 +117,44 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Estilos para impresión */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  [class*="print:"] {
+    visibility: visible !important;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  .print\:max-w-full {
+    max-width: 100% !important;
+  }
+  
+  .print\:max-h-full {
+    max-height: 100% !important;
+  }
+  
+  .print\:text-black,
+  .print\:text-black * {
+    color: #000 !important;
+  }
+  
+  /* Mostrar solo el contenido del diálogo */
+  [role="dialog"],
+  [role="dialog"] * {
+    visibility: visible !important;
+  }
+  
+  /* Ocultar overlay y botones de cierre */
+  [data-radix-dialog-overlay],
+  button[aria-label*="Close"],
+  button[aria-label*="Cerrar"] {
+    display: none !important;
+  }
+}
