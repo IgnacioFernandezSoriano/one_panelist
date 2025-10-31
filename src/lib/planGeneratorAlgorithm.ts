@@ -319,46 +319,63 @@ function balanceBySourceClassification(
   const weekKey = getWeekKey(monthKey);
   const weeklyEventCount: Record<string, number> = {};
 
-  const shuffledNodes = [...destinationNodes].sort(() => Math.random() - 0.5);
+  // Sort nodes for deterministic sequential filling
+  const sortedNodes = [...destinationNodes].sort((a, b) => a.codigo.localeCompare(b.codigo));
 
-  // Helper function to assign events from specific classification
+  // Helper function to assign events from specific classification using sequential filling
   const assignFromClassification = (
     count: number,
     sourceClassification: 'A' | 'B' | 'C'
   ): number => {
     let assignedCount = 0;
-    let attempts = 0;
-    const maxAttempts = count * 10;
+    let nodeIndex = 0;
+    let fullLoopAttempts = 0;
+    const maxFullLoops = 3;
 
-    while (assignedCount < count && attempts < maxAttempts) {
-      attempts++;
-      
-      const node = shuffledNodes[Math.floor(Math.random() * shuffledNodes.length)];
-      if (!node) continue;
+    while (assignedCount < count && fullLoopAttempts < maxFullLoops) {
+      let progressMade = false;
 
-      const nodeWeekKey = `${weekKey}_${node.codigo}`;
-      const currentWeekCount = weeklyEventCount[nodeWeekKey] || 0;
+      // Try all nodes in sequence
+      for (let i = 0; i < sortedNodes.length && assignedCount < count; i++) {
+        const currentIndex = (nodeIndex + i) % sortedNodes.length;
+        const node = sortedNodes[currentIndex];
 
-      if (currentWeekCount >= maxEventsPerWeek) {
-        continue;
+        const nodeWeekKey = `${weekKey}_${node.codigo}`;
+        const currentWeekCount = weeklyEventCount[nodeWeekKey] || 0;
+
+        // Check if node has capacity
+        if (currentWeekCount >= maxEventsPerWeek) {
+          continue;
+        }
+
+        // Find origin from specified classification
+        const randomOrigin = selectRandomOriginByClassification(
+          allTopology,
+          sourceClassification,
+          node.codigo
+        );
+        
+        if (!randomOrigin) continue;
+
+        // Assign event to this node
+        assigned.push({
+          nodo_origen: randomOrigin,
+          nodo_destino: node.codigo,
+          fecha_programada: getRandomDateInMonth(monthKey),
+        });
+
+        weeklyEventCount[nodeWeekKey] = currentWeekCount + 1;
+        assignedCount++;
+        progressMade = true;
+
+        // Update node index for next iteration (sequential filling)
+        nodeIndex = currentIndex;
       }
 
-      const randomOrigin = selectRandomOriginByClassification(
-        allTopology,
-        sourceClassification,
-        node.codigo
-      );
-      
-      if (!randomOrigin) continue;
-
-      assigned.push({
-        nodo_origen: randomOrigin,
-        nodo_destino: node.codigo,
-        fecha_programada: getRandomDateInMonth(monthKey),
-      });
-
-      weeklyEventCount[nodeWeekKey] = currentWeekCount + 1;
-      assignedCount++;
+      // If no progress was made in a full loop, all nodes are full
+      if (!progressMade) {
+        fullLoopAttempts++;
+      }
     }
 
     return assignedCount;

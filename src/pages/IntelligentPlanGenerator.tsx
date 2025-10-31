@@ -81,81 +81,67 @@ export default function IntelligentPlanGenerator() {
   const handleConfigSubmit = async (config: PlanConfiguration) => {
     setPlanConfig(config);
     
-    console.log('[Preview] Starting preview calculation with config:', {
-      cliente_id: config.cliente_id,
-      carrier_id: config.carrier_id,
-      producto_id: config.producto_id,
-      start_date: config.start_date,
-      end_date: config.end_date,
-      total_events: config.total_events,
-    });
+    console.log('[Preview] Starting preview calculation with config:', config);
     
-    // Calculate preview
+    // Calculate preview using same logic as generator
     try {
-      // 1. Load city requirements
-      const { data: cityReqs, error: cityReqsError } = await supabase
-        .from('city_allocation_requirements')
-        .select(`
-          ciudad_id,
-          percentage_from_a,
-          percentage_from_b,
-          percentage_from_c,
-          ciudades (id, nombre, clasificacion)
-        `)
+      // 1. Load classification allocation matrix
+      const { data: classificationMatrix, error: matrixError } = await supabase
+        .from('classification_allocation_matrix')
+        .select('*')
         .eq('cliente_id', config.cliente_id);
 
-      if (cityReqsError) {
-        console.error('[Preview] Error loading city requirements:', cityReqsError);
-        throw cityReqsError;
-      }
+      if (matrixError) throw matrixError;
 
-      console.log('[Preview] City requirements loaded:', {
-        count: cityReqs?.length || 0,
-        cityReqs: cityReqs?.map(c => ({
-          ciudad_id: c.ciudad_id,
-          nombre: (c.ciudades as any)?.nombre,
-          clasificacion: (c.ciudades as any)?.clasificacion,
-        }))
-      });
+      // 2. Load active cities with classification
+      const { data: ciudades, error: ciudadesError } = await supabase
+        .from('ciudades')
+        .select('id, nombre, clasificacion')
+        .eq('cliente_id', config.cliente_id)
+        .eq('estado', 'activo');
 
-      // 2. Load active nodes for all cities
-      const ciudadIds = cityReqs?.map(c => c.ciudad_id) || [];
-      
-      console.log('[Preview] Loading nodes for cities:', ciudadIds);
+      if (ciudadesError) throw ciudadesError;
 
+      // 3. Load product seasonality
+      const startYear = config.start_date.getFullYear();
+      const { data: seasonalityData, error: seasonalityError } = await supabase
+        .from('product_seasonality')
+        .select('*')
+        .eq('cliente_id', config.cliente_id)
+        .eq('producto_id', config.producto_id)
+        .eq('year', startYear)
+        .single();
+
+      if (seasonalityError) throw seasonalityError;
+
+      const seasonality = {
+        january: seasonalityData.january_percentage,
+        february: seasonalityData.february_percentage,
+        march: seasonalityData.march_percentage,
+        april: seasonalityData.april_percentage,
+        may: seasonalityData.may_percentage,
+        june: seasonalityData.june_percentage,
+        july: seasonalityData.july_percentage,
+        august: seasonalityData.august_percentage,
+        september: seasonalityData.september_percentage,
+        october: seasonalityData.october_percentage,
+        november: seasonalityData.november_percentage,
+        december: seasonalityData.december_percentage,
+      };
+
+      // 4. Load active nodes
+      const ciudadIds = ciudades?.map(c => c.id) || [];
       const { data: nodos, error: nodosError } = await supabase
         .from('nodos')
-        .select(`
-          codigo,
-          ciudad_id,
-          estado,
-          panelista_id
-        `)
+        .select('codigo, ciudad_id, estado, panelista_id')
         .eq('cliente_id', config.cliente_id)
         .in('ciudad_id', ciudadIds)
         .eq('estado', 'activo');
 
-      if (nodosError) {
-        console.error('[Preview] Error loading nodos:', nodosError);
-        throw nodosError;
-      }
+      if (nodosError) throw nodosError;
 
-      console.log('[Preview] Nodos loaded:', {
-        total: nodos?.length || 0,
-        nodos: nodos?.map(n => ({
-          codigo: n.codigo,
-          ciudad_id: n.ciudad_id,
-          estado: n.estado,
-          has_panelista: n.panelista_id !== null,
-        })),
-        byCity: ciudadIds.map(cid => ({
-          ciudad_id: cid,
-          count: nodos?.filter((n: any) => n.ciudad_id === cid).length || 0,
-        }))
-      });
-
-      // 3. Count existing events for each node in the date range
-      const nodeCodes = nodos?.map((n: any) => n.codigo) || [];
+      // 5. Count existing events
+      const nodeCodes = nodos?.map(n => n.codigo) || [];
       const { data: existingEvents } = await supabase
         .from('envios')
         .select('nodo_destino')
@@ -164,80 +150,165 @@ export default function IntelligentPlanGenerator() {
         .lte('fecha_programada', config.end_date.toISOString().split('T')[0])
         .in('nodo_destino', nodeCodes);
 
-      // Count events per node
       const eventCountByNode = (existingEvents || []).reduce((acc: Record<string, number>, event: any) => {
         acc[event.nodo_destino] = (acc[event.nodo_destino] || 0) + 1;
         return acc;
       }, {});
 
-      console.log('[Preview] Existing events by node:', eventCountByNode);
+      // 6. Calculate events using generator's formula
+      const startDate = config.start_date;
+      const endDate = config.end_date;
+      const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const calculatedEvents = Math.ceil((config.total_events * totalDays) / 365);
+      const totalWeeks = differenceInWeeks(endDate, startDate);
 
-      const totalWeeks = differenceInWeeks(config.end_date, config.start_date);
-      const calculatedEvents = Math.round((config.total_events / 52) * totalWeeks);
-      
-      // Calculate distribution by cities using percentages
-      const totalPercentage = cityReqs?.reduce((sum: number, city: any) => 
-        sum + (city.percentage_from_a + city.percentage_from_b + city.percentage_from_c), 0) || 100;
-      
-      const cityDistribution = cityReqs?.map((city: any) => {
-        const cityPercentage = city.percentage_from_a + city.percentage_from_b + city.percentage_from_c;
-        const totalCityEvents = Math.round((cityPercentage / 100) * calculatedEvents);
+      // 7. Distribute by month using seasonality
+      const getMonthsInRange = (start: Date, end: Date): Date[] => {
+        const months: Date[] = [];
+        const current = new Date(start.getFullYear(), start.getMonth(), 1);
+        const endMonth = new Date(end.getFullYear(), end.getMonth(), 1);
         
-        const cityNodesData = nodos?.filter((n: any) => n.ciudad_id === city.ciudad_id) || [];
-        const activeNodesCount = cityNodesData.length || 1;
+        while (current <= endMonth) {
+          months.push(new Date(current));
+          current.setMonth(current.getMonth() + 1);
+        }
+        return months;
+      };
+
+      const months = getMonthsInRange(startDate, endDate);
+      const monthlyDistribution: Record<string, number> = {};
+      
+      months.forEach(month => {
+        const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+        const monthName = month.toLocaleString('en', { month: 'long' }).toLowerCase() as keyof typeof seasonality;
+        const percentage = seasonality[monthName] || 8.33;
+        monthlyDistribution[monthKey] = Math.round((calculatedEvents * percentage) / 100);
+      });
+
+      // 8. Helper to distribute by city and classification (same as generator)
+      const distributeByCitiesAndClassification = (monthlyEvents: number) => {
+        const result: Record<number, { from_a: number; from_b: number; from_c: number }> = {};
+        const citiesByType: Record<string, typeof ciudades> = { A: [], B: [], C: [] };
         
-        const cityNodos = cityNodesData.map((n: any) => {
-          // Calculate new events to be distributed to this node
-          const newEvents = Math.round(totalCityEvents / activeNodesCount);
-          const existingEvents = eventCountByNode[n.codigo] || 0;
-          const totalEvents = existingEvents + newEvents;
-          const eventsPerWeek = totalEvents / totalWeeks;
+        ciudades?.forEach(city => {
+          const type = city.clasificacion.toUpperCase();
+          if (type === 'A' || type === 'B' || type === 'C') {
+            citiesByType[type].push(city);
+          }
+        });
+
+        classificationMatrix?.forEach((matrix: any) => {
+          const destType = matrix.destination_classification.toUpperCase();
+          const citiesOfType = citiesByType[destType];
+          if (!citiesOfType || citiesOfType.length === 0) return;
+
+          const eventsFromA = (monthlyEvents * matrix.percentage_from_a) / 100;
+          const eventsFromB = (monthlyEvents * matrix.percentage_from_b) / 100;
+          const eventsFromC = (monthlyEvents * matrix.percentage_from_c) / 100;
           
-          console.log('[Preview] Mapping node for ciudad', city.ciudad_id, ':', {
-            codigo: n.codigo,
-            ciudad_id: n.ciudad_id,
-            has_panelista: n.panelista_id !== null,
-            estado: n.estado,
-            existingEvents,
-            newEvents,
-            totalEvents,
-            eventsPerWeek,
+          const totalEventsForType = eventsFromA + eventsFromB + eventsFromC;
+          const eventsPerCity = totalEventsForType / citiesOfType.length;
+
+          citiesOfType.forEach(city => {
+            result[city.id] = {
+              from_a: Math.ceil(eventsPerCity * (eventsFromA / totalEventsForType)),
+              from_b: Math.ceil(eventsPerCity * (eventsFromB / totalEventsForType)),
+              from_c: Math.ceil(eventsPerCity * (eventsFromC / totalEventsForType)),
+            };
           });
-          
+        });
+
+        return result;
+      };
+
+      // 9. Helper to fill nodes sequentially
+      const fillNodesSequentially = (
+        cityNodes: any[],
+        totalEvents: number,
+        maxEventsPerWeek: number
+      ): Record<string, number> => {
+        const nodeEvents: Record<string, number> = {};
+        cityNodes.forEach(n => { nodeEvents[n.codigo] = 0; });
+        
+        const sortedNodes = [...cityNodes].sort((a, b) => a.codigo.localeCompare(b.codigo));
+        let remaining = totalEvents;
+        let nodeIndex = 0;
+
+        while (remaining > 0 && nodeIndex < sortedNodes.length) {
+          const node = sortedNodes[nodeIndex];
+          if (nodeEvents[node.codigo] < maxEventsPerWeek) {
+            nodeEvents[node.codigo]++;
+            remaining--;
+          } else {
+            nodeIndex++;
+          }
+        }
+
+        return nodeEvents;
+      };
+
+      // 10. Calculate distribution per city
+      const cityTotals: Record<number, number> = {};
+      const nodeAssignments: Record<string, number> = {};
+
+      for (const [monthKey, monthEvents] of Object.entries(monthlyDistribution)) {
+        const monthlyCityDistribution = distributeByCitiesAndClassification(monthEvents);
+
+        for (const [ciudadIdStr, allocation] of Object.entries(monthlyCityDistribution)) {
+          const ciudadId = parseInt(ciudadIdStr);
+          const cityTotal = allocation.from_a + allocation.from_b + allocation.from_c;
+          cityTotals[ciudadId] = (cityTotals[ciudadId] || 0) + cityTotal;
+
+          const cityNodes = nodos?.filter(n => n.ciudad_id === ciudadId) || [];
+          if (cityNodes.length > 0) {
+            const monthlyNodeEvents = fillNodesSequentially(cityNodes, cityTotal, config.max_events_per_week);
+            for (const [codigo, events] of Object.entries(monthlyNodeEvents)) {
+              nodeAssignments[codigo] = (nodeAssignments[codigo] || 0) + events;
+            }
+          }
+        }
+      }
+
+      // 11. Build city distribution for UI
+      const cityDistribution = ciudades?.map(city => {
+        const totalCityEvents = cityTotals[city.id] || 0;
+        const cityNodes = nodos?.filter(n => n.ciudad_id === city.id) || [];
+        
+        const cityNodos = cityNodes.map(n => {
+          const newEvents = nodeAssignments[n.codigo] || 0;
+          const existingEventsCount = eventCountByNode[n.codigo] || 0;
+          const totalEvents = existingEventsCount + newEvents;
+          const eventsPerWeek = totalWeeks > 0 ? totalEvents / totalWeeks : 0;
+
           return {
             codigo: n.codigo,
             has_panelista: n.panelista_id !== null,
             estado: n.estado,
-            existing_events: existingEvents,
+            existing_events: existingEventsCount,
             new_events: newEvents,
             total_events: totalEvents,
             events_per_week: eventsPerWeek,
           };
         });
 
-        console.log('[Preview] City distribution for', city.ciudades.nombre, ':', {
-          ciudad_id: city.ciudad_id,
-          nodosCount: cityNodos.length,
-          totalCityEvents,
-        });
+        const totalEvents = cityTotals[city.id] || 0;
+        const percentage = calculatedEvents > 0 ? (totalEvents / calculatedEvents) * 100 : 0;
 
         return {
-          ciudad_id: city.ciudad_id,
-          ciudad_nombre: city.ciudades.nombre,
-          clasificacion: city.ciudades.clasificacion,
-          events: totalCityEvents,
-          percentage: cityPercentage,
+          ciudad_id: city.id,
+          ciudad_nombre: city.nombre,
+          clasificacion: city.clasificacion,
+          events: totalEvents,
+          percentage,
           nodos: cityNodos,
         };
       }) || [];
-
-      console.log('[Preview] Final city distribution:', cityDistribution);
 
       setPlanPreview({
         totalEvents: config.total_events,
         calculatedEvents,
         totalWeeks,
-        maxWeeklyCapacity: Math.round(calculatedEvents / totalWeeks),
+        maxWeeklyCapacity: config.max_events_per_week,
         cityDistribution,
       });
     } catch (error) {
