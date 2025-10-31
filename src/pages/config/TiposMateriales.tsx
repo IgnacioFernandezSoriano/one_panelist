@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { TipoMaterialForm } from "@/components/config/forms/TipoMaterialForm";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function TiposMateriales() {
   const [materiales, setMateriales] = useState<any[]>([]);
@@ -16,6 +17,7 @@ export default function TiposMateriales() {
   const [editingMaterial, setEditingMaterial] = useState<any>(null);
   const { toast } = useToast();
   const { clienteId, isSuperAdmin } = useUserRole();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (clienteId !== null) {
@@ -97,19 +99,19 @@ export default function TiposMateriales() {
       <div className="p-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Material Types</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t("page.material_types_title")}</h1>
             <p className="text-muted-foreground">
-              Manage material types catalog for shipments
+              {t("page.material_types_description")}
             </p>
           </div>
           <Button onClick={() => setDialogOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" />
-            New Material Type
+            {t("button.new_material_type")}
           </Button>
         </div>
 
         <ConfigDataTable
-          title="Material Types"
+          title={t("page.material_types_title")}
           data={materiales}
           columns={columns}
           onEdit={(material) => {

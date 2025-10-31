@@ -173,7 +173,7 @@ const AppSidebarContent = () => {
 
   const solutionParametersItems = [
     { icon: Truck, label: "Carriers", path: "/configuracion/carriers" },
-    { icon: Package, label: "Material Types", path: "/configuracion/tipos-materiales" },
+    { icon: Package, label: t("menu.material_types"), path: "/configuracion/tipos-materiales" },
     { icon: Box, label: "Products", path: "/configuracion/productos" },
     { icon: Workflow, label: "Workflows", path: "/configuracion/workflows" },
     { icon: AlertCircle, label: "Issues", path: "/configuracion/incidencias" },
