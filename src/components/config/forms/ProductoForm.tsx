@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
@@ -45,15 +46,18 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
   const [openCliente, setOpenCliente] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { clienteId, isSuperAdmin } = useUserRole();
 
   useEffect(() => {
-    loadClientes();
-    loadTiposMaterial();
-    if (initialData?.id) {
-      loadMaterialesProducto(initialData.id);
-      loadCarriers(initialData.id);
+    if (clienteId !== null) {
+      loadClientes();
+      loadTiposMaterial();
+      if (initialData?.id) {
+        loadMaterialesProducto(initialData.id);
+        loadCarriers(initialData.id);
+      }
     }
-  }, []);
+  }, [clienteId, initialData?.id]);
 
   const loadClientes = async () => {
     const { data } = await supabase
@@ -65,11 +69,19 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
   };
 
   const loadTiposMaterial = async () => {
-    const { data } = await supabase
+    if (!clienteId) return;
+    
+    let query = supabase
       .from("tipos_material")
       .select("*")
-      .eq("estado", "activo")
-      .order("nombre");
+      .eq("estado", "activo");
+    
+    // Filter by user's cliente_id unless superadmin
+    if (!isSuperAdmin()) {
+      query = query.eq("cliente_id", clienteId);
+    }
+    
+    const { data } = await query.order("nombre");
     setTiposMaterial(data || []);
   };
 
