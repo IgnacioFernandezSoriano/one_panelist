@@ -9,7 +9,7 @@ import { PlanPreviewSummary } from "@/components/intelligent-plan/PlanPreviewSum
 import { UnassignedEventsAlert } from "@/components/intelligent-plan/UnassignedEventsAlert";
 import { GeneratedPlansList } from "@/components/intelligent-plan/GeneratedPlansList";
 import { PlanMergeDialog } from "@/components/intelligent-plan/PlanMergeDialog";
-import { ImportModifiedPlanCSV } from "@/components/intelligent-plan/ImportModifiedPlanCSV";
+
 import { generateIntelligentPlan } from "@/lib/planGeneratorAlgorithm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -512,12 +512,6 @@ export default function IntelligentPlanGenerator() {
                   onExport={handleExportPlan}
                 />
 
-                {draftPlans.length > 0 && draftPlans[0] && (
-                  <ImportModifiedPlanCSV
-                    planId={draftPlans[0].id}
-                    onSuccess={loadDraftPlans}
-                  />
-                )}
               </>
             )}
           </TabsContent>
