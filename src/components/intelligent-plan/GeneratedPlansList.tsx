@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, Merge, Trash2 } from "lucide-react";
+import { Download, Merge, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
 import Papa from "papaparse";
 
@@ -24,9 +24,10 @@ interface GeneratedPlansListProps {
   onMerge: (planId: number) => void;
   onDelete: (planId: number) => void;
   onExport: (planId: number) => void;
+  onViewDetails: (planId: number) => void;
 }
 
-export function GeneratedPlansList({ plans, onMerge, onDelete, onExport }: GeneratedPlansListProps) {
+export function GeneratedPlansList({ plans, onMerge, onDelete, onExport, onViewDetails }: GeneratedPlansListProps) {
   if (plans.length === 0) {
     return (
       <Card className="p-8 text-center">
@@ -64,6 +65,14 @@ export function GeneratedPlansList({ plans, onMerge, onDelete, onExport }: Gener
             </div>
             
             <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onViewDetails(plan.id)}
+              >
+                <Eye className="h-4 w-4 mr-1" />
+                Details
+              </Button>
               <Button
                 size="sm"
                 variant="outline"

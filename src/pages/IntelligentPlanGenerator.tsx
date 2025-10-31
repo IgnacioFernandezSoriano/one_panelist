@@ -9,6 +9,7 @@ import { PlanPreviewSummary } from "@/components/intelligent-plan/PlanPreviewSum
 import { UnassignedEventsAlert } from "@/components/intelligent-plan/UnassignedEventsAlert";
 import { GeneratedPlansList } from "@/components/intelligent-plan/GeneratedPlansList";
 import { PlanMergeDialog } from "@/components/intelligent-plan/PlanMergeDialog";
+import { PlanDetailsDialog } from "@/components/intelligent-plan/PlanDetailsDialog";
 
 import { generateIntelligentPlan } from "@/lib/planGeneratorAlgorithm";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,6 +28,8 @@ export default function IntelligentPlanGenerator() {
   const [loading, setLoading] = useState(false);
   const [mergeDialogOpen, setMergeDialogOpen] = useState(false);
   const [selectedPlanForMerge, setSelectedPlanForMerge] = useState<any>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedPlanForDetails, setSelectedPlanForDetails] = useState<number | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
@@ -439,6 +442,11 @@ export default function IntelligentPlanGenerator() {
     }
   };
 
+  const handleViewDetails = (planId: number) => {
+    setSelectedPlanForDetails(planId);
+    setDetailsDialogOpen(true);
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -510,6 +518,7 @@ export default function IntelligentPlanGenerator() {
                   onMerge={handleMergePlan}
                   onDelete={handleDeletePlan}
                   onExport={handleExportPlan}
+                  onViewDetails={handleViewDetails}
                 />
 
               </>
@@ -524,6 +533,15 @@ export default function IntelligentPlanGenerator() {
           onCancel={() => {
             setMergeDialogOpen(false);
             setSelectedPlanForMerge(null);
+          }}
+        />
+
+        <PlanDetailsDialog
+          planId={selectedPlanForDetails}
+          open={detailsDialogOpen}
+          onClose={() => {
+            setDetailsDialogOpen(false);
+            setSelectedPlanForDetails(null);
           }}
         />
       </div>
