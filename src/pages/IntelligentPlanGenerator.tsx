@@ -14,12 +14,14 @@ import { PlanDetailsDialog } from "@/components/intelligent-plan/PlanDetailsDial
 import { generateIntelligentPlan } from "@/lib/planGeneratorAlgorithm";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { differenceInWeeks, format } from "date-fns";
 import Papa from "papaparse";
 import JSZip from "jszip";
 
 export default function IntelligentPlanGenerator() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [currentTab, setCurrentTab] = useState<'config' | 'review'>('config');
   const [planConfig, setPlanConfig] = useState<PlanConfiguration | null>(null);
   const [planPreview, setPlanPreview] = useState<any>(null);
@@ -475,17 +477,17 @@ export default function IntelligentPlanGenerator() {
         <div className="flex items-center gap-3">
           <Brain className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-3xl font-bold">Intelligent Plan Generator</h1>
+            <h1 className="text-3xl font-bold">{t('intelligent_plan.title')}</h1>
             <p className="text-muted-foreground">
-              Generate allocation plans using AI-powered distribution
+              {t('intelligent_plan.description')}
             </p>
           </div>
         </div>
 
         <Tabs value={currentTab} onValueChange={(v) => setCurrentTab(v as any)}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="config">Configuration</TabsTrigger>
-            <TabsTrigger value="review">Review Plans</TabsTrigger>
+            <TabsTrigger value="config">{t('intelligent_plan.configuration')}</TabsTrigger>
+            <TabsTrigger value="review">{t('intelligent_plan.review_plans')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="config" className="mt-6">
@@ -517,10 +519,10 @@ export default function IntelligentPlanGenerator() {
                   {generating ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Generating Plan...
+                      {t('intelligent_plan.generating_plan')}
                     </>
                   ) : (
-                    'Generate Plan'
+                    t('intelligent_plan.generate_plan')
                   )}
                 </Button>
               </div>
@@ -531,7 +533,7 @@ export default function IntelligentPlanGenerator() {
             {loading ? (
               <Card className="p-8 text-center">
                 <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-                <p className="text-muted-foreground">Loading draft plans...</p>
+                <p className="text-muted-foreground">{t('intelligent_plan.loading_plans')}</p>
               </Card>
             ) : (
               <>

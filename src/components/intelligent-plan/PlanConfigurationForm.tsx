@@ -12,6 +12,7 @@ import { CalendarIcon, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface PlanConfiguration {
   cliente_id: number;
@@ -32,6 +33,7 @@ interface PlanConfigurationFormProps {
 
 export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: PlanConfigurationFormProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [clientes, setClientes] = useState<any[]>([]);
   const [carriers, setCarriers] = useState<any[]>([]);
   const [productos, setProductos] = useState<any[]>([]);
@@ -200,8 +202,8 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
         !formData.start_date || !formData.end_date || !formData.total_events ||
         !formData.max_events_per_week || !formData.merge_strategy) {
       toast({
-        title: "Validation Error",
-        description: "Please fill in all required fields",
+        title: t('intelligent_plan.validation_error'),
+        description: t('intelligent_plan.fill_required'),
         variant: "destructive",
       });
       return;
@@ -209,8 +211,8 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
     if (formData.end_date <= formData.start_date) {
       toast({
-        title: "Validation Error",
-        description: "End date must be after start date",
+        title: t('intelligent_plan.validation_error'),
+        description: t('intelligent_plan.end_after_start'),
         variant: "destructive",
       });
       return;
@@ -218,8 +220,8 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
     if (formData.total_events <= 0) {
       toast({
-        title: "Validation Error",
-        description: "Total events must be greater than 0",
+        title: t('intelligent_plan.validation_error'),
+        description: t('intelligent_plan.events_positive'),
         variant: "destructive",
       });
       return;
@@ -232,13 +234,13 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
     <div className="space-y-6">
       {isSuperAdmin && (
         <div className="space-y-2">
-          <Label htmlFor="cliente">Account *</Label>
+          <Label htmlFor="cliente">{t('intelligent_plan.account')} *</Label>
           <Select
             value={formData.cliente_id?.toString()}
             onValueChange={(value) => setFormData({ ...formData, cliente_id: parseInt(value), carrier_id: undefined, producto_id: undefined })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select account" />
+              <SelectValue placeholder={t('intelligent_plan.select_account')} />
             </SelectTrigger>
             <SelectContent>
               {clientes.map((cliente) => (
@@ -252,14 +254,14 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="carrier">Carrier *</Label>
+        <Label htmlFor="carrier">{t('intelligent_plan.carrier')} *</Label>
         <Select
           value={formData.carrier_id?.toString()}
           onValueChange={(value) => setFormData({ ...formData, carrier_id: parseInt(value), producto_id: undefined })}
           disabled={!formData.cliente_id}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select carrier" />
+            <SelectValue placeholder={t('intelligent_plan.select_carrier')} />
           </SelectTrigger>
           <SelectContent>
             {carriers.map((carrier) => (
@@ -272,14 +274,14 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="producto">Product *</Label>
+        <Label htmlFor="producto">{t('intelligent_plan.product')} *</Label>
         <Select
           value={formData.producto_id?.toString()}
           onValueChange={(value) => setFormData({ ...formData, producto_id: parseInt(value) })}
           disabled={!formData.carrier_id}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select product" />
+            <SelectValue placeholder={t('intelligent_plan.select_product')} />
           </SelectTrigger>
           <SelectContent>
             {productos.map((producto: any) => (
@@ -293,7 +295,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Start Date *</Label>
+          <Label>{t('intelligent_plan.start_date')} *</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -304,7 +306,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.start_date ? format(formData.start_date, "PPP") : "Pick a date"}
+                {formData.start_date ? format(formData.start_date, "PPP") : t('intelligent_plan.pick_date')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -318,7 +320,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
         </div>
 
         <div className="space-y-2">
-          <Label>End Date *</Label>
+          <Label>{t('intelligent_plan.end_date')} *</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -329,7 +331,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {formData.end_date ? format(formData.end_date, "PPP") : "Pick a date"}
+                {formData.end_date ? format(formData.end_date, "PPP") : t('intelligent_plan.pick_date')}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -344,7 +346,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="total_events">Total Events (Annual) *</Label>
+        <Label htmlFor="total_events">{t('intelligent_plan.total_events')} *</Label>
         <Input
           id="total_events"
           type="number"
@@ -356,7 +358,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
       <div className="space-y-2">
         <Label htmlFor="max_events_per_week">
-          Max Events per Panelist/Week (Default: {defaultMaxEvents})
+          {t('intelligent_plan.max_events_per_week').replace('{value}', defaultMaxEvents.toString())}
         </Label>
         <Input
           id="max_events_per_week"
@@ -386,7 +388,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
       </div>
 
       <div className="space-y-2">
-        <Label>Merge Strategy *</Label>
+        <Label>{t('intelligent_plan.merge_strategy')} *</Label>
         <RadioGroup
           value={formData.merge_strategy}
           onValueChange={(value: 'add' | 'replace') => setFormData({ ...formData, merge_strategy: value })}
@@ -394,13 +396,13 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="add" id="add" />
             <Label htmlFor="add" className="font-normal cursor-pointer">
-              Add - Add to existing events
+              {t('intelligent_plan.merge_add')}
             </Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="replace" id="replace" />
             <Label htmlFor="replace" className="font-normal cursor-pointer">
-              Replace - Delete existing PENDING events for this carrier/product and add new ones
+              {t('intelligent_plan.merge_replace')}
             </Label>
           </div>
         </RadioGroup>
@@ -408,7 +410,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
       <div className="flex gap-2">
         <Button onClick={handleSubmit} className="flex-1">
-          Preview Plan
+          {t('intelligent_plan.preview_plan')}
         </Button>
         <Button variant="outline" onClick={onCancel}>
           Cancel
