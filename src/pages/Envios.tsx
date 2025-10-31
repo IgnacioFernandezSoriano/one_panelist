@@ -194,7 +194,7 @@ export default function Envios() {
             ciudades:ciudad_id (id, nombre, codigo)
           )
         `)
-        .order("fecha_programada", { ascending: false });
+        .order("fecha_programada", { ascending: true });
 
       if (error) throw error;
       setEnvios(data || []);
