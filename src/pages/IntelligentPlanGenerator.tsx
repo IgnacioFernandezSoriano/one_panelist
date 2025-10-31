@@ -72,7 +72,7 @@ export default function IntelligentPlanGenerator() {
 
   const handleConfigSubmit = (config: PlanConfiguration) => {
     setPlanConfig(config);
-    setCurrentTab('review');
+    // Stay on config tab to show the Generate Plan button
   };
 
   const handleGeneratePlan = async () => {
