@@ -159,9 +159,9 @@ const AppSidebarContent = () => {
 
   const allocationPlanItems = [
     { icon: Send, label: "View Plan", path: "/envios" },
-        { icon: Brain, label: "Generador Plan", path: "/envios/intelligent-plan-generator" },
+        { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
         { icon: FileBarChart, label: "Generador CSV Plan", path: "/envios/plan-csv-generator" },
-    { icon: Upload, label: "Import Plan", path: "/envios", action: "import-csv" },
+    { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
     { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
     { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
   ];
