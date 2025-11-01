@@ -68,6 +68,7 @@ const AppSidebarContent = () => {
   const [superAdminOpen, setSuperAdminOpen] = useState(false);
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
   const [topologyOpen, setTopologyOpen] = useState(false);
+  const [panelistsOpen, setPanelistsOpen] = useState(false);
   const { isSuperAdmin, hasAnyRole } = useUserRole();
   const { canAccessMenuItem } = useMenuPermissions();
   const { t } = useTranslation();
@@ -138,9 +139,16 @@ const AppSidebarContent = () => {
     }
     if (location.pathname.startsWith("/envios")) {
       setAllocationPlanOpen(true);
+      // Also open panelists menu if on massive-change page
+      if (location.pathname === "/envios/massive-change") {
+        setPanelistsOpen(true);
+      }
     }
     if (location.pathname.startsWith("/topology")) {
       setTopologyOpen(true);
+    }
+    if (location.pathname === "/panelistas") {
+      setPanelistsOpen(true);
     }
   }, [location.pathname]);
 
@@ -157,11 +165,14 @@ const AppSidebarContent = () => {
     { icon: UserX, label: "Unassigned Nodes", path: "/topology/unassigned-nodes" },
   ];
 
+  const panelistItems = [
+    { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
+  ];
+
   const allocationPlanItems = [
     { icon: Send, label: "View Plan", path: "/envios" },
         { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
     { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
-    { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
     { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
   ];
 
@@ -280,15 +291,58 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
-            {/* Panelists */}
+            {/* Panelists Collapsible */}
             {canAccessMenuItem('panelistas') && (
               <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location.pathname === "/panelistas"}>
-                  <Link to="/panelistas">
+                <Collapsible open={panelistsOpen} onOpenChange={setPanelistsOpen}>
+                <CollapsibleTrigger asChild>
+                  <SidebarMenuButton isActive={location.pathname === "/panelistas" || location.pathname === "/envios/massive-change"}>
                     <Users className="w-5 h-5" />
                     {sidebarOpen && <span>Panelists</span>}
-                  </Link>
-                </SidebarMenuButton>
+                    {sidebarOpen && (panelistsOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroup>
+                    <SidebarGroupContent>
+                      <SidebarMenu>
+                        {/* View Panelists */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            asChild 
+                            isActive={location.pathname === "/panelistas"} 
+                            className="pl-8"
+                          >
+                            <Link to="/panelistas">
+                              <Users className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">View Panelists</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        {/* Submenu items */}
+                        {panelistItems.map((item) => {
+                          const isActive = location.pathname === item.path;
+                          return (
+                            <SidebarMenuItem key={item.path}>
+                              <SidebarMenuButton 
+                                asChild 
+                                isActive={isActive} 
+                                className="pl-8"
+                              >
+                                <Link to={item.path}>
+                                  <item.icon className="w-4 h-4" />
+                                  {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                </Link>
+                              </SidebarMenuButton>
+                            </SidebarMenuItem>
+                          );
+                        })}
+                      </SidebarMenu>
+                    </SidebarGroupContent>
+                  </SidebarGroup>
+                </CollapsibleContent>
+                </Collapsible>
               </SidebarMenuItem>
             )}
 
