@@ -48,7 +48,8 @@ import {
   User as UserIcon,
   FileBarChart,
   Brain,
-  Wrench
+  Wrench,
+  BookOpen
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -555,8 +556,19 @@ const AppSidebarContent = () => {
                 </Collapsible>
               </SidebarMenuItem>
             )}
+            
+            {/* Documentation Link */}
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild isActive={location.pathname === "/documentation"}>
+                <Link to="/documentation">
+                  <BookOpen className="w-5 h-5" />
+                  {sidebarOpen && <span>Documentation</span>}
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
-        </SidebarGroup>
+        </SidebarGroupContent>
+      </SidebarGroup>
       </SidebarContent>
 
       {/* User Profile Dropdown */}

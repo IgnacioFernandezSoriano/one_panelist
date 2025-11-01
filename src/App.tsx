@@ -41,6 +41,7 @@ import EditarEnvio from "./pages/EditarEnvio";
 import IntelligentPlanGenerator from "./pages/IntelligentPlanGenerator";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
+import Documentation from "./pages/Documentation";
 import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/documentation" element={<Documentation />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/panelistas" element={<Panelistas />} />
             <Route path="/envios" element={<Envios />} />
