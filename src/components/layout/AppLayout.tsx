@@ -139,8 +139,8 @@ const AppSidebarContent = () => {
     }
     if (location.pathname.startsWith("/envios")) {
       setAllocationPlanOpen(true);
-      // Also open panelists menu if on massive-change page
-      if (location.pathname === "/envios/massive-change") {
+      // Also open panelists menu if on massive-change or materials-plan pages
+      if (location.pathname === "/envios/massive-change" || location.pathname === "/envios/materials-plan") {
         setPanelistsOpen(true);
       }
     }
@@ -167,13 +167,13 @@ const AppSidebarContent = () => {
 
   const panelistItems = [
     { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
+    { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
   ];
 
   const allocationPlanItems = [
     { icon: Send, label: "View Plan", path: "/envios" },
         { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
     { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
-    { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
   ];
 
   const measurementTopologyItems = [
@@ -296,7 +296,7 @@ const AppSidebarContent = () => {
               <SidebarMenuItem>
                 <Collapsible open={panelistsOpen} onOpenChange={setPanelistsOpen}>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton isActive={location.pathname === "/panelistas" || location.pathname === "/envios/massive-change"}>
+                  <SidebarMenuButton isActive={location.pathname === "/panelistas" || location.pathname === "/envios/massive-change" || location.pathname === "/envios/materials-plan"}>
                     <Users className="w-5 h-5" />
                     {sidebarOpen && <span>Panelists</span>}
                     {sidebarOpen && (panelistsOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
