@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useUserRole } from '@/hooks/useUserRole';
 import { Download, Upload, Plus, Search } from 'lucide-react';
 import Papa from 'papaparse';
 
@@ -37,6 +38,10 @@ export default function Traducciones() {
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { hasAnyRole } = useUserRole();
+  
+  // Check if user can manage translations (admin or superadmin)
+  const canManageTranslations = hasAnyRole(['admin', 'superadmin']);
 
   const { data: translations = [], isLoading } = useQuery({
     queryKey: ['all-translations'],
@@ -247,25 +252,27 @@ export default function Traducciones() {
                 <Download className="h-4 w-4 mr-2" />
                 Exportar CSV
               </Button>
-              <Button variant="outline" asChild>
-                <label>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Importar CSV
-                  <input
-                    type="file"
-                    accept=".csv"
-                    className="hidden"
-                    onChange={handleImportCSV}
-                  />
-                </label>
-              </Button>
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nueva Traducción
+              {canManageTranslations && (
+                <>
+                  <Button variant="outline" asChild>
+                    <label>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Importar CSV
+                      <input
+                        type="file"
+                        accept=".csv"
+                        className="hidden"
+                        onChange={handleImportCSV}
+                      />
+                    </label>
                   </Button>
-                </DialogTrigger>
+                  <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nueva Traducción
+                      </Button>
+                    </DialogTrigger>
                 <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Nueva Traducción</DialogTitle>
@@ -316,6 +323,8 @@ export default function Traducciones() {
                   </div>
                 </DialogContent>
               </Dialog>
+                </>
+              )}
             </div>
           </div>
         </Card>

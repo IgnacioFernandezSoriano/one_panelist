@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: string | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: number
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id: number
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: string | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       carrier_productos: {
         Row: {
           carrier_id: number
@@ -42,6 +86,13 @@ export type Database = {
             columns: ["carrier_id"]
             isOneToOne: false
             referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "carrier_productos_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers_public_view"
             referencedColumns: ["id"]
           },
           {
@@ -497,6 +548,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "envios_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers_public_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "envios_cliente_id_fkey"
             columns: ["cliente_id"]
             isOneToOne: false
@@ -525,10 +583,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "envios_panelista_destino_id_fkey"
+            columns: ["panelista_destino_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas_basic_view"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "envios_panelista_origen_id_fkey"
             columns: ["panelista_origen_id"]
             isOneToOne: false
             referencedRelation: "panelistas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_panelista_origen_id_fkey"
+            columns: ["panelista_origen_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas_basic_view"
             referencedColumns: ["id"]
           },
           {
@@ -580,6 +652,13 @@ export type Database = {
             columns: ["carrier_id"]
             isOneToOne: false
             referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_allocation_plan_details_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers_public_view"
             referencedColumns: ["id"]
           },
           {
@@ -669,6 +748,13 @@ export type Database = {
             columns: ["carrier_id"]
             isOneToOne: false
             referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "generated_allocation_plans_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers_public_view"
             referencedColumns: ["id"]
           },
           {
@@ -863,6 +949,13 @@ export type Database = {
             referencedRelation: "panelistas"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "incidencias_panelista_id_fkey"
+            columns: ["panelista_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas_basic_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       menu_permissions: {
@@ -936,6 +1029,13 @@ export type Database = {
             columns: ["panelista_id"]
             isOneToOne: false
             referencedRelation: "panelistas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_nodos_panelista"
+            columns: ["panelista_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas_basic_view"
             referencedColumns: ["id"]
           },
           {
@@ -1458,7 +1558,105 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      carriers_public_view: {
+        Row: {
+          carrier_code: string | null
+          cliente_id: number | null
+          commercial_name: string | null
+          created_at: string | null
+          id: number | null
+          legal_name: string | null
+          operator_type: Database["public"]["Enums"]["operator_type"] | null
+          status: string | null
+        }
+        Insert: {
+          carrier_code?: string | null
+          cliente_id?: number | null
+          commercial_name?: string | null
+          created_at?: string | null
+          id?: number | null
+          legal_name?: string | null
+          operator_type?: Database["public"]["Enums"]["operator_type"] | null
+          status?: string | null
+        }
+        Update: {
+          carrier_code?: string | null
+          cliente_id?: number | null
+          commercial_name?: string | null
+          created_at?: string | null
+          id?: number | null
+          legal_name?: string | null
+          operator_type?: Database["public"]["Enums"]["operator_type"] | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "carriers_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      panelistas_basic_view: {
+        Row: {
+          ciudad_id: number | null
+          cliente_id: number | null
+          estado: string | null
+          fecha_alta: string | null
+          id: number | null
+          idioma: string | null
+          nodo_asignado: string | null
+          nombre_completo: string | null
+          plataforma_preferida: string | null
+        }
+        Insert: {
+          ciudad_id?: number | null
+          cliente_id?: number | null
+          estado?: string | null
+          fecha_alta?: string | null
+          id?: number | null
+          idioma?: string | null
+          nodo_asignado?: string | null
+          nombre_completo?: string | null
+          plataforma_preferida?: string | null
+        }
+        Update: {
+          ciudad_id?: number | null
+          cliente_id?: number | null
+          estado?: string | null
+          fecha_alta?: string | null
+          id?: number | null
+          idioma?: string | null
+          nodo_asignado?: string | null
+          nombre_completo?: string | null
+          plataforma_preferida?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_panelistas_ciudad"
+            columns: ["ciudad_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panelistas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panelistas_nodo_asignado_fkey"
+            columns: ["nodo_asignado"]
+            isOneToOne: false
+            referencedRelation: "nodos"
+            referencedColumns: ["codigo"]
+          },
+        ]
+      }
     }
     Functions: {
       generate_next_material_code: {

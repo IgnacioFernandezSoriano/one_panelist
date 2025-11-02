@@ -567,8 +567,7 @@ const AppSidebarContent = () => {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+        </SidebarGroup>
       </SidebarContent>
 
       {/* User Profile Dropdown */}

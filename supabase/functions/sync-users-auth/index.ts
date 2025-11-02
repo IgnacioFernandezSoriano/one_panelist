@@ -6,24 +6,98 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+function generateTempPassword(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+  let password = '';
+  for (let i = 0; i < 16; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
-  // Helper: generate a strong temporary password (min 12 chars, includes symbols)
-  const generateTempPassword = () => {
-    const bytes = new Uint8Array(16)
-    crypto.getRandomValues(bytes)
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*'
-    let pass = 'Tmp-'
-    for (let i = 0; i < 12; i++) pass += chars[bytes[i] % chars.length]
-    return pass
-  }
-
   try {
-    // Create a Supabase client with the service role key
+    // Get authorization token
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Create a Supabase client with the auth header
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        },
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      console.error('Auth error:', userError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Get user from usuarios table
+    const { data: usuario, error: usuarioError } = await supabaseClient
+      .from('usuarios')
+      .select('id')
+      .eq('email', user.email)
+      .single();
+
+    if (usuarioError || !usuario) {
+      console.error('Usuario not found:', usuarioError);
+      return new Response(
+        JSON.stringify({ error: 'User profile not found' }),
+        { 
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Check if user has superadmin role
+    const { data: roles, error: rolesError } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', usuario.id);
+
+    if (rolesError || !roles || !roles.some(r => r.role === 'superadmin')) {
+      console.error('Not superadmin:', { userId: usuario.id, roles });
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Superadmin role required' }),
+        { 
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Create admin client for sync operation
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -33,102 +107,110 @@ serve(async (req) => {
           persistSession: false
         }
       }
-    )
+    );
 
-    console.log('Starting user synchronization...')
-
-    // Get all users from the usuarios table
+    // Get all active users from usuarios table
     const { data: usuarios, error: usuariosError } = await supabaseAdmin
       .from('usuarios')
-      .select('id, email, password_hash, nombre_completo, estado')
-      .eq('estado', 'activo')
+      .select('id, email, nombre_completo')
+      .eq('estado', 'activo');
 
     if (usuariosError) {
-      console.error('Error fetching usuarios:', usuariosError)
-      throw new Error(`Failed to fetch usuarios: ${usuariosError.message}`)
-    }
-
-    console.log(`Found ${usuarios?.length || 0} active users in usuarios table`)
-
-    const results = {
-      total: usuarios?.length || 0,
-      created: 0,
-      existing: 0,
-      failed: [] as any[],
-      errors: [] as any[]
-    }
-
-    // Process each user
-    for (const usuario of usuarios || []) {
-      try {
-        // Check if user already exists in auth
-        const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers()
-        const existingUser = existingAuthUsers?.users?.find(u => u.email === usuario.email)
-
-        if (existingUser) {
-          console.log(`User already exists in auth: ${usuario.email}`)
-          results.existing++
-          continue
+      console.error('Error fetching usuarios:', usuariosError);
+      return new Response(
+        JSON.stringify({ error: 'Error fetching users from database' }),
+        { 
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
+      );
+    }
 
-        // Create user in Supabase Auth
-        console.log(`Creating auth user for: ${usuario.email}`)
-        const tempPassword = generateTempPassword()
+    console.log(`Found ${usuarios?.length || 0} active usuarios to sync`);
+
+    // Get existing auth users
+    const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingEmails = new Set(existingAuthUsers?.users?.map(u => u.email?.toLowerCase()) || []);
+
+    let syncedCount = 0;
+    let skippedCount = 0;
+    const errors: any[] = [];
+
+    // Sync each user
+    for (const usuario of usuarios || []) {
+      const email = usuario.email.toLowerCase();
+
+      if (existingEmails.has(email)) {
+        console.log(`User already exists in auth: ${email}`);
+        skippedCount++;
+        continue;
+      }
+
+      try {
+        const tempPassword = generateTempPassword();
+        
         const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-          email: usuario.email,
+          email: email,
           password: tempPassword,
-          email_confirm: true, // Auto-confirm the email
+          email_confirm: true,
           user_metadata: {
-            nombre_completo: usuario.nombre_completo || usuario.email
+            nombre_completo: usuario.nombre_completo
           }
-        })
+        });
 
         if (authError) {
-          console.error(`Failed to create auth user for ${usuario.email}:`, authError)
-          results.failed.push({
-            email: usuario.email,
-            error: authError.message
-          })
-          results.errors.push(authError.message)
-        } else {
-          console.log(`Successfully created auth user for: ${usuario.email}`)
-          results.created++
+          console.error(`Error creating auth user for ${email}:`, authError);
+          errors.push({ email, error: authError.message });
+          continue;
         }
+
+        console.log(`Successfully created auth user: ${email}`);
+        syncedCount++;
+
       } catch (error: any) {
-        console.error(`Error processing user ${usuario.email}:`, error)
-        results.failed.push({
-          email: usuario.email,
-          error: error?.message || 'Unknown error'
-        })
-        results.errors.push(error?.message || 'Unknown error')
+        console.error(`Exception creating auth user for ${email}:`, error);
+        errors.push({ email, error: error.message });
       }
     }
 
-    console.log('Synchronization completed:', results)
+    // Log audit trail
+    await supabaseClient
+      .from('admin_audit_log')
+      .insert({
+        user_id: usuario.id,
+        action: 'SYNC_USERS',
+        resource_type: 'auth_users',
+        details: { 
+          synced: syncedCount, 
+          skipped: skippedCount, 
+          errors: errors.length,
+          executed_by: user.email 
+        }
+      });
+
+    console.log(`Sync complete: ${syncedCount} created, ${skippedCount} skipped, ${errors.length} errors`);
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: `Synchronization completed. Created: ${results.created}, Existing: ${results.existing}, Failed: ${results.failed.length}`,
-        details: results
+        synced: syncedCount,
+        skipped: skippedCount,
+        errors: errors,
+        message: `Synchronization complete: ${syncedCount} users created`
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
 
   } catch (error: any) {
-    console.error('Fatal error:', error)
+    console.error('Fatal error:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error?.message || 'Unknown error occurred',
-        details: error
-      }),
+      JSON.stringify({ error: 'Internal server error' }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    )
+    );
   }
 })
