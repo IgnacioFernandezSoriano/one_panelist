@@ -116,6 +116,7 @@ const NodeDetail = () => {
           nodo_origen,
           nodo_destino,
           plan_id,
+          status,
           plan:generated_allocation_plans!inner(status)
         `)
         .eq('cliente_id', clienteId)
@@ -128,7 +129,7 @@ const NodeDetail = () => {
         fecha_programada: e.fecha_programada,
         nodo_origen: e.nodo_origen,
         nodo_destino: e.nodo_destino,
-        status: e.plan?.status || 'draft',
+        status: e.status || 'PENDING',
         plan_id: e.plan_id,
       }));
 

@@ -15,7 +15,7 @@ export interface AffectedEvent {
   fecha_programada: string;
   nodo_origen: string;
   nodo_destino: string;
-  status: string;
+  status: 'PENDING' | 'SENT' | 'RECEIVED' | 'NOTIFIED' | 'CANCELLED';
   plan_id: number;
 }
 
@@ -44,9 +44,23 @@ export const AffectedEventsTable = ({ events, availableNodes, onSaveEvent }: Aff
   };
 
   const getStatusBadge = (status: string) => {
-    if (status === 'draft') return <Badge variant="outline">Borrador</Badge>;
-    if (status === 'merged') return <Badge className="bg-success text-success-foreground">Fusionado</Badge>;
-    return <Badge>{status}</Badge>;
+    const statusMap: Record<string, { label: string; variant: string }> = {
+      'PENDING': { label: 'Pendiente', variant: 'outline' },
+      'SENT': { label: 'Enviado', variant: 'default' },
+      'RECEIVED': { label: 'Recibido', variant: 'default' },
+      'NOTIFIED': { label: 'Notificado', variant: 'default' },
+      'CANCELLED': { label: 'Cancelado', variant: 'destructive' },
+    };
+    
+    const statusInfo = statusMap[status] || { label: status, variant: 'outline' };
+    
+    if (statusInfo.variant === 'destructive') {
+      return <Badge variant="destructive">{statusInfo.label}</Badge>;
+    }
+    if (status === 'RECEIVED') {
+      return <Badge className="bg-success text-success-foreground">{statusInfo.label}</Badge>;
+    }
+    return <Badge variant={statusInfo.variant as any}>{statusInfo.label}</Badge>;
   };
 
   return (

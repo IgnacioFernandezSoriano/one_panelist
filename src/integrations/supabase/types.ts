@@ -623,6 +623,7 @@ export type Database = {
           nodo_origen: string
           plan_id: number
           producto_id: number
+          status: Database["public"]["Enums"]["estado_envio"] | null
         }
         Insert: {
           carrier_id: number
@@ -634,6 +635,7 @@ export type Database = {
           nodo_origen: string
           plan_id: number
           producto_id: number
+          status?: Database["public"]["Enums"]["estado_envio"] | null
         }
         Update: {
           carrier_id?: number
@@ -645,6 +647,7 @@ export type Database = {
           nodo_origen?: string
           plan_id?: number
           producto_id?: number
+          status?: Database["public"]["Enums"]["estado_envio"] | null
         }
         Relationships: [
           {
