@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +33,7 @@ interface NodeRisk {
 }
 
 const NodosDescubiertos = () => {
+  const navigate = useNavigate();
   const [risks, setRisks] = useState<NodeRisk[]>([]);
   const [filteredRisks, setFilteredRisks] = useState<NodeRisk[]>([]);
   const [loading, setLoading] = useState(true);
@@ -442,9 +444,13 @@ const NodosDescubiertos = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button variant="outline" size="sm">
-                            Ver Detalle
-                          </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate(`/issues/nodos-descubiertos/${risk.nodo_codigo}`)}
+                    >
+                      Ver Detalle
+                    </Button>
                         </TableCell>
                       </TableRow>
                     ))}
