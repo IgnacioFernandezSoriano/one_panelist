@@ -67,13 +67,13 @@ export const WeeklyLoadTable = ({ loads, weekRange, maxEventsPerWeek }: WeeklyLo
             <TableBody>
               {loads.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={weekRange.length + 3} className="text-center text-muted-foreground py-8">
                     No hay nodos en esta ubicación
                   </TableCell>
                 </TableRow>
               ) : (
                 loads.map((load) => {
-                  const weekValues = [
+                  const allWeekValues = [
                     load.week_minus_2,
                     load.week_minus_1,
                     load.week_0,
@@ -82,6 +82,9 @@ export const WeeklyLoadTable = ({ loads, weekRange, maxEventsPerWeek }: WeeklyLo
                     load.week_plus_3,
                     load.week_plus_4,
                   ];
+                  
+                  // Only show weeks that are in the weekRange (filtered weeks)
+                  const weekValues = allWeekValues.slice(7 - weekRange.length);
 
                   return (
                     <TableRow key={load.nodo_codigo}>
@@ -93,18 +96,23 @@ export const WeeklyLoadTable = ({ loads, weekRange, maxEventsPerWeek }: WeeklyLo
                           <span className="text-muted-foreground italic">Sin panelista</span>
                         )}
                       </TableCell>
-                      {weekValues.map((count, idx) => (
-                        <TableCell
-                          key={idx}
-                          className={cn(
-                            "text-center font-medium transition-colors",
-                            getColorClass(count, !load.panelista_id),
-                            idx === 2 && "ring-2 ring-primary ring-inset"
-                          )}
-                        >
-                          {count}
-                        </TableCell>
-                      ))}
+                      {weekValues.map((count, idx) => {
+                        // Find if this is week 0 in the original weekRange
+                        const isWeek0 = weekRange[idx]?.weekNumber === 0;
+                        
+                        return (
+                          <TableCell
+                            key={idx}
+                            className={cn(
+                              "text-center font-medium transition-colors",
+                              getColorClass(count, !load.panelista_id),
+                              isWeek0 && "ring-2 ring-primary ring-inset"
+                            )}
+                          >
+                            {count}
+                          </TableCell>
+                        );
+                      })}
                       <TableCell className="text-center font-bold">
                         {load.total}
                       </TableCell>

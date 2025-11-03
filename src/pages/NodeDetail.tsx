@@ -116,8 +116,6 @@ const NodeDetail = () => {
           nodo_origen,
           nodo_destino,
           plan_id,
-          producto:productos_cliente(nombre_producto),
-          carrier:carriers(legal_name),
           plan:generated_allocation_plans!inner(status)
         `)
         .eq('cliente_id', clienteId)
@@ -125,21 +123,12 @@ const NodeDetail = () => {
         .in('plan.status', ['draft', 'merged'])
         .order('fecha_programada');
 
-      const formattedEvents: AffectedEvent[] = (eventsQuery.data || []).map((e: {
-        id: number;
-        fecha_programada: string;
-        nodo_origen: string;
-        nodo_destino: string;
-        plan_id: number;
-        producto: { nombre_producto: string } | null;
-        carrier: { legal_name: string } | null;
-      }) => ({
+      const formattedEvents: AffectedEvent[] = (eventsQuery.data || []).map((e: any) => ({
         id: e.id,
         fecha_programada: e.fecha_programada,
         nodo_origen: e.nodo_origen,
         nodo_destino: e.nodo_destino,
-        producto_nombre: e.producto?.nombre_producto || 'N/A',
-        carrier_nombre: e.carrier?.legal_name || 'N/A',
+        status: e.plan?.status || 'draft',
         plan_id: e.plan_id,
       }));
 
@@ -185,15 +174,18 @@ const NodeDetail = () => {
 
       setNodeRisk(risk);
 
-      // Calculate week range centered on first event
-      const weeks = calculateWeekRange(risk.first_event_date);
-      setWeekRange(weeks);
+      // Calculate week range centered on first event, filter to only future weeks
+      const allWeeks = calculateWeekRange(risk.first_event_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const futureWeeks = allWeeks.filter(week => week.endDate >= today);
+      setWeekRange(futureWeeks);
 
       // Load available nodes (same city for A/B, same region for C)
       await loadAvailableNodes(risk, clienteId);
 
       // Load weekly loads
-      await loadWeeklyLoads(weeks, risk, clienteId);
+      await loadWeeklyLoads(futureWeeks, risk, clienteId);
 
     } catch (error) {
       console.error('Error loading node detail:', error);
@@ -210,7 +202,8 @@ const NodeDetail = () => {
       .from('nodos')
       .select(`
         codigo,
-        panelista:panelistas!fk_nodos_panelista(nombre_completo)
+        panelista:panelistas!fk_nodos_panelista(nombre_completo),
+        ciudad_info:ciudades(clasificacion)
       `)
       .eq('cliente_id', clienteId)
       .eq('estado', 'activo');
@@ -222,7 +215,12 @@ const NodeDetail = () => {
     }
 
     const nodesQuery = await query;
-    const nodes = nodesQuery.data;
+    let nodes = nodesQuery.data;
+
+    // For type C, filter to only include other type C nodes
+    if (isTypeC && nodes) {
+      nodes = nodes.filter((n: any) => n.ciudad_info?.clasificacion === 'C');
+    }
 
     setAvailableNodes((nodes || []).map((n: {
       codigo: string;
@@ -260,7 +258,8 @@ const NodeDetail = () => {
       .select(`
         codigo,
         panelista_id,
-        panelista:panelistas!fk_nodos_panelista(nombre_completo)
+        panelista:panelistas!fk_nodos_panelista(nombre_completo),
+        ciudad_info:ciudades(clasificacion)
       `)
       .eq('cliente_id', clienteId)
       .eq('estado', 'activo');
@@ -272,7 +271,12 @@ const NodeDetail = () => {
     }
 
     const nodeQueryResult = await nodeQuery;
-    const nodes = nodeQueryResult.data;
+    let nodes = nodeQueryResult.data;
+
+    // For type C, filter to only include other type C nodes
+    if (isTypeC && nodes) {
+      nodes = nodes.filter((n: any) => n.ciudad_info?.clasificacion === 'C');
+    }
 
     // Calculate weekly loads
     const loads: NodeWeeklyLoad[] = (nodes || []).map((node: {
