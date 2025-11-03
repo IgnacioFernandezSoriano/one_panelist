@@ -58,13 +58,13 @@ const NodeDetail = () => {
 
       // Get current user's cliente_id
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
+      if (!user || !user.email) throw new Error("No user found");
 
       // @ts-ignore - Supabase type inference issue
       const userQuery = await supabase
         .from('usuarios')
-        .select('cliente_id')
-        .eq('auth_user_id', user.id)
+        .select('id, cliente_id')
+        .eq('email', user.email)
         .maybeSingle();
 
       if (!userQuery.data) throw new Error("User data not found");
