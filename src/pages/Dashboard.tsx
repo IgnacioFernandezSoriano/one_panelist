@@ -119,7 +119,7 @@ export default function Dashboard() {
     const { data: delayed } = await supabase
       .from("envios")
       .select("id, fecha_programada, producto_id")
-      .in("estado", ["SENT", "SENDER_NOTIFIED"])
+      .eq("estado", "SENT")
       .lt("fecha_programada", new Date().toISOString());
 
     // Incidencias críticas: prioridad alta y estado abierta
@@ -197,7 +197,7 @@ export default function Dashboard() {
       : 0;
 
     // Tasa de incidencias
-    const { data: allShipments } = await supabase
+    const { count: allShipmentsCount } = await supabase
       .from("envios")
       .select("id", { count: "exact", head: true });
 
@@ -210,12 +210,12 @@ export default function Dashboard() {
       shipmentsWithIssues?.map((i) => i.envio_id)
     ).size;
 
-    const incidentRate = allShipments?.count
-      ? Math.round((uniqueShipmentsWithIssues / allShipments.count) * 100 * 10) / 10
+    const incidentRate = allShipmentsCount
+      ? Math.round((uniqueShipmentsWithIssues / allShipmentsCount) * 100 * 10) / 10
       : 0;
 
     // Utilización de panelistas (simplificado)
-    const { data: panelists } = await supabase
+    const { count: panelistsCount } = await supabase
       .from("panelistas")
       .select("id", { count: "exact", head: true })
       .eq("estado", "activo");
@@ -233,8 +233,8 @@ export default function Dashboard() {
       ...(recentShipments?.map((e) => e.panelista_destino_id) || []),
     ]);
 
-    const utilization = panelists?.count
-      ? Math.round((assignedPanelists.size / panelists.count) * 100)
+    const utilization = panelistsCount
+      ? Math.round((assignedPanelists.size / panelistsCount) * 100)
       : 0;
 
     return {
@@ -403,7 +403,7 @@ export default function Dashboard() {
     const panelistsWithStats = panelists?.map((p) => {
       const stats = panelistStats[p.id] || { shipments: 0, onTime: 0, total: 0 };
       return {
-        id: p.id,
+        id: p.id.toString(),
         name: p.nombre_completo,
         shipments: stats.shipments,
         successRate: stats.total > 0 ? Math.round((stats.onTime / stats.total) * 100) : 0,

@@ -1056,8 +1056,11 @@ export type Database = {
       }
       panelistas: {
         Row: {
+          availability_status: string | null
           ciudad_id: number | null
           cliente_id: number
+          current_leave_end: string | null
+          current_leave_start: string | null
           dias_comunicacion: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
@@ -1072,6 +1075,7 @@ export type Database = {
           horario_inicio: string
           id: number
           idioma: string
+          last_availability_change: string | null
           nodo_asignado: string | null
           nombre_completo: string
           plataforma_preferida: string
@@ -1079,8 +1083,11 @@ export type Database = {
           zona_horaria: string
         }
         Insert: {
+          availability_status?: string | null
           ciudad_id?: number | null
           cliente_id: number
+          current_leave_end?: string | null
+          current_leave_start?: string | null
           dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
@@ -1095,6 +1102,7 @@ export type Database = {
           horario_inicio: string
           id?: number
           idioma: string
+          last_availability_change?: string | null
           nodo_asignado?: string | null
           nombre_completo: string
           plataforma_preferida: string
@@ -1102,8 +1110,11 @@ export type Database = {
           zona_horaria: string
         }
         Update: {
+          availability_status?: string | null
           ciudad_id?: number | null
           cliente_id?: number
+          current_leave_end?: string | null
+          current_leave_start?: string | null
           dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle?: string
           direccion_ciudad?: string
@@ -1118,6 +1129,7 @@ export type Database = {
           horario_inicio?: string
           id?: number
           idioma?: string
+          last_availability_change?: string | null
           nodo_asignado?: string | null
           nombre_completo?: string
           plataforma_preferida?: string
@@ -1152,6 +1164,77 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "nodos"
             referencedColumns: ["codigo"]
+          },
+        ]
+      }
+      panelistas_availability_log: {
+        Row: {
+          changed_at: string
+          changed_by: number | null
+          cliente_id: number
+          id: number
+          leave_end_date: string | null
+          leave_start_date: string | null
+          notes: string | null
+          panelista_id: number
+          previous_status: string | null
+          reason: string | null
+          status: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: number | null
+          cliente_id: number
+          id?: number
+          leave_end_date?: string | null
+          leave_start_date?: string | null
+          notes?: string | null
+          panelista_id: number
+          previous_status?: string | null
+          reason?: string | null
+          status: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: number | null
+          cliente_id?: number
+          id?: number
+          leave_end_date?: string | null
+          leave_start_date?: string | null
+          notes?: string | null
+          panelista_id?: number
+          previous_status?: string | null
+          reason?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panelistas_availability_log_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panelistas_availability_log_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panelistas_availability_log_panelista_id_fkey"
+            columns: ["panelista_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panelistas_availability_log_panelista_id_fkey"
+            columns: ["panelista_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas_basic_view"
+            referencedColumns: ["id"]
           },
         ]
       }

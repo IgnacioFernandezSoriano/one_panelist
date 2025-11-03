@@ -166,13 +166,17 @@ async function loadTopology(cliente_id: number): Promise<Node[]> {
     .select(`
       codigo,
       estado,
+      panelistas!inner (
+        availability_status
+      ),
       ciudades (
         id,
         region_id,
         clasificacion
       )
     `)
-    .eq('cliente_id', cliente_id);
+    .eq('cliente_id', cliente_id)
+    .eq('panelistas.availability_status', 'active');
 
   if (error) throw error;
 

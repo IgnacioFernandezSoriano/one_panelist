@@ -5,12 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useTranslation } from "@/hooks/useTranslation";
+import { AvailabilityManager } from "@/components/panelistas/AvailabilityManager";
 
 interface PanelistaFormProps {
   onSuccess: () => void;
@@ -185,7 +187,16 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <Tabs defaultValue="general" className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="general">Datos Generales</TabsTrigger>
+        <TabsTrigger value="availability" disabled={!isEditing}>
+          Bajas Temporales
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="general">
+        <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2 bg-muted/50 p-4 rounded-lg border">
         <Label htmlFor="cliente_id">{t('panelist.account_client')} *</Label>
         {isSuperAdmin() ? (
@@ -600,6 +611,21 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
           {isSubmitting ? (isEditing ? t('button.updating') : t('button.creating')) : (isEditing ? t('button.update_panelist') : t('button.add'))}
         </Button>
       </div>
-    </form>
+        </form>
+      </TabsContent>
+
+      <TabsContent value="availability">
+        {isEditing && initialData?.id && (
+          <AvailabilityManager
+            panelistaId={initialData.id}
+            clienteId={parseInt(formData.cliente_id)}
+            currentStatus={initialData.availability_status || 'active'}
+            currentLeaveStart={initialData.current_leave_start}
+            currentLeaveEnd={initialData.current_leave_end}
+            onUpdate={onSuccess}
+          />
+        )}
+      </TabsContent>
+    </Tabs>
   );
 }
