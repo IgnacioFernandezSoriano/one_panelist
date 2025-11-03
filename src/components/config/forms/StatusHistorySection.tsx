@@ -3,12 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Clock, User, MessageSquare, Edit2, CheckCircle, XCircle, Bell, Send } from "lucide-react";
+import { Clock, User, MessageSquare, Edit2, CheckCircle, XCircle, Bell, Send, Save, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -39,11 +38,10 @@ interface StatusHistorySectionProps {
 export function StatusHistorySection({ envioId, currentStatus, onStatusChange }: StatusHistorySectionProps) {
   const [history, setHistory] = useState<StatusHistory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [canChangeStatus, setCanChangeStatus] = useState(false);
-  const [showChangeDialog, setShowChangeDialog] = useState(false);
-  const [newStatus, setNewStatus] = useState("");
-  const [statusNotes, setStatusNotes] = useState("");
-  const [changingStatus, setChangingStatus] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editNotes, setEditNotes] = useState("");
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -107,59 +105,40 @@ export function StatusHistorySection({ envioId, currentStatus, onStatusChange }:
         .eq("menu_item", "envios_change_status")
         .in("role", userRoles);
 
-      setCanChangeStatus(permissions?.some(p => p.can_access) || false);
+      setCanEdit(permissions?.some(p => p.can_access) || false);
     } catch (error) {
       console.error("Error checking permissions:", error);
     }
   };
 
-  const handleStatusChange = async () => {
-    if (!newStatus || newStatus === currentStatus) {
-      toast({
-        title: "Error",
-        description: "Please select a different status",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleEditStart = (entry: StatusHistory) => {
+    setEditingId(entry.id);
+    setEditNotes(entry.notas || "");
+  };
 
-    setChangingStatus(true);
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditNotes("");
+  };
+
+  const handleEditSave = async (entryId: number) => {
+    setSaving(true);
     try {
       const { error } = await supabase
-        .from("envios")
-        .update({ estado: newStatus as "PENDING" | "NOTIFIED" | "SENT" | "RECEIVED" | "CANCELLED" })
-        .eq("id", envioId);
+        .from("envios_estado_historial")
+        .update({ notas: editNotes.trim() || null })
+        .eq("id", entryId);
 
       if (error) throw error;
 
-      // If there are notes, update the history entry
-      if (statusNotes.trim()) {
-        const { data: latestHistory } = await supabase
-          .from("envios_estado_historial")
-          .select("id")
-          .eq("envio_id", envioId)
-          .order("fecha_cambio", { ascending: false })
-          .limit(1)
-          .single();
-
-        if (latestHistory) {
-          await supabase
-            .from("envios_estado_historial")
-            .update({ notas: statusNotes.trim() })
-            .eq("id", latestHistory.id);
-        }
-      }
-
       toast({
         title: "Success",
-        description: "Status updated successfully",
+        description: "Notes updated successfully",
       });
 
-      setShowChangeDialog(false);
-      setNewStatus("");
-      setStatusNotes("");
+      setEditingId(null);
+      setEditNotes("");
       loadHistory();
-      onStatusChange?.();
     } catch (error: any) {
       toast({
         title: "Error",
@@ -167,7 +146,7 @@ export function StatusHistorySection({ envioId, currentStatus, onStatusChange }:
         variant: "destructive",
       });
     } finally {
-      setChangingStatus(false);
+      setSaving(false);
     }
   };
 
@@ -224,21 +203,11 @@ export function StatusHistorySection({ envioId, currentStatus, onStatusChange }:
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="h-5 w-5" />
           Status History
         </CardTitle>
-        {canChangeStatus && (
-          <Button
-            size="sm"
-            onClick={() => setShowChangeDialog(true)}
-            className="gap-2"
-          >
-            <Edit2 className="h-4 w-4" />
-            Change Status
-          </Button>
-        )}
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -262,7 +231,7 @@ export function StatusHistorySection({ envioId, currentStatus, onStatusChange }:
                     <div className="w-px h-full bg-border mt-2" />
                   )}
                 </div>
-                <div className="flex-1 space-y-1">
+                <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     {entry.estado_anterior && (
                       <>
@@ -287,11 +256,64 @@ export function StatusHistorySection({ envioId, currentStatus, onStatusChange }:
                       </>
                     )}
                   </div>
-                  {entry.notas && (
-                    <div className="flex gap-2 mt-2 text-sm bg-muted p-2 rounded">
-                      <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                      <p className="text-muted-foreground">{entry.notas}</p>
+                  {editingId === entry.id ? (
+                    <div className="space-y-2 mt-2">
+                      <Textarea
+                        value={editNotes}
+                        onChange={(e) => setEditNotes(e.target.value)}
+                        placeholder="Add notes about this status change..."
+                        rows={3}
+                        className="text-sm"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleEditSave(entry.id)}
+                          disabled={saving}
+                        >
+                          <Save className="h-3 w-3 mr-1" />
+                          {saving ? "Saving..." : "Save"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleEditCancel}
+                          disabled={saving}
+                        >
+                          <X className="h-3 w-3 mr-1" />
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      {entry.notas ? (
+                        <div className="flex gap-2 mt-2 text-sm bg-muted p-2 rounded group relative">
+                          <MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <p className="text-muted-foreground flex-1">{entry.notas}</p>
+                          {canEdit && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleEditStart(entry)}
+                            >
+                              <Edit2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ) : canEdit && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-xs text-muted-foreground"
+                          onClick={() => handleEditStart(entry)}
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" />
+                          Add notes
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -299,70 +321,6 @@ export function StatusHistorySection({ envioId, currentStatus, onStatusChange }:
           </div>
         )}
       </CardContent>
-
-      <Dialog open={showChangeDialog} onOpenChange={setShowChangeDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Status</DialogTitle>
-            <DialogDescription>
-              Update the shipment status. This change will be recorded in the history.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Current Status</Label>
-              <div className="flex items-center gap-2">
-                <Badge variant={getStatusBadgeVariant(currentStatus)}>
-                  {currentStatus}
-                </Badge>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-status">New Status *</Label>
-              <Select value={newStatus} onValueChange={setNewStatus}>
-                <SelectTrigger id="new-status">
-                  <SelectValue placeholder="Select new status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PENDING">PENDING</SelectItem>
-                  <SelectItem value="NOTIFIED">NOTIFIED</SelectItem>
-                  <SelectItem value="SENT">SENT</SelectItem>
-                  <SelectItem value="RECEIVED">RECEIVED</SelectItem>
-                  <SelectItem value="CANCELLED">CANCELLED</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status-notes">Notes (optional)</Label>
-              <Textarea
-                id="status-notes"
-                placeholder="Add notes about this status change..."
-                value={statusNotes}
-                onChange={(e) => setStatusNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowChangeDialog(false);
-                setNewStatus("");
-                setStatusNotes("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleStatusChange}
-              disabled={changingStatus || !newStatus || newStatus === currentStatus}
-            >
-              {changingStatus ? "Updating..." : "Update Status"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </Card>
   );
 }

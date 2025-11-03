@@ -6,10 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandSeparator } from "@/components/ui/command";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Calendar as CalendarIcon, Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Calendar as CalendarIcon, Check, ChevronsUpDown, Plus, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { QuickCreateCliente } from "./quick-create/QuickCreateCliente";
@@ -43,6 +45,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
   const [fechaProgramada, setFechaProgramada] = useState<Date | undefined>(
     initialData?.fecha_programada ? new Date(initialData.fecha_programada) : undefined
   );
+  const [previousStatus, setPreviousStatus] = useState(initialData?.estado || "PENDING");
   
   const [formData, setFormData] = useState({
     cliente_id: initialData?.cliente_id ? initialData.cliente_id.toString() : "",
@@ -54,6 +57,7 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     motivo_creacion: initialData?.motivo_creacion || "programado",
     estado: initialData?.estado || "PENDING",
     observaciones: initialData?.observaciones || "",
+    status_change_notes: "", // For tracking notes when status changes
   });
 
   const { toast } = useToast();
@@ -171,10 +175,31 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
     try {
       let result;
       if (isEditing) {
+        // Check if status changed
+        const statusChanged = formData.estado !== previousStatus;
+        
         result = await supabase
           .from("envios")
           .update(dataToSave)
           .eq("id", initialData.id);
+
+        // If status changed and there are notes, update the latest history entry
+        if (result.data && !result.error && statusChanged && formData.status_change_notes.trim()) {
+          const { data: latestHistory } = await supabase
+            .from("envios_estado_historial")
+            .select("id")
+            .eq("envio_id", initialData.id)
+            .order("fecha_cambio", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latestHistory) {
+            await supabase
+              .from("envios_estado_historial")
+              .update({ notas: formData.status_change_notes.trim() })
+              .eq("id", latestHistory.id);
+          }
+        }
       } else {
         result = await supabase
           .from("envios")
@@ -187,6 +212,13 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
         title: isEditing ? t('success.allocation_plan_updated') : t('success.allocation_plan_created'),
         description: t('success.changes_saved'),
       });
+      
+      // Reset status change notes and update previous status
+      if (isEditing) {
+        setPreviousStatus(formData.estado);
+        setFormData(prev => ({ ...prev, status_change_notes: "" }));
+      }
+      
       onSuccess();
     } catch (error: any) {
       toast({
@@ -591,6 +623,28 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
           </Select>
         </div>
       </div>
+
+      {/* Status Change Notes - only show when editing and status changed */}
+      {isEditing && formData.estado !== previousStatus && (
+        <div className="space-y-2 p-4 bg-muted/50 rounded-lg border-2 border-primary/20">
+          <div className="flex items-center gap-2 mb-2">
+            <MessageSquare className="h-4 w-4 text-primary" />
+            <Label htmlFor="status_change_notes" className="text-primary font-medium">
+              Status Change Notes (Optional)
+            </Label>
+          </div>
+          <p className="text-xs text-muted-foreground mb-2">
+            The status has changed from <Badge variant="outline" className="mx-1">{previousStatus}</Badge> to <Badge variant="outline" className="mx-1">{formData.estado}</Badge>. Add notes to explain this change.
+          </p>
+          <Textarea
+            id="status_change_notes"
+            value={formData.status_change_notes}
+            onChange={(e) => setFormData({ ...formData, status_change_notes: e.target.value })}
+            placeholder="e.g., Package was delivered to the recipient's neighbor..."
+            rows={3}
+          />
+        </div>
+      )}
 
       {/* Observaciones */}
       <div className="space-y-2">
