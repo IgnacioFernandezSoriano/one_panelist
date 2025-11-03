@@ -60,17 +60,18 @@ const NodeDetail = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
-      const userResult: any = await supabase
+      // @ts-ignore - Supabase type inference issue
+      const userQuery = await supabase
         .from('usuarios')
         .select('cliente_id')
         .eq('auth_user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      if (!userResult.data) throw new Error("User data not found");
+      if (!userQuery.data) throw new Error("User data not found");
       
-      const clienteId = userResult.data.cliente_id;
+      const clienteId = userQuery.data.cliente_id;
 
-      const nodoResult: any = await supabase
+      const nodoQuery = await supabase
         .from('nodos')
         .select(`
           codigo,
@@ -83,11 +84,11 @@ const NodeDetail = () => {
         `)
         .eq('codigo', nodoCodigo)
         .eq('cliente_id', clienteId)
-        .single();
+        .maybeSingle();
 
-      if (nodoResult.error || !nodoResult.data) throw new Error("Node not found");
+      if (!nodoQuery.data) throw new Error("Node not found");
 
-      const nodoData = nodoResult.data as {
+      const nodoData = nodoQuery.data as {
         codigo: string;
         ciudad: string;
         pais: string;
@@ -107,7 +108,7 @@ const NodeDetail = () => {
       setMaxEventsPerWeek(cliente?.max_events_per_panelist_week || 5);
 
       // Load affected events
-      const eventsResult: any = await supabase
+      const eventsQuery = await supabase
         .from('generated_allocation_plan_details')
         .select(`
           id,
@@ -124,7 +125,7 @@ const NodeDetail = () => {
         .in('plan.status', ['draft', 'merged'])
         .order('fecha_programada');
 
-      const formattedEvents: AffectedEvent[] = (eventsResult.data || []).map((e: {
+      const formattedEvents: AffectedEvent[] = (eventsQuery.data || []).map((e: {
         id: number;
         fecha_programada: string;
         nodo_origen: string;
@@ -146,11 +147,11 @@ const NodeDetail = () => {
 
       // Check for scheduled leaves
       let leaveInfo = {};
-      if (nodo.panelista_id) {
+      if (nodoData.panelista_id) {
         const { data: leaves } = await supabase
           .from('scheduled_leaves')
           .select('leave_start_date, leave_end_date, reason')
-          .eq('panelista_id', nodo.panelista_id)
+          .eq('panelista_id', nodoData.panelista_id)
           .eq('status', 'scheduled')
           .gte('leave_end_date', format(new Date(), 'yyyy-MM-dd'))
           .order('leave_start_date')
@@ -205,7 +206,7 @@ const NodeDetail = () => {
   const loadAvailableNodes = async (risk: NodeRisk, clienteId: number) => {
     const isTypeC = risk.clasificacion === 'C';
     
-    const query = supabase
+    let query = supabase
       .from('nodos')
       .select(`
         codigo,
@@ -215,12 +216,13 @@ const NodeDetail = () => {
       .eq('estado', 'activo');
 
     if (isTypeC) {
-      query.eq('region_id', risk.region_id);
+      query = query.eq('region_id', risk.region_id);
     } else {
-      query.eq('ciudad_id', risk.ciudad_id);
+      query = query.eq('ciudad_id', risk.ciudad_id);
     }
 
-    const { data: nodes } = await query;
+    const nodesQuery = await query;
+    const nodes = nodesQuery.data;
 
     setAvailableNodes((nodes || []).map((n: {
       codigo: string;
@@ -236,7 +238,7 @@ const NodeDetail = () => {
     const endDate = format(weeks[6].endDate, 'yyyy-MM-dd');
 
     // Get all events in the date range
-    const { data: events } = await supabase
+    const eventsQuery = await supabase
       .from('generated_allocation_plan_details')
       .select(`
         fecha_programada,
@@ -249,9 +251,11 @@ const NodeDetail = () => {
       .gte('fecha_programada', startDate)
       .lte('fecha_programada', endDate);
 
+    const events = eventsQuery.data;
+
     // Get nodes for the same city/region
     const isTypeC = risk.clasificacion === 'C';
-    const query = supabase
+    let nodeQuery = supabase
       .from('nodos')
       .select(`
         codigo,
@@ -262,12 +266,13 @@ const NodeDetail = () => {
       .eq('estado', 'activo');
 
     if (isTypeC) {
-      query.eq('region_id', risk.region_id);
+      nodeQuery = nodeQuery.eq('region_id', risk.region_id);
     } else {
-      query.eq('ciudad_id', risk.ciudad_id);
+      nodeQuery = nodeQuery.eq('ciudad_id', risk.ciudad_id);
     }
 
-    const { data: nodes } = await query;
+    const nodeQueryResult = await nodeQuery;
+    const nodes = nodeQueryResult.data;
 
     // Calculate weekly loads
     const loads: NodeWeeklyLoad[] = (nodes || []).map((node: {
