@@ -263,6 +263,58 @@ export type Database = {
           },
         ]
       }
+      ciudad_transit_times: {
+        Row: {
+          ciudad_destino_id: number
+          ciudad_origen_id: number
+          cliente_id: number
+          created_at: string
+          dias_transito: number
+          id: number
+          updated_at: string
+        }
+        Insert: {
+          ciudad_destino_id: number
+          ciudad_origen_id: number
+          cliente_id: number
+          created_at?: string
+          dias_transito?: number
+          id?: number
+          updated_at?: string
+        }
+        Update: {
+          ciudad_destino_id?: number
+          ciudad_origen_id?: number
+          cliente_id?: number
+          created_at?: string
+          dias_transito?: number
+          id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ciudad_transit_times_ciudad_destino_id_fkey"
+            columns: ["ciudad_destino_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ciudad_transit_times_ciudad_origen_id_fkey"
+            columns: ["ciudad_origen_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ciudad_transit_times_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ciudades: {
         Row: {
           clasificacion: string

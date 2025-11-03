@@ -1,0 +1,585 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useToast } from "@/hooks/use-toast";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { RefreshCw, Edit, Trash2, Clock, Loader2 } from "lucide-react";
+import TransitTimeForm from "@/components/config/forms/TransitTimeForm";
+
+interface TransitTime {
+  id: number;
+  cliente_id: number;
+  ciudad_origen_id: number;
+  ciudad_destino_id: number;
+  dias_transito: number;
+  ciudad_origen?: {
+    id: number;
+    codigo: string;
+    nombre: string;
+    clasificacion: string;
+    region?: { nombre: string };
+  };
+  ciudad_destino?: {
+    id: number;
+    codigo: string;
+    nombre: string;
+    clasificacion: string;
+    region?: { nombre: string };
+  };
+}
+
+interface Region {
+  id: number;
+  nombre: string;
+}
+
+export default function TiemposTransito() {
+  const { clienteId } = useUserRole();
+  const { toast } = useToast();
+  const [transitTimes, setTransitTimes] = useState<TransitTime[]>([]);
+  const [regiones, setRegiones] = useState<Region[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRegion, setFilterRegion] = useState<string>("all");
+  const [filterClassification, setFilterClassification] = useState<string>("all");
+  const [massEditDialogOpen, setMassEditDialogOpen] = useState(false);
+  const [massEditDays, setMassEditDays] = useState<number>(0);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingId, setEditingId] = useState<number | undefined>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false);
+
+  useEffect(() => {
+    if (clienteId) {
+      loadData();
+      loadRegiones();
+    }
+  }, [clienteId]);
+
+  const loadData = async () => {
+    if (!clienteId) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("ciudad_transit_times")
+        .select(`
+          *,
+          ciudad_origen:ciudades!ciudad_origen_id(id, codigo, nombre, clasificacion, region:regiones(nombre)),
+          ciudad_destino:ciudades!ciudad_destino_id(id, codigo, nombre, clasificacion, region:regiones(nombre))
+        `)
+        .eq("cliente_id", clienteId)
+        .order("ciudad_origen_id", { ascending: true });
+
+      if (error) throw error;
+      setTransitTimes(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadRegiones = async () => {
+    if (!clienteId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("regiones")
+        .select("id, nombre")
+        .eq("cliente_id", clienteId)
+        .eq("estado", "activo")
+        .order("nombre");
+
+      if (error) throw error;
+      setRegiones(data || []);
+    } catch (error: any) {
+      console.error("Error loading regiones:", error);
+    }
+  };
+
+  const generateAllCombinations = async () => {
+    if (!clienteId) return;
+    
+    setGenerating(true);
+    try {
+      // Get all active cities
+      const { data: ciudades, error: fetchError } = await supabase
+        .from("ciudades")
+        .select("id")
+        .eq("cliente_id", clienteId)
+        .eq("estado", "activo");
+
+      if (fetchError) throw fetchError;
+      if (!ciudades || ciudades.length === 0) {
+        toast({
+          title: "No cities found",
+          description: "Please create active cities first.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create all combinations (origin -> destination where origin != destination)
+      const combinations = [];
+      for (let i = 0; i < ciudades.length; i++) {
+        for (let j = 0; j < ciudades.length; j++) {
+          if (i !== j) {
+            combinations.push({
+              cliente_id: clienteId,
+              ciudad_origen_id: ciudades[i].id,
+              ciudad_destino_id: ciudades[j].id,
+              dias_transito: 0,
+            });
+          }
+        }
+      }
+
+      // Insert with ON CONFLICT DO NOTHING (upsert with ignoreDuplicates)
+      const { error: insertError } = await supabase
+        .from("ciudad_transit_times")
+        .upsert(combinations, { 
+          onConflict: "cliente_id,ciudad_origen_id,ciudad_destino_id",
+          ignoreDuplicates: true 
+        });
+
+      if (insertError) throw insertError;
+
+      toast({
+        title: "Success",
+        description: `Generated ${combinations.length} city pair combinations`,
+      });
+
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setGenerating(false);
+      setConfirmGenerateOpen(false);
+    }
+  };
+
+  const handleMassUpdate = async () => {
+    if (selectedIds.size === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from("ciudad_transit_times")
+        .update({ dias_transito: massEditDays })
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Updated ${selectedIds.size} transit times`,
+      });
+
+      setMassEditDialogOpen(false);
+      setSelectedIds(new Set());
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    
+    try {
+      const { error } = await supabase
+        .from("ciudad_transit_times")
+        .delete()
+        .eq("id", deletingId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Transit time deleted successfully",
+      });
+
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingId(null);
+    }
+  };
+
+  const toggleSelection = (id: number) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredTransitTimes.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredTransitTimes.map(tt => tt.id)));
+    }
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setFilterRegion("all");
+    setFilterClassification("all");
+  };
+
+  const filteredTransitTimes = transitTimes.filter(tt => {
+    const matchesSearch = searchTerm === "" || 
+      tt.ciudad_origen?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tt.ciudad_origen?.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tt.ciudad_destino?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tt.ciudad_destino?.codigo.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesRegion = filterRegion === "all" ||
+      tt.ciudad_origen?.region?.nombre === filterRegion ||
+      tt.ciudad_destino?.region?.nombre === filterRegion;
+
+    const matchesClassification = filterClassification === "all" ||
+      tt.ciudad_origen?.clasificacion === filterClassification ||
+      tt.ciudad_destino?.clasificacion === filterClassification;
+
+    return matchesSearch && matchesRegion && matchesClassification;
+  });
+
+  const getClassificationBadgeVariant = (classification: string) => {
+    switch (classification) {
+      case "A": return "default";
+      case "B": return "secondary";
+      case "C": return "outline";
+      default: return "outline";
+    }
+  };
+
+  const configuredCount = transitTimes.filter(tt => tt.dias_transito > 0).length;
+
+  return (
+    <AppLayout>
+      <div className="space-y-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/configuracion">Configuration</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/configuracion">Measurement Topology</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Transit Times</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <div>
+          <h1 className="text-3xl font-bold">Standard Transit Times Between Cities</h1>
+          <p className="text-muted-foreground mt-2">
+            Configure expected transit days between city pairs. {configuredCount} of {transitTimes.length} combinations configured.
+          </p>
+        </div>
+
+        <div className="flex gap-4">
+          <Button 
+            onClick={() => setConfirmGenerateOpen(true)}
+            disabled={generating}
+          >
+            {generating ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4" />
+                Generate All Combinations
+              </>
+            )}
+          </Button>
+
+          <Button 
+            onClick={() => {
+              setEditingId(undefined);
+              setEditDialogOpen(true);
+            }}
+            variant="outline"
+          >
+            <Clock className="h-4 w-4" />
+            Add Manual Entry
+          </Button>
+        </div>
+
+        <div className="flex gap-4 flex-wrap">
+          <Input
+            placeholder="Search cities..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-xs"
+          />
+
+          <Select value={filterRegion} onValueChange={setFilterRegion}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by region" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Regions</SelectItem>
+              {regiones.map((region) => (
+                <SelectItem key={region.id} value={region.nombre}>
+                  {region.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterClassification} onValueChange={setFilterClassification}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by classification" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Classifications</SelectItem>
+              <SelectItem value="A">Class A</SelectItem>
+              <SelectItem value="B">Class B</SelectItem>
+              <SelectItem value="C">Class C</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {(searchTerm || filterRegion !== "all" || filterClassification !== "all") && (
+            <Button variant="outline" onClick={clearFilters}>
+              Clear Filters
+            </Button>
+          )}
+        </div>
+
+        {selectedIds.size > 0 && (
+          <div className="flex gap-4 items-center bg-muted p-4 rounded-md">
+            <span className="font-medium">{selectedIds.size} selected</span>
+            <Button onClick={() => setMassEditDialogOpen(true)}>
+              Set Transit Days
+            </Button>
+            <Button variant="outline" onClick={() => setSelectedIds(new Set())}>
+              Clear Selection
+            </Button>
+          </div>
+        )}
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <div className="border rounded-md">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedIds.size === filteredTransitTimes.length && filteredTransitTimes.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead>Origin City</TableHead>
+                  <TableHead>Origin Region</TableHead>
+                  <TableHead>Origin Class</TableHead>
+                  <TableHead>Destination City</TableHead>
+                  <TableHead>Dest Region</TableHead>
+                  <TableHead>Dest Class</TableHead>
+                  <TableHead>Transit Days</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTransitTimes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      No transit times configured. Click "Generate All Combinations" to get started.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTransitTimes.map((tt) => (
+                    <TableRow key={tt.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedIds.has(tt.id)}
+                          onCheckedChange={() => toggleSelection(tt.id)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{tt.ciudad_origen?.codigo}</div>
+                        <div className="text-sm text-muted-foreground">{tt.ciudad_origen?.nombre}</div>
+                      </TableCell>
+                      <TableCell>{tt.ciudad_origen?.region?.nombre || "-"}</TableCell>
+                      <TableCell>
+                        <Badge variant={getClassificationBadgeVariant(tt.ciudad_origen?.clasificacion || "")}>
+                          {tt.ciudad_origen?.clasificacion}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{tt.ciudad_destino?.codigo}</div>
+                        <div className="text-sm text-muted-foreground">{tt.ciudad_destino?.nombre}</div>
+                      </TableCell>
+                      <TableCell>{tt.ciudad_destino?.region?.nombre || "-"}</TableCell>
+                      <TableCell>
+                        <Badge variant={getClassificationBadgeVariant(tt.ciudad_destino?.clasificacion || "")}>
+                          {tt.ciudad_destino?.clasificacion}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className={tt.dias_transito === 0 ? "text-muted-foreground" : "font-medium"}>
+                          {tt.dias_transito} {tt.dias_transito === 1 ? "day" : "days"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditingId(tt.id);
+                              setEditDialogOpen(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setDeletingId(tt.id);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+
+      {/* Mass Edit Dialog */}
+      <Dialog open={massEditDialogOpen} onOpenChange={setMassEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Set Transit Days</DialogTitle>
+            <DialogDescription>
+              Set the number of transit days for {selectedIds.size} selected city pairs
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="mass-days" className="text-sm font-medium">
+                Transit Days
+              </label>
+              <Input
+                id="mass-days"
+                type="number"
+                min="0"
+                value={massEditDays}
+                onChange={(e) => setMassEditDays(parseInt(e.target.value) || 0)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMassEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleMassUpdate}>
+              Apply to {selectedIds.size} items
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Edit Transit Time" : "Add Transit Time"}</DialogTitle>
+          </DialogHeader>
+          <TransitTimeForm
+            transitTimeId={editingId}
+            clienteId={clienteId}
+            onSuccess={() => {
+              setEditDialogOpen(false);
+              loadData();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this transit time configuration.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Generate Confirmation Dialog */}
+      <AlertDialog open={confirmGenerateOpen} onOpenChange={setConfirmGenerateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate All Combinations?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will create entries for all possible city pairs in your topology. 
+              Existing combinations will be preserved. This operation may take a few moments.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={generateAllCombinations}>Generate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AppLayout>
+  );
+}

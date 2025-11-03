@@ -48,6 +48,7 @@ import {
   User as UserIcon,
   FileBarChart,
   Brain,
+  Clock,
   Wrench,
   BookOpen
 } from "lucide-react";
@@ -190,6 +191,7 @@ const AppSidebarContent = () => {
     { icon: MapPin, label: "Regions", path: "/configuracion/regiones" },
     { icon: MapPin, label: "Cities", path: "/configuracion/ciudades" },
     { icon: MapPin, label: "Nodes", path: "/configuracion/nodos" },
+    { icon: Clock, label: "Transit Times", path: "/configuracion/tiempos-transito" },
   ];
 
   const solutionParametersItems = [

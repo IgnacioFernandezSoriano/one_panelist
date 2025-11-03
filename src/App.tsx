@@ -25,6 +25,7 @@ import ConfigClientes from "./pages/config/Clientes";
 import ConfigRegiones from "./pages/config/Regiones";
 import ConfigCiudades from "./pages/config/Ciudades";
 import ConfigNodos from "./pages/config/ConfigNodos";
+import TiemposTransito from "./pages/config/TiemposTransito";
 import ConfigUsuarios from "./pages/config/Usuarios";
 import ConfigProductos from "./pages/config/Productos";
 import ConfigPlantillas from "./pages/config/Plantillas";
@@ -125,12 +126,17 @@ const App = () => {
                 <ConfigCiudades />
               </RoleGuard>
             } />
-            <Route path="/configuracion/nodos" element={
-              <RoleGuard allowedRoles={['superadmin', 'admin']}>
-                <ConfigNodos />
-              </RoleGuard>
-            } />
-            <Route path="/configuracion/productos" element={
+              <Route path="/configuracion/nodos" element={
+                <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                  <ConfigNodos />
+                </RoleGuard>
+              } />
+              <Route path="/configuracion/tiempos-transito" element={
+                <RoleGuard allowedRoles={['superadmin', 'admin']}>
+                  <TiemposTransito />
+                </RoleGuard>
+              } />
+              <Route path="/configuracion/productos" element={
               <RoleGuard allowedRoles={['superadmin', 'admin']}>
                 <ConfigProductos />
               </RoleGuard>
