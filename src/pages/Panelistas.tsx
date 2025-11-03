@@ -190,7 +190,7 @@ export default function Panelistas() {
         <div className="space-y-1">
           <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>
           <p className="text-xs text-blue-600">
-            Baja desde: {new Date(scheduledLeave.leave_start_date).toLocaleDateString('es-ES')}
+            Baja desde: {new Date(scheduledLeave.leave_start_date).toLocaleDateString('es-ES')} hasta {new Date(scheduledLeave.leave_end_date).toLocaleDateString('es-ES')}
           </p>
         </div>
       );
