@@ -152,8 +152,11 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
 
     const selectedProducto = productos.find(p => p.id.toString() === formData.producto_id);
     
+    // Prepare data for saving, excluding status_change_notes
+    const { status_change_notes, ...formDataToSave } = formData;
+    
     const dataToSave = {
-      ...formData,
+      ...formDataToSave,
       fecha_programada: format(fechaProgramada, "yyyy-MM-dd"),
       cliente_id: formData.cliente_id && formData.cliente_id !== "" ? parseInt(formData.cliente_id) : null,
       producto_id: formData.producto_id && formData.producto_id !== "" ? parseInt(formData.producto_id) : null,
