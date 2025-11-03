@@ -70,6 +70,7 @@ const AppSidebarContent = () => {
   const [allocationPlanOpen, setAllocationPlanOpen] = useState(false);
   const [topologyOpen, setTopologyOpen] = useState(false);
   const [panelistsOpen, setPanelistsOpen] = useState(false);
+  const [issuesOpen, setIssuesOpen] = useState(false);
   const { isSuperAdmin, hasAnyRole } = useUserRole();
   const { canAccessMenuItem } = useMenuPermissions();
   const { t } = useTranslation();
@@ -151,6 +152,9 @@ const AppSidebarContent = () => {
     if (location.pathname === "/panelistas") {
       setPanelistsOpen(true);
     }
+    if (location.pathname.startsWith("/incidencias") || location.pathname.startsWith("/issues")) {
+      setIssuesOpen(true);
+    }
   }, [location.pathname]);
 
   const handleLogout = async () => {
@@ -175,6 +179,11 @@ const AppSidebarContent = () => {
     { icon: Send, label: "View Plan", path: "/envios" },
         { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
     { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
+  ];
+
+  const issuesItems = [
+    { icon: AlertCircle, label: "View Issues", path: "/incidencias" },
+    { icon: UserX, label: "Nodos Descubiertos", path: "/issues/nodos-descubiertos" },
   ];
 
   const measurementTopologyItems = [
@@ -399,16 +408,43 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
-            {/* Issues - Not developed yet */}
+            {/* Issues Collapsible */}
             {canAccessMenuItem('incidencias') && (
               <SidebarMenuItem>
-                <SidebarMenuButton 
-                  disabled 
-                  className="opacity-50 cursor-not-allowed"
-                >
-                  <AlertCircle className="w-5 h-5" />
-                  {sidebarOpen && <span>Issues</span>}
-                </SidebarMenuButton>
+                <Collapsible open={issuesOpen} onOpenChange={setIssuesOpen}>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={location.pathname.startsWith("/incidencias") || location.pathname.startsWith("/issues")}>
+                      <AlertCircle className="w-5 h-5" />
+                      {sidebarOpen && <span>Issues</span>}
+                      {sidebarOpen && (issuesOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarGroup>
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {issuesItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton 
+                                  asChild 
+                                  isActive={isActive} 
+                                  className="pl-8"
+                                >
+                                  <Link to={item.path}>
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
+                  </CollapsibleContent>
+                </Collapsible>
               </SidebarMenuItem>
             )}
 

@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Panelistas from "./pages/Panelistas";
 import Envios from "./pages/Envios";
 import Incidencias from "./pages/Incidencias";
+import NodosDescubiertos from "./pages/NodosDescubiertos";
 import Nodos from "./pages/Nodos";
 import Topology from "./pages/Topology";
 import UnassignedNodes from "./pages/UnassignedNodes";
@@ -70,6 +71,7 @@ const App = () => {
             <Route path="/envios/materials-plan" element={<PanelistMaterialsPlan />} />
             <Route path="/envios/:id" element={<EditarEnvio />} />
             <Route path="/incidencias" element={<Incidencias />} />
+            <Route path="/issues/nodos-descubiertos" element={<NodosDescubiertos />} />
             <Route path="/nodos" element={<Nodos />} />
             <Route path="/topology" element={<Topology />} />
             <Route path="/topology/unassigned-nodes" element={<UnassignedNodes />} />
