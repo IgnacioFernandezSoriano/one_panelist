@@ -257,7 +257,7 @@ export default function Panelistas() {
                           {getEstadoBadge(panelista)}
                         </div>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                           <div>
                             <span className="text-muted-foreground">{t('label.id')}:</span>
                             <p className="font-medium">{panelista.id}</p>
@@ -269,6 +269,14 @@ export default function Panelistas() {
                           <div>
                             <span className="text-muted-foreground">{t('label.phone')}:</span>
                             <p className="font-medium">{panelista.telefono}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Nodo:</span>
+                            <p className="font-medium">{panelista.nodo_asignado || "No asignado"}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Plataforma:</span>
+                            <p className="font-medium capitalize">{panelista.plataforma_preferida}</p>
                           </div>
                         </div>
                         
