@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown, RefreshCw, Clock, Bell, Send, CheckCircle, Calendar as CalendarDaysIcon } from "lucide-react";
+import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown, RefreshCw, Clock, Bell, Send, CheckCircle, Calendar as CalendarDaysIcon, MessageSquare } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -26,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,6 +132,9 @@ export default function Envios() {
     status: "" as string,
     timeRange: "" as "week" | "month" | ""
   });
+  const [changeStatusDialogOpen, setChangeStatusDialogOpen] = useState(false);
+  const [newStatusValue, setNewStatusValue] = useState("");
+  const [statusChangeNotes, setStatusChangeNotes] = useState("");
 
   useEffect(() => {
     loadEnvios();
@@ -639,6 +643,65 @@ export default function Envios() {
     }
   };
 
+  const handleChangeStatusSelected = async () => {
+    if (!newStatusValue) {
+      toast({
+        title: "Error",
+        description: "Please select a status",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Update all selected envios
+      const { error } = await supabase
+        .from("envios")
+        .update({ estado: newStatusValue as "PENDING" | "NOTIFIED" | "SENT" | "RECEIVED" | "CANCELLED" })
+        .in("id", selectedIds);
+
+      if (error) throw error;
+
+      // If there are notes, update all the latest history entries for each envio
+      if (statusChangeNotes.trim()) {
+        for (const envioId of selectedIds) {
+          const { data: latestHistory } = await supabase
+            .from("envios_estado_historial")
+            .select("id")
+            .eq("envio_id", envioId)
+            .order("fecha_cambio", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (latestHistory) {
+            await supabase
+              .from("envios_estado_historial")
+              .update({ notas: statusChangeNotes.trim() })
+              .eq("id", latestHistory.id);
+          }
+        }
+      }
+
+      toast({
+        title: "Updated successfully",
+        description: `${selectedIds.length} record(s) updated to ${newStatusValue}`,
+      });
+
+      setSelectedIds([]);
+      setNewStatusValue("");
+      setStatusChangeNotes("");
+      loadEnvios();
+    } catch (error: any) {
+      toast({
+        title: "Error updating",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setChangeStatusDialogOpen(false);
+    }
+  };
+
   const handleDuplicateOne = async (id: number) => {
     try {
       const envio = envios.find(e => e.id === id);
@@ -959,6 +1022,15 @@ export default function Envios() {
                     variant="outline"
                     size="sm"
                     className="gap-2"
+                    onClick={() => setChangeStatusDialogOpen(true)}
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Change Status
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
                     onClick={handleDuplicateSelected}
                   >
                     <Copy className="w-4 h-4" />
@@ -1217,6 +1289,68 @@ export default function Envios() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <Dialog open={changeStatusDialogOpen} onOpenChange={setChangeStatusDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Change Status for Selected Records</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Selected Records</Label>
+                <p className="text-sm text-muted-foreground">
+                  {selectedIds.length} record(s) will be updated
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-status">New Status *</Label>
+                <Select value={newStatusValue} onValueChange={setNewStatusValue}>
+                  <SelectTrigger id="new-status">
+                    <SelectValue placeholder="Select new status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="PENDING">PENDING</SelectItem>
+                    <SelectItem value="NOTIFIED">NOTIFIED</SelectItem>
+                    <SelectItem value="SENT">SENT</SelectItem>
+                    <SelectItem value="RECEIVED">RECEIVED</SelectItem>
+                    <SelectItem value="CANCELLED">CANCELLED</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bulk-status-notes">Notes (optional)</Label>
+                <Textarea
+                  id="bulk-status-notes"
+                  placeholder="Add notes about this status change..."
+                  value={statusChangeNotes}
+                  onChange={(e) => setStatusChangeNotes(e.target.value)}
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">
+                  These notes will be added to the status history of all selected records
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setChangeStatusDialogOpen(false);
+                  setNewStatusValue("");
+                  setStatusChangeNotes("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleChangeStatusSelected}
+                disabled={!newStatusValue}
+              >
+                Update {selectedIds.length} Record(s)
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <Dialog open={advancedSearchOpen} onOpenChange={setAdvancedSearchOpen}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
