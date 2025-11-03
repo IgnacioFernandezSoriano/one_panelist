@@ -720,10 +720,6 @@ export default function Envios() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2" onClick={exportTopologyCSV}>
-              <FileDown className="w-4 h-4" />
-              {t('export_topology_csv')}
-            </Button>
             <Button variant="outline" className="gap-2" onClick={exportAllocationPlanCSV}>
               <FileDown className="w-4 h-4" />
               {t('export_allocation_plan')}
