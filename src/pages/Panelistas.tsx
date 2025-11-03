@@ -104,11 +104,33 @@ export default function Panelistas() {
     }
   };
 
-  const filteredPanelistas = panelistas.filter((p) =>
-    p.nombre_completo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.telefono.includes(searchTerm) ||
-    p.direccion_ciudad.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredPanelistas = panelistas.filter((p) => {
+    const search = searchTerm.toLowerCase();
+    
+    // Map availability_status to readable Spanish text
+    const statusText = p.availability_status === 'temporary_leave' 
+      ? 'baja temporal' 
+      : p.availability_status === 'active' 
+      ? 'activo' 
+      : 'inactivo';
+    
+    return (
+      // Name
+      p.nombre_completo.toLowerCase().includes(search) ||
+      // Phone
+      p.telefono.includes(search) ||
+      // City
+      p.direccion_ciudad.toLowerCase().includes(search) ||
+      // Assigned node (may be null)
+      (p.nodo_asignado && p.nodo_asignado.toLowerCase().includes(search)) ||
+      // Platform
+      p.plataforma_preferida.toLowerCase().includes(search) ||
+      // Status (availability_status)
+      statusText.includes(search) ||
+      // General status (activo/suspendido/inactivo)
+      p.estado.toLowerCase().includes(search)
+    );
+  });
 
   const handleDelete = async (panelista: Panelista) => {
     if (!confirm(t('panelistas.confirm_delete', { name: panelista.nombre_completo }))) {
