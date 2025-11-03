@@ -1,22 +1,30 @@
 import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useToast } from "@/components/ui/use-toast";
+import { Calendar, AlertCircle, Plus, X, CheckCircle } from "lucide-react";
+import { format } from "date-fns";
 
 interface AvailabilityManagerProps {
   panelistaId: number;
   clienteId: number;
   currentStatus: string;
-  currentLeaveStart?: string | null;
-  currentLeaveEnd?: string | null;
   onUpdate: () => void;
+}
+
+interface ScheduledLeave {
+  id: number;
+  leave_start_date: string;
+  leave_end_date: string;
+  reason: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
 }
 
 interface AvailabilityLog {
@@ -29,65 +37,92 @@ interface AvailabilityLog {
   notes: string | null;
   changed_at: string;
   changed_by: number | null;
-  usuarios?: { nombre_completo: string } | null;
+  usuarios?: {
+    nombre_completo: string;
+  };
 }
 
-export function AvailabilityManager({
-  panelistaId,
-  clienteId,
+export function AvailabilityManager({ 
+  panelistaId, 
+  clienteId, 
   currentStatus,
-  currentLeaveStart,
-  currentLeaveEnd,
-  onUpdate
+  onUpdate 
 }: AvailabilityManagerProps) {
   const [leaveStartDate, setLeaveStartDate] = useState("");
   const [leaveEndDate, setLeaveEndDate] = useState("");
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [logs, setLogs] = useState<AvailabilityLog[]>([]);
+  const [scheduledLeaves, setScheduledLeaves] = useState<ScheduledLeave[]>([]);
+  const [availabilityLogs, setAvailabilityLogs] = useState<AvailabilityLog[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
   const { toast } = useToast();
-  const { userId } = useUserRole();
 
   useEffect(() => {
+    loadScheduledLeaves();
     loadLogs();
   }, [panelistaId]);
 
-  const loadLogs = async () => {
-    const { data, error } = await supabase
-      .from('panelistas_availability_log')
-      .select(`
-        id,
-        status,
-        previous_status,
-        leave_start_date,
-        leave_end_date,
-        reason,
-        notes,
-        changed_at,
-        changed_by,
-        usuarios:changed_by (nombre_completo)
-      `)
-      .eq('panelista_id', panelistaId)
-      .order('changed_at', { ascending: false })
-      .limit(10);
+  const loadScheduledLeaves = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('scheduled_leaves')
+        .select('*')
+        .eq('panelista_id', panelistaId)
+        .in('status', ['scheduled', 'active'])
+        .order('leave_start_date', { ascending: true });
 
-    if (!error && data) {
-      setLogs(data);
+      if (error) throw error;
+      setScheduledLeaves(data || []);
+    } catch (error) {
+      console.error('Error loading scheduled leaves:', error);
     }
   };
 
-  const handleSetLeave = async () => {
+  const loadLogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('panelistas_availability_log')
+        .select(`
+          *,
+          usuarios:changed_by(nombre_completo)
+        `)
+        .eq('panelista_id', panelistaId)
+        .order('changed_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setAvailabilityLogs(data || []);
+    } catch (error) {
+      console.error('Error loading logs:', error);
+    }
+  };
+
+  const handleAddLeave = async () => {
     if (!leaveStartDate || !leaveEndDate) {
       toast({
         title: "Error",
-        description: "Debe especificar fecha de inicio y fin de la baja",
+        description: "Por favor selecciona las fechas de inicio y fin",
         variant: "destructive"
       });
       return;
     }
 
-    if (new Date(leaveEndDate) <= new Date(leaveStartDate)) {
+    const startDate = new Date(leaveStartDate);
+    const endDate = new Date(leaveEndDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (startDate < today) {
+      toast({
+        title: "Error",
+        description: "La fecha de inicio no puede ser en el pasado",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (endDate < startDate) {
       toast({
         title: "Error",
         description: "La fecha de fin debe ser posterior a la fecha de inicio",
@@ -97,55 +132,88 @@ export function AvailabilityManager({
     }
 
     setIsSubmitting(true);
+
     try {
-      // Update panelista status
-      const { error: updateError } = await supabase
-        .from('panelistas')
-        .update({
-          availability_status: 'temporary_leave',
-          current_leave_start: leaveStartDate,
-          current_leave_end: leaveEndDate,
-          last_availability_change: new Date().toISOString()
-        })
-        .eq('id', panelistaId);
+      // Determine status based on dates
+      const leaveStatus = startDate <= today && endDate >= today ? 'active' : 'scheduled';
+      const panelistaStatus = leaveStatus === 'active' ? 'temporary_leave' : currentStatus;
 
-      if (updateError) throw updateError;
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', user?.email)
+        .single();
 
-      // Log the change
-      const { error: logError } = await supabase
-        .from('panelistas_availability_log')
+      // Insert scheduled leave
+      const { error: insertError } = await supabase
+        .from('scheduled_leaves')
         .insert({
           panelista_id: panelistaId,
           cliente_id: clienteId,
-          status: 'temporary_leave',
-          previous_status: currentStatus,
           leave_start_date: leaveStartDate,
           leave_end_date: leaveEndDate,
           reason: reason || null,
           notes: notes || null,
-          changed_by: userId,
-          changed_at: new Date().toISOString()
+          status: leaveStatus,
+          created_by: userData?.id
         });
 
-      if (logError) throw logError;
+      if (insertError) throw insertError;
+
+      // Update panelista status if leave is active now
+      if (leaveStatus === 'active') {
+        const { error: updateError } = await supabase
+          .from('panelistas')
+          .update({
+            availability_status: panelistaStatus,
+            last_availability_change: new Date().toISOString()
+          })
+          .eq('id', panelistaId);
+
+        if (updateError) throw updateError;
+
+        // Log the change
+        await supabase
+          .from('panelistas_availability_log')
+          .insert({
+            panelista_id: panelistaId,
+            cliente_id: clienteId,
+            status: 'temporary_leave',
+            previous_status: currentStatus,
+            leave_start_date: leaveStartDate,
+            leave_end_date: leaveEndDate,
+            reason: reason || 'Baja temporal registrada',
+            notes,
+            changed_by: userData?.id,
+            changed_at: new Date().toISOString()
+          });
+      }
 
       toast({
-        title: "Baja registrada",
-        description: `Panelista de baja desde ${leaveStartDate} hasta ${leaveEndDate}`
+        title: "Éxito",
+        description: leaveStatus === 'active' 
+          ? "Baja temporal registrada y panelista de baja" 
+          : "Baja temporal programada correctamente"
       });
 
+      // Reset form
       setLeaveStartDate("");
       setLeaveEndDate("");
       setReason("");
       setNotes("");
-      loadLogs();
-      onUpdate();
+      setShowAddForm(false);
 
-    } catch (error: any) {
-      console.error('Error setting leave:', error);
+      // Reload data
+      await loadScheduledLeaves();
+      await loadLogs();
+      onUpdate();
+    } catch (error) {
+      console.error('Error adding leave:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "No se pudo registrar la baja temporal",
         variant: "destructive"
       });
     } finally {
@@ -153,50 +221,89 @@ export function AvailabilityManager({
     }
   };
 
+  const handleCancelLeave = async (leaveId: number) => {
+    try {
+      const { error } = await supabase
+        .from('scheduled_leaves')
+        .update({ status: 'cancelled' })
+        .eq('id', leaveId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Baja temporal cancelada"
+      });
+
+      await loadScheduledLeaves();
+    } catch (error) {
+      console.error('Error cancelling leave:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar la baja temporal",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleReactivate = async () => {
     setIsSubmitting(true);
+
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', user?.email)
+        .single();
+
+      // Cancel all active leaves
+      const { error: cancelError } = await supabase
+        .from('scheduled_leaves')
+        .update({ status: 'cancelled' })
+        .eq('panelista_id', panelistaId)
+        .eq('status', 'active');
+
+      if (cancelError) throw cancelError;
+
+      // Update panelista status
       const { error: updateError } = await supabase
         .from('panelistas')
         .update({
           availability_status: 'active',
-          current_leave_start: null,
-          current_leave_end: null,
           last_availability_change: new Date().toISOString()
         })
         .eq('id', panelistaId);
 
       if (updateError) throw updateError;
 
-      const { error: logError } = await supabase
+      // Log the change
+      await supabase
         .from('panelistas_availability_log')
         .insert({
           panelista_id: panelistaId,
           cliente_id: clienteId,
           status: 'active',
           previous_status: currentStatus,
-          leave_start_date: currentLeaveStart,
-          leave_end_date: currentLeaveEnd,
-          reason: 'Manual reactivation',
-          changed_by: userId,
+          reason: 'Reactivación manual',
+          changed_by: userData?.id,
           changed_at: new Date().toISOString()
         });
 
-      if (logError) throw logError;
-
       toast({
-        title: "Panelista reactivado",
-        description: "El panelista ha sido reactivado manualmente"
+        title: "Éxito",
+        description: "Panelista reactivado correctamente"
       });
 
-      loadLogs();
+      await loadScheduledLeaves();
+      await loadLogs();
       onUpdate();
-
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error reactivating:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "No se pudo reactivar el panelista",
         variant: "destructive"
       });
     } finally {
@@ -206,12 +313,14 @@ export function AvailabilityManager({
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'scheduled':
+        return <Badge variant="outline" className="bg-blue-50">Programada</Badge>;
       case 'active':
-        return <Badge className="bg-success">{status === 'active' ? 'Activo' : status}</Badge>;
-      case 'temporary_leave':
-        return <Badge variant="secondary">Baja Temporal</Badge>;
-      case 'inactive':
-        return <Badge variant="destructive">Inactivo</Badge>;
+        return <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">Activa</Badge>;
+      case 'completed':
+        return <Badge variant="outline" className="bg-green-50">Completada</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-gray-50">Cancelada</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -224,136 +333,228 @@ export function AvailabilityManager({
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Estado Actual de Disponibilidad
+            Estado Actual
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">Estado:</span>
-              {getStatusBadge(currentStatus)}
+          <div className="flex items-center justify-between">
+            <div>
+              {currentStatus === 'temporary_leave' ? (
+                <>
+                  <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                    De Baja Temporal
+                  </Badge>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    El panelista está actualmente de baja
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    Activo
+                  </Badge>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    El panelista está disponible
+                  </p>
+                </>
+              )}
             </div>
-            
-            {currentStatus === 'temporary_leave' && currentLeaveStart && currentLeaveEnd && (
-              <div className="space-y-2">
-                <div className="text-sm">
-                  <span className="text-muted-foreground">Desde:</span> {currentLeaveStart}
-                </div>
-                <div className="text-sm">
-                  <span className="text-muted-foreground">Hasta:</span> {currentLeaveEnd}
-                </div>
-                <Button 
-                  onClick={handleReactivate} 
-                  disabled={isSubmitting}
-                  variant="outline"
-                  size="sm"
-                >
-                  Reactivar Ahora
-                </Button>
-              </div>
+            {currentStatus === 'temporary_leave' && (
+              <Button
+                onClick={handleReactivate}
+                disabled={isSubmitting}
+                variant="outline"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Reactivar Manualmente
+              </Button>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Register New Leave */}
-      {currentStatus === 'active' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Registrar Baja Temporal</CardTitle>
-            <CardDescription>
-              Configure el período de baja del panelista
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="leave_start">Fecha Inicio</Label>
-                <Input
-                  id="leave_start"
-                  type="date"
-                  value={leaveStartDate}
-                  onChange={(e) => setLeaveStartDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="leave_end">Fecha Fin</Label>
-                <Input
-                  id="leave_end"
-                  type="date"
-                  value={leaveEndDate}
-                  onChange={(e) => setLeaveEndDate(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="reason">Motivo (opcional)</Label>
-              <Input
-                id="reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Ej: Vacaciones, enfermedad..."
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notas (opcional)</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Información adicional..."
-              />
-            </div>
-            
-            <Button 
-              onClick={handleSetLeave} 
-              disabled={isSubmitting}
-              className="w-full"
+      {/* Scheduled & Active Leaves */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Bajas Programadas y Activas</CardTitle>
+            <Button
+              onClick={() => setShowAddForm(!showAddForm)}
+              size="sm"
+              variant="outline"
             >
-              {isSubmitting ? "Guardando..." : "Registrar Baja"}
+              <Plus className="h-4 w-4 mr-2" />
+              Nueva Baja
             </Button>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {showAddForm && (
+            <Card className="mb-4 border-2 border-primary/20">
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="start-date">Fecha Inicio *</Label>
+                      <Input
+                        id="start-date"
+                        type="date"
+                        value={leaveStartDate}
+                        onChange={(e) => setLeaveStartDate(e.target.value)}
+                        min={format(new Date(), 'yyyy-MM-dd')}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end-date">Fecha Fin *</Label>
+                      <Input
+                        id="end-date"
+                        type="date"
+                        value={leaveEndDate}
+                        onChange={(e) => setLeaveEndDate(e.target.value)}
+                        min={leaveStartDate || format(new Date(), 'yyyy-MM-dd')}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="reason">Motivo</Label>
+                    <Input
+                      id="reason"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder="Vacaciones, enfermedad, etc."
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="notes">Notas Adicionales</Label>
+                    <Textarea
+                      id="notes"
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Información adicional sobre la baja..."
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleAddLeave}
+                      disabled={isSubmitting}
+                      className="flex-1"
+                    >
+                      Registrar Baja
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowAddForm(false);
+                        setLeaveStartDate("");
+                        setLeaveEndDate("");
+                        setReason("");
+                        setNotes("");
+                      }}
+                      variant="outline"
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="space-y-3">
+            {scheduledLeaves.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No hay bajas programadas o activas</p>
+              </div>
+            ) : (
+              scheduledLeaves.map((leave) => (
+                <Card key={leave.id} className="border-l-4" style={{
+                  borderLeftColor: leave.status === 'active' ? 'rgb(249 115 22)' : 'rgb(59 130 246)'
+                }}>
+                  <CardContent className="pt-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(leave.status)}
+                          <span className="font-medium">
+                            {format(new Date(leave.leave_start_date), 'dd/MM/yyyy')} - {format(new Date(leave.leave_end_date), 'dd/MM/yyyy')}
+                          </span>
+                        </div>
+                        {leave.reason && (
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Motivo:</strong> {leave.reason}
+                          </p>
+                        )}
+                        {leave.notes && (
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Notas:</strong> {leave.notes}
+                          </p>
+                        )}
+                      </div>
+                      {leave.status === 'scheduled' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleCancelLeave(leave.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* History */}
       <Card>
         <CardHeader>
           <CardTitle>Historial de Cambios</CardTitle>
-          <CardDescription>
-            Últimos cambios en la disponibilidad del panelista
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {logs.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Sin cambios registrados</p>
+            {availabilityLogs.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No hay cambios registrados
+              </p>
             ) : (
-              logs.map((log) => (
-                <div key={log.id} className="border-l-2 border-border pl-4 py-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    {getStatusBadge(log.status)}
-                    {log.previous_status && (
-                      <>
-                        <span className="text-xs text-muted-foreground">←</span>
-                        {getStatusBadge(log.previous_status)}
-                      </>
-                    )}
+              availabilityLogs.map((log) => (
+                <div key={log.id} className="border-l-2 border-muted pl-4 py-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      {log.previous_status && (
+                        <Badge variant="outline" className="text-xs">
+                          {log.previous_status}
+                        </Badge>
+                      )}
+                      <span className="text-xs">→</span>
+                      <Badge variant="outline" className="text-xs">
+                        {log.status}
+                      </Badge>
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(log.changed_at), 'dd/MM/yyyy HH:mm')}
+                    </span>
                   </div>
+                  {log.reason && (
+                    <p className="text-sm text-muted-foreground">{log.reason}</p>
+                  )}
                   {log.leave_start_date && log.leave_end_date && (
-                    <p className="text-sm text-muted-foreground">
-                      {log.leave_start_date} - {log.leave_end_date}
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(log.leave_start_date), 'dd/MM/yyyy')} - {format(new Date(log.leave_end_date), 'dd/MM/yyyy')}
                     </p>
                   )}
-                  {log.reason && (
-                    <p className="text-sm">{log.reason}</p>
+                  {log.usuarios && (
+                    <p className="text-xs text-muted-foreground">
+                      Por: {log.usuarios.nombre_completo}
+                    </p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {new Date(log.changed_at).toLocaleString('es-ES')}
-                    {log.usuarios && ` • ${log.usuarios.nombre_completo}`}
-                  </p>
                 </div>
               ))
             )}

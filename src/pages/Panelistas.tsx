@@ -33,6 +33,13 @@ interface Panelista {
   estado: string;
   fecha_alta: string;
   ciudad_id: number | null;
+  availability_status: string | null;
+  cliente_id: number;
+  scheduled_leaves?: Array<{
+    leave_start_date: string;
+    leave_end_date: string;
+    status: string;
+  }>;
 }
 
 export default function Panelistas() {
@@ -67,7 +74,14 @@ export default function Panelistas() {
     try {
       let query = supabase
         .from("panelistas")
-        .select("*")
+        .select(`
+          *,
+          scheduled_leaves!left(
+            leave_start_date,
+            leave_end_date,
+            status
+          )
+        `)
         .order("fecha_alta", { ascending: false });
       
       // Filter by cliente_id unless user is superadmin
@@ -123,10 +137,47 @@ export default function Panelistas() {
     }
   };
 
-  const getEstadoBadge = (estado: string) => {
-    if (estado === "activo") {
+  const getEstadoBadge = (panelista: Panelista) => {
+    // Priority 1: Check availability status (temporary leave)
+    if (panelista.availability_status === 'temporary_leave') {
+      const activeLeave = panelista.scheduled_leaves?.find(
+        leave => leave.status === 'active'
+      );
+      
+      return (
+        <div className="space-y-1">
+          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+            Baja Temporal
+          </Badge>
+          {activeLeave && (
+            <p className="text-xs text-muted-foreground">
+              Hasta: {new Date(activeLeave.leave_end_date).toLocaleDateString('es-ES')}
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    // Priority 2: Check scheduled future leaves
+    const scheduledLeave = panelista.scheduled_leaves?.find(
+      leave => leave.status === 'scheduled'
+    );
+    
+    if (scheduledLeave && panelista.estado === 'activo') {
+      return (
+        <div className="space-y-1">
+          <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>
+          <p className="text-xs text-blue-600">
+            Baja desde: {new Date(scheduledLeave.leave_start_date).toLocaleDateString('es-ES')}
+          </p>
+        </div>
+      );
+    }
+
+    // Priority 3: Regular status
+    if (panelista.estado === "activo") {
       return <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>;
-    } else if (estado === "suspendido") {
+    } else if (panelista.estado === "suspendido") {
       return <Badge variant="destructive" className="bg-destructive text-white">{t('status.suspended')}</Badge>;
     } else {
       return <Badge variant="destructive" className="bg-destructive text-white">{t('status.inactive')}</Badge>;
@@ -181,7 +232,7 @@ export default function Panelistas() {
                           <h3 className="text-lg font-semibold text-foreground">
                             {panelista.nombre_completo}
                           </h3>
-                          {getEstadoBadge(panelista.estado)}
+                          {getEstadoBadge(panelista)}
                         </div>
                         
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">

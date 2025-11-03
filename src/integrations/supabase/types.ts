@@ -1059,8 +1059,6 @@ export type Database = {
           availability_status: string | null
           ciudad_id: number | null
           cliente_id: number
-          current_leave_end: string | null
-          current_leave_start: string | null
           dias_comunicacion: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
@@ -1086,8 +1084,6 @@ export type Database = {
           availability_status?: string | null
           ciudad_id?: number | null
           cliente_id: number
-          current_leave_end?: string | null
-          current_leave_start?: string | null
           dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle: string
           direccion_ciudad: string
@@ -1113,8 +1109,6 @@ export type Database = {
           availability_status?: string | null
           ciudad_id?: number | null
           cliente_id?: number
-          current_leave_end?: string | null
-          current_leave_start?: string | null
           dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
           direccion_calle?: string
           direccion_ciudad?: string
@@ -1469,6 +1463,77 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_leaves: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          created_by: number | null
+          id: number
+          leave_end_date: string
+          leave_start_date: string
+          notes: string | null
+          panelista_id: number
+          reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          created_by?: number | null
+          id?: number
+          leave_end_date: string
+          leave_start_date: string
+          notes?: string | null
+          panelista_id: number
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          created_by?: number | null
+          id?: number
+          leave_end_date?: string
+          leave_start_date?: string
+          notes?: string | null
+          panelista_id?: number
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_leaves_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_leaves_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_leaves_panelista_id_fkey"
+            columns: ["panelista_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_leaves_panelista_id_fkey"
+            columns: ["panelista_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas_basic_view"
             referencedColumns: ["id"]
           },
         ]

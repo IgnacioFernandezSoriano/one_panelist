@@ -620,8 +620,6 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
             panelistaId={initialData.id}
             clienteId={parseInt(formData.cliente_id)}
             currentStatus={initialData.availability_status || 'active'}
-            currentLeaveStart={initialData.current_leave_start}
-            currentLeaveEnd={initialData.current_leave_end}
             onUpdate={onSuccess}
           />
         )}

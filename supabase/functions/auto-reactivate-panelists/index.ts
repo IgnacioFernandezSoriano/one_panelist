@@ -20,71 +20,126 @@ serve(async (req) => {
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Find panelists with expired leaves
-    const { data: expiredLeaves, error: queryError } = await supabase
-      .from('panelistas')
-      .select('id, nombre_completo, cliente_id, availability_status, current_leave_start, current_leave_end')
-      .eq('availability_status', 'temporary_leave')
-      .lt('current_leave_end', today);
+    // Step 1: Activate scheduled leaves that start today
+    const { data: leavesToActivate, error: activateQueryError } = await supabase
+      .from('scheduled_leaves')
+      .select('id, panelista_id, cliente_id')
+      .eq('status', 'scheduled')
+      .lte('leave_start_date', today)
+      .gte('leave_end_date', today);
 
-    if (queryError) {
-      console.error('Error querying panelists:', queryError);
-      throw queryError;
-    }
+    if (activateQueryError) {
+      console.error('Error querying leaves to activate:', activateQueryError);
+    } else {
+      console.log(`Found ${leavesToActivate?.length || 0} leaves to activate`);
+      
+      for (const leave of leavesToActivate || []) {
+        try {
+          // Mark leave as active
+          const { error: updateLeaveError } = await supabase
+            .from('scheduled_leaves')
+            .update({ status: 'active' })
+            .eq('id', leave.id);
 
-    console.log(`Found ${expiredLeaves?.length || 0} panelists with expired leaves`);
+          if (updateLeaveError) throw updateLeaveError;
 
-    let reactivatedCount = 0;
-    const errors: any[] = [];
+          // Update panelista status
+          const { error: updatePanelistaError } = await supabase
+            .from('panelistas')
+            .update({
+              availability_status: 'temporary_leave',
+              last_availability_change: new Date().toISOString()
+            })
+            .eq('id', leave.panelista_id);
 
-    // Reactivate each panelist
-    for (const panelista of expiredLeaves || []) {
-      try {
-        // Update panelista status
-        const { error: updateError } = await supabase
-          .from('panelistas')
-          .update({
-            availability_status: 'active',
-            current_leave_start: null,
-            current_leave_end: null,
-            last_availability_change: new Date().toISOString()
-          })
-          .eq('id', panelista.id);
+          if (updatePanelistaError) throw updatePanelistaError;
 
-        if (updateError) throw updateError;
-
-        // Log the change
-        const { error: logError } = await supabase
-          .from('panelistas_availability_log')
-          .insert({
-            panelista_id: panelista.id,
-            cliente_id: panelista.cliente_id,
-            status: 'active',
-            previous_status: 'temporary_leave',
-            leave_start_date: panelista.current_leave_start,
-            leave_end_date: panelista.current_leave_end,
-            reason: 'Auto-reactivated after leave expiration',
-            changed_at: new Date().toISOString()
-          });
-
-        if (logError) throw logError;
-
-        console.log(`Reactivated panelist ${panelista.id} - ${panelista.nombre_completo}`);
-        reactivatedCount++;
-      } catch (error) {
-        console.error(`Error reactivating panelist ${panelista.id}:`, error);
-        errors.push({ 
-          panelista_id: panelista.id, 
-          error: error instanceof Error ? error.message : String(error)
-        });
+          console.log(`Activated leave ${leave.id} for panelista ${leave.panelista_id}`);
+        } catch (error) {
+          console.error(`Error activating leave ${leave.id}:`, error);
+        }
       }
     }
+
+    // Step 2: Complete expired leaves and reactivate panelists
+    const { data: expiredLeaves, error: expiredQueryError } = await supabase
+      .from('scheduled_leaves')
+      .select('id, panelista_id, cliente_id, leave_start_date, leave_end_date, reason')
+      .eq('status', 'active')
+      .lt('leave_end_date', today);
+
+    if (expiredQueryError) {
+      console.error('Error querying expired leaves:', expiredQueryError);
+    } else {
+      console.log(`Found ${expiredLeaves?.length || 0} expired leaves`);
+
+      for (const leave of expiredLeaves || []) {
+        try {
+          // Mark leave as completed
+          const { error: completeError } = await supabase
+            .from('scheduled_leaves')
+            .update({ status: 'completed' })
+            .eq('id', leave.id);
+
+          if (completeError) throw completeError;
+
+          // Check if panelista has other active leaves
+          const { data: activeLeaves, error: activeLeavesError } = await supabase
+            .from('scheduled_leaves')
+            .select('id')
+            .eq('panelista_id', leave.panelista_id)
+            .eq('status', 'active')
+            .limit(1);
+
+          if (activeLeavesError) throw activeLeavesError;
+
+          // Only reactivate if no other active leaves
+          if (!activeLeaves || activeLeaves.length === 0) {
+            const { error: reactivateError } = await supabase
+              .from('panelistas')
+              .update({
+                availability_status: 'active',
+                last_availability_change: new Date().toISOString()
+              })
+              .eq('id', leave.panelista_id);
+
+            if (reactivateError) throw reactivateError;
+
+            // Log the reactivation
+            const { error: logError } = await supabase
+              .from('panelistas_availability_log')
+              .insert({
+                panelista_id: leave.panelista_id,
+                cliente_id: leave.cliente_id,
+                status: 'active',
+                previous_status: 'temporary_leave',
+                leave_start_date: leave.leave_start_date,
+                leave_end_date: leave.leave_end_date,
+                reason: 'Auto-reactivated after leave expiration',
+                changed_at: new Date().toISOString()
+              });
+
+            if (logError) throw logError;
+
+            console.log(`Reactivated panelista ${leave.panelista_id} after leave ${leave.id} expired`);
+          } else {
+            console.log(`Panelista ${leave.panelista_id} still has active leaves, not reactivating`);
+          }
+        } catch (error) {
+          console.error(`Error completing leave ${leave.id}:`, error);
+        }
+      }
+    }
+
+    const reactivatedCount = expiredLeaves?.length || 0;
+    const activatedCount = leavesToActivate?.length || 0;
+    const errors: any[] = [];
 
     const result = {
       success: true,
       timestamp: new Date().toISOString(),
       reactivated_count: reactivatedCount,
-      total_found: expiredLeaves?.length || 0,
+      activated_count: activatedCount,
       errors: errors.length > 0 ? errors : undefined
     };
 
