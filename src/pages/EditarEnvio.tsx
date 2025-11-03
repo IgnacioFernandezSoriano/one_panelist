@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { EnvioForm } from "@/components/config/forms/EnvioForm";
+import { StatusHistorySection } from "@/components/config/forms/StatusHistorySection";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,15 +93,27 @@ export default function EditarEnvio() {
           </p>
         </div>
 
-        <Card className="p-6 max-w-4xl">
+        <Card className="p-6 max-w-4xl mb-6">
           {envio && (
             <EnvioForm
               initialData={envio}
-              onSuccess={() => navigate("/envios")}
+              onSuccess={() => {
+                loadEnvio();
+              }}
               onCancel={() => navigate("/envios")}
             />
           )}
         </Card>
+
+        <div className="max-w-4xl">
+          {envio && (
+            <StatusHistorySection
+              envioId={parseInt(id!)}
+              currentStatus={envio.estado}
+              onStatusChange={loadEnvio}
+            />
+          )}
+        </div>
       </div>
     </AppLayout>
   );

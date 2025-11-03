@@ -612,6 +612,64 @@ export type Database = {
           },
         ]
       }
+      envios_estado_historial: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          envio_id: number
+          estado_anterior: Database["public"]["Enums"]["estado_envio"] | null
+          estado_nuevo: Database["public"]["Enums"]["estado_envio"]
+          fecha_cambio: string
+          id: number
+          notas: string | null
+          usuario_id: number | null
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          envio_id: number
+          estado_anterior?: Database["public"]["Enums"]["estado_envio"] | null
+          estado_nuevo: Database["public"]["Enums"]["estado_envio"]
+          fecha_cambio?: string
+          id?: number
+          notas?: string | null
+          usuario_id?: number | null
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          envio_id?: number
+          estado_anterior?: Database["public"]["Enums"]["estado_envio"] | null
+          estado_nuevo?: Database["public"]["Enums"]["estado_envio"]
+          fecha_cambio?: string
+          id?: number
+          notas?: string | null
+          usuario_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envios_estado_historial_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_estado_historial_envio_id_fkey"
+            columns: ["envio_id"]
+            isOneToOne: false
+            referencedRelation: "envios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_estado_historial_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       generated_allocation_plan_details: {
         Row: {
           carrier_id: number
