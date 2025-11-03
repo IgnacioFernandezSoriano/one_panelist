@@ -278,6 +278,14 @@ export default function Panelistas() {
                             <span className="text-muted-foreground">Plataforma:</span>
                             <p className="font-medium capitalize">{panelista.plataforma_preferida}</p>
                           </div>
+                          <div>
+                            <span className="text-muted-foreground">País:</span>
+                            <p className="font-medium">{panelista.direccion_pais}</p>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Email:</span>
+                            <p className="font-medium">{panelista.email || "No disponible"}</p>
+                          </div>
                         </div>
                         
                         <CollapsibleContent>
