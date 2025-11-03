@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown, RefreshCw } from "lucide-react";
+import { Plus, Search, Upload, FileDown, Trash2, Copy, XCircle, Edit, MoreVertical, Filter, X, CalendarIcon, Check, ChevronsUpDown, RefreshCw, Clock, Bell, Send, CheckCircle, Calendar as CalendarDaysIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -23,7 +23,7 @@ import {
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -37,6 +37,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { CSVImporter } from "@/components/import/CSVImporter";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Separator } from "@/components/ui/separator";
 
 interface Envio {
   id: number;
@@ -125,6 +127,10 @@ export default function Envios() {
   const [regiones, setRegiones] = useState<Array<{id: number, nombre: string, codigo: string}>>([]);
   const [ciudades, setCiudades] = useState<Array<{id: number, nombre: string, codigo: string}>>([]);
   const { toast } = useToast();
+  const [quickFilters, setQuickFilters] = useState({
+    status: "" as string,
+    timeRange: "" as "week" | "month" | ""
+  });
 
   useEffect(() => {
     loadEnvios();
@@ -379,6 +385,22 @@ export default function Envios() {
       });
     }
 
+    // Quick filters
+    const matchesQuickStatus = !quickFilters.status || e.estado === quickFilters.status;
+    
+    let matchesQuickTime = true;
+    if (quickFilters.timeRange === "week") {
+      const startOfCurrentWeek = startOfWeek(new Date(), { weekStartsOn: 1 });
+      const endOfCurrentWeek = endOfWeek(new Date(), { weekStartsOn: 1 });
+      const fecha = new Date(e.fecha_programada);
+      matchesQuickTime = fecha >= startOfCurrentWeek && fecha <= endOfCurrentWeek;
+    } else if (quickFilters.timeRange === "month") {
+      const startOfCurrentMonth = startOfMonth(new Date());
+      const endOfCurrentMonth = endOfMonth(new Date());
+      const fecha = new Date(e.fecha_programada);
+      matchesQuickTime = fecha >= startOfCurrentMonth && fecha <= endOfCurrentMonth;
+    }
+
     // Advanced filters
     const matchesCarrier = !advancedFilters.carrier || 
       e.carrier_id?.toString() === advancedFilters.carrier ||
@@ -429,7 +451,8 @@ export default function Envios() {
     const matchesFechaEnvioHasta = !advancedFilters.fechaEnvioHasta ||
       (e.fecha_envio_real && new Date(e.fecha_envio_real) <= advancedFilters.fechaEnvioHasta);
 
-    return matchesBasicSearch && matchesCarrier && matchesProduct && 
+    return matchesBasicSearch && matchesQuickStatus && matchesQuickTime && 
+           matchesCarrier && matchesProduct && 
            matchesType && matchesOrigin && matchesDestination && 
            matchesPanelist && matchesStatus && matchesRegionOrigen && matchesRegionDestino &&
            matchesCiudadOrigen && matchesCiudadDestino &&
@@ -454,7 +477,8 @@ export default function Envios() {
   });
   const uniqueStatuses = Array.from(new Set(envios.map(e => e.estado).filter(Boolean)));
 
-  const hasActiveFilters = Object.values(advancedFilters).some(v => v !== "" && v !== undefined);
+  const hasActiveFilters = Object.values(advancedFilters).some(v => v !== "" && v !== undefined) || 
+    quickFilters.status !== "" || quickFilters.timeRange !== "";
 
   const clearAdvancedFilters = () => {
     setAdvancedFilters({
@@ -474,6 +498,10 @@ export default function Envios() {
       fechaEnvioDesde: undefined,
       fechaEnvioHasta: undefined
     });
+    setQuickFilters({
+      status: "",
+      timeRange: ""
+    });
   };
 
   // Pagination
@@ -485,7 +513,7 @@ export default function Envios() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, advancedFilters, itemsPerPage]);
+  }, [searchTerm, advancedFilters, itemsPerPage, quickFilters]);
 
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; className?: string }> = {
@@ -717,6 +745,60 @@ export default function Envios() {
               className="pl-10"
             />
           </div>
+          
+          {/* Quick Filters */}
+          <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Status:</span>
+              <ToggleGroup 
+                type="single" 
+                value={quickFilters.status}
+                onValueChange={(value) => setQuickFilters(prev => ({ ...prev, status: value }))}
+              >
+                <ToggleGroupItem value="PENDING" aria-label="Pending" size="sm" className="data-[state=on]:bg-yellow-500/20 data-[state=on]:text-yellow-700 dark:data-[state=on]:text-yellow-500">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Pending
+                </ToggleGroupItem>
+                <ToggleGroupItem value="NOTIFIED" aria-label="Notified" size="sm" className="data-[state=on]:bg-blue-500/20 data-[state=on]:text-blue-700 dark:data-[state=on]:text-blue-500">
+                  <Bell className="h-3 w-3 mr-1" />
+                  Notified
+                </ToggleGroupItem>
+                <ToggleGroupItem value="SENT" aria-label="Sent" size="sm" className="data-[state=on]:bg-purple-500/20 data-[state=on]:text-purple-700 dark:data-[state=on]:text-purple-500">
+                  <Send className="h-3 w-3 mr-1" />
+                  Sent
+                </ToggleGroupItem>
+                <ToggleGroupItem value="RECEIVED" aria-label="Received" size="sm" className="data-[state=on]:bg-green-500/20 data-[state=on]:text-green-700 dark:data-[state=on]:text-green-500">
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Received
+                </ToggleGroupItem>
+                <ToggleGroupItem value="CANCELLED" aria-label="Cancelled" size="sm" className="data-[state=on]:bg-red-500/20 data-[state=on]:text-red-700 dark:data-[state=on]:text-red-500">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Cancelled
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+
+            <Separator orientation="vertical" className="h-8" />
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Time:</span>
+              <ToggleGroup 
+                type="single" 
+                value={quickFilters.timeRange}
+                onValueChange={(value) => setQuickFilters(prev => ({ ...prev, timeRange: value as "week" | "month" | "" }))}
+              >
+                <ToggleGroupItem value="week" aria-label="This Week" size="sm">
+                  <CalendarIcon className="h-3 w-3 mr-1" />
+                  This Week
+                </ToggleGroupItem>
+                <ToggleGroupItem value="month" aria-label="This Month" size="sm">
+                  <CalendarDaysIcon className="h-3 w-3 mr-1" />
+                  This Month
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+          </div>
+          
           <div className="flex items-center justify-between mt-3">
             <p className="text-xs text-muted-foreground">
               Search across all fields: accounts, products, carriers, panelists, nodes, and tracking labels
@@ -739,6 +821,18 @@ export default function Envios() {
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
               <span className="text-xs font-medium text-muted-foreground">Active filters:</span>
+              {quickFilters.status && (
+                <Badge variant="secondary" className="gap-1">
+                  Quick Status: {quickFilters.status}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setQuickFilters(prev => ({ ...prev, status: "" }))} />
+                </Badge>
+              )}
+              {quickFilters.timeRange && (
+                <Badge variant="secondary" className="gap-1">
+                  {quickFilters.timeRange === "week" ? "This Week" : "This Month"}
+                  <X className="w-3 h-3 cursor-pointer" onClick={() => setQuickFilters(prev => ({ ...prev, timeRange: "" }))} />
+                </Badge>
+              )}
               {advancedFilters.carrier && (
                 <Badge variant="secondary" className="gap-1">
                   Carrier: {uniqueCarriers.find(c => c === advancedFilters.carrier)}
