@@ -384,7 +384,7 @@ export default function TiemposTransito() {
         </div>
 
         <div className="space-y-4">
-          <div className="flex gap-4 flex-wrap">
+          <div className="flex gap-4 flex-wrap items-center">
             <Input
               placeholder="Search cities..."
               value={searchTerm}
@@ -392,12 +392,14 @@ export default function TiemposTransito() {
               className="max-w-xs"
             />
 
-            {(searchTerm || filterOrigenRegion !== "all" || filterDestinoRegion !== "all" || 
-              filterOrigenClassification !== "all" || filterDestinoClassification !== "all") && (
-              <Button variant="outline" onClick={clearFilters}>
-                Clear All Filters
-              </Button>
-            )}
+            <Button 
+              variant="outline" 
+              onClick={clearFilters}
+              disabled={!searchTerm && filterOrigenRegion === "all" && filterDestinoRegion === "all" && 
+                        filterOrigenClassification === "all" && filterDestinoClassification === "all"}
+            >
+              Clear All Filters
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
