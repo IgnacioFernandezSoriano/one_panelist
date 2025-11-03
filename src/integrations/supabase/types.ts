@@ -542,6 +542,7 @@ export type Database = {
           producto_id: number | null
           tiempo_transito_dias: number | null
           tipo_producto: string | null
+          validation_status: string | null
         }
         Insert: {
           carrier_id?: number | null
@@ -566,6 +567,7 @@ export type Database = {
           producto_id?: number | null
           tiempo_transito_dias?: number | null
           tipo_producto?: string | null
+          validation_status?: string | null
         }
         Update: {
           carrier_id?: number | null
@@ -590,6 +592,7 @@ export type Database = {
           producto_id?: number | null
           tiempo_transito_dias?: number | null
           tipo_producto?: string | null
+          validation_status?: string | null
         }
         Relationships: [
           {
@@ -716,6 +719,207 @@ export type Database = {
           {
             foreignKeyName: "envios_estado_historial_usuario_id_fkey"
             columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      envios_validacion_pendiente: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          envio_id: number
+          estado: string
+          fecha_revision: string | null
+          id: number
+          notas_revision: string | null
+          revisado_por: number | null
+          updated_at: string
+          validaciones_fallidas: Json
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          envio_id: number
+          estado?: string
+          fecha_revision?: string | null
+          id?: number
+          notas_revision?: string | null
+          revisado_por?: number | null
+          updated_at?: string
+          validaciones_fallidas?: Json
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          envio_id?: number
+          estado?: string
+          fecha_revision?: string | null
+          id?: number
+          notas_revision?: string | null
+          revisado_por?: number | null
+          updated_at?: string
+          validaciones_fallidas?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envios_validacion_pendiente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_validacion_pendiente_envio_id_fkey"
+            columns: ["envio_id"]
+            isOneToOne: true
+            referencedRelation: "envios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_validacion_pendiente_revisado_por_fkey"
+            columns: ["revisado_por"]
+            isOneToOne: false
+            referencedRelation: "usuarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eventos_reales: {
+        Row: {
+          carrier_id: number | null
+          carrier_name: string | null
+          cliente_id: number
+          created_at: string
+          envio_id: number
+          fecha_envio_real: string | null
+          fecha_programada: string
+          fecha_recepcion_real: string | null
+          fecha_validacion: string
+          id: number
+          nodo_destino: string
+          nodo_origen: string
+          numero_etiqueta: string | null
+          panelista_destino_id: number | null
+          panelista_origen_id: number | null
+          producto_id: number | null
+          tiempo_transito_dias: number | null
+          tipo_producto: string | null
+          updated_at: string
+          validado_por: number | null
+        }
+        Insert: {
+          carrier_id?: number | null
+          carrier_name?: string | null
+          cliente_id: number
+          created_at?: string
+          envio_id: number
+          fecha_envio_real?: string | null
+          fecha_programada: string
+          fecha_recepcion_real?: string | null
+          fecha_validacion?: string
+          id?: number
+          nodo_destino: string
+          nodo_origen: string
+          numero_etiqueta?: string | null
+          panelista_destino_id?: number | null
+          panelista_origen_id?: number | null
+          producto_id?: number | null
+          tiempo_transito_dias?: number | null
+          tipo_producto?: string | null
+          updated_at?: string
+          validado_por?: number | null
+        }
+        Update: {
+          carrier_id?: number | null
+          carrier_name?: string | null
+          cliente_id?: number
+          created_at?: string
+          envio_id?: number
+          fecha_envio_real?: string | null
+          fecha_programada?: string
+          fecha_recepcion_real?: string | null
+          fecha_validacion?: string
+          id?: number
+          nodo_destino?: string
+          nodo_origen?: string
+          numero_etiqueta?: string | null
+          panelista_destino_id?: number | null
+          panelista_origen_id?: number | null
+          producto_id?: number | null
+          tiempo_transito_dias?: number | null
+          tipo_producto?: string | null
+          updated_at?: string
+          validado_por?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_reales_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_carrier_id_fkey"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers_public_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_envio_id_fkey"
+            columns: ["envio_id"]
+            isOneToOne: false
+            referencedRelation: "envios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_panelista_destino_id_fkey"
+            columns: ["panelista_destino_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_panelista_destino_id_fkey"
+            columns: ["panelista_destino_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas_basic_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_panelista_origen_id_fkey"
+            columns: ["panelista_origen_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_panelista_origen_id_fkey"
+            columns: ["panelista_origen_id"]
+            isOneToOne: false
+            referencedRelation: "panelistas_basic_view"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_cliente"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_reales_validado_por_fkey"
+            columns: ["validado_por"]
             isOneToOne: false
             referencedRelation: "usuarios"
             referencedColumns: ["id"]

@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import Panelistas from "./pages/Panelistas";
 import Envios from "./pages/Envios";
 import Incidencias from "./pages/Incidencias";
+import EventosPendientesValidar from "./pages/EventosPendientesValidar";
 import NodosDescubiertos from "./pages/NodosDescubiertos";
 import NodeDetail from "./pages/NodeDetail";
 import Nodos from "./pages/Nodos";
@@ -69,6 +70,7 @@ const App = () => {
             <Route path="/envios" element={<Envios />} />
             <Route path="/envios/nuevo" element={<NuevoEnvio />} />
             <Route path="/envios/intelligent-plan-generator" element={<IntelligentPlanGenerator />} />
+            <Route path="/envios/eventos-pendientes-validar" element={<EventosPendientesValidar />} />
             <Route path="/envios/massive-change" element={<MassivePanelistChange />} />
             <Route path="/envios/materials-plan" element={<PanelistMaterialsPlan />} />
             <Route path="/envios/:id" element={<EditarEnvio />} />
