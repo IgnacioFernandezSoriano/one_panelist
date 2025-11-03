@@ -80,13 +80,13 @@ interface Envio {
     region_id?: number;
     ciudad_id?: number;
     regiones?: { id: number; nombre: string; codigo: string; };
-    ciudades?: { id: number; nombre: string; codigo: string; };
+    ciudades?: { id: number; nombre: string; codigo: string; clasificacion?: string; };
   };
   nodo_destino_info?: {
     region_id?: number;
     ciudad_id?: number;
     regiones?: { id: number; nombre: string; codigo: string; };
-    ciudades?: { id: number; nombre: string; codigo: string; };
+    ciudades?: { id: number; nombre: string; codigo: string; clasificacion?: string; };
   };
 }
 
@@ -185,13 +185,13 @@ export default function Envios() {
             region_id,
             ciudad_id,
             regiones:region_id (id, nombre, codigo),
-            ciudades:ciudad_id (id, nombre, codigo)
+            ciudades:ciudad_id (id, nombre, codigo, clasificacion)
           ),
           nodo_destino_info:nodos!envios_nodo_destino_fkey (
             region_id,
             ciudad_id,
             regiones:region_id (id, nombre, codigo),
-            ciudades:ciudad_id (id, nombre, codigo)
+            ciudades:ciudad_id (id, nombre, codigo, clasificacion)
           )
         `)
         .order("fecha_programada", { ascending: true });
@@ -961,7 +961,16 @@ export default function Envios() {
                       
                       <div className="flex items-center gap-1.5">
                         <span className="text-muted-foreground text-xs">Origin:</span>
-                        <p className="font-medium">{envio.nodo_origen}</p>
+                        <p className="font-medium font-mono">{envio.nodo_origen}</p>
+                        {envio.nodo_origen_info?.ciudades && (
+                          <>
+                            <span className="text-muted-foreground">•</span>
+                            <p className="text-xs text-muted-foreground">
+                              {envio.nodo_origen_info.ciudades.nombre}
+                              {envio.nodo_origen_info.ciudades.clasificacion && ` (${envio.nodo_origen_info.ciudades.clasificacion})`}
+                            </p>
+                          </>
+                        )}
                         {envio.panelista_origen && (
                           <>
                             <span className="text-muted-foreground">•</span>
@@ -972,7 +981,16 @@ export default function Envios() {
                       
                       <div className="flex items-center gap-1.5">
                         <span className="text-muted-foreground text-xs">Destination:</span>
-                        <p className="font-medium">{envio.nodo_destino}</p>
+                        <p className="font-medium font-mono">{envio.nodo_destino}</p>
+                        {envio.nodo_destino_info?.ciudades && (
+                          <>
+                            <span className="text-muted-foreground">•</span>
+                            <p className="text-xs text-muted-foreground">
+                              {envio.nodo_destino_info.ciudades.nombre}
+                              {envio.nodo_destino_info.ciudades.clasificacion && ` (${envio.nodo_destino_info.ciudades.clasificacion})`}
+                            </p>
+                          </>
+                        )}
                         {envio.panelista_destino && (
                           <>
                             <span className="text-muted-foreground">•</span>
