@@ -45,11 +45,11 @@ export function EnvioForm({ onSuccess, onCancel, initialData }: EnvioFormProps) 
   );
   
   const [formData, setFormData] = useState({
-    cliente_id: initialData?.cliente_id || "",
-    carrier_id: initialData?.carrier_id || "",
+    cliente_id: initialData?.cliente_id ? initialData.cliente_id.toString() : "",
+    carrier_id: initialData?.carrier_id ? initialData.carrier_id.toString() : "",
     nodo_origen: initialData?.nodo_origen || "",
     nodo_destino: initialData?.nodo_destino || "",
-    producto_id: initialData?.producto_id || "",
+    producto_id: initialData?.producto_id ? initialData.producto_id.toString() : "",
     tipo_producto: initialData?.tipo_producto || "",
     motivo_creacion: initialData?.motivo_creacion || "programado",
     estado: initialData?.estado || "PENDING",
