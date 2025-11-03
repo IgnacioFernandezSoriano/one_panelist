@@ -23,9 +23,10 @@ interface AffectedEventsTableProps {
   events: AffectedEvent[];
   availableNodes: { codigo: string; panelista_nombre: string | null }[];
   onSaveEvent: (eventId: number, updates: Partial<AffectedEvent>) => Promise<void>;
+  affectedNodeCode: string;
 }
 
-export const AffectedEventsTable = ({ events, availableNodes, onSaveEvent }: AffectedEventsTableProps) => {
+export const AffectedEventsTable = ({ events, availableNodes, onSaveEvent, affectedNodeCode }: AffectedEventsTableProps) => {
   const [savingId, setSavingId] = useState<number | null>(null);
 
   const handleFieldChange = async (eventId: number, field: string, value: any) => {
@@ -139,7 +140,12 @@ export const AffectedEventsTable = ({ events, availableNodes, onSaveEvent }: Aff
                         >
                           <SelectTrigger>
                             <SelectValue>
-                              <span className="font-mono text-sm">{event.nodo_origen}</span>
+                              <span className={cn(
+                                "font-mono text-sm",
+                                event.nodo_origen === affectedNodeCode && "font-bold text-destructive"
+                              )}>
+                                {event.nodo_origen}
+                              </span>
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -168,7 +174,12 @@ export const AffectedEventsTable = ({ events, availableNodes, onSaveEvent }: Aff
                         >
                           <SelectTrigger>
                             <SelectValue>
-                              <span className="font-mono text-sm">{event.nodo_destino}</span>
+                              <span className={cn(
+                                "font-mono text-sm",
+                                event.nodo_destino === affectedNodeCode && "font-bold text-destructive"
+                              )}>
+                                {event.nodo_destino}
+                              </span>
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>

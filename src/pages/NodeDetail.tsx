@@ -442,6 +442,7 @@ const NodeDetail = () => {
             events={affectedEvents}
             availableNodes={availableNodes}
             onSaveEvent={handleSaveEvent}
+            affectedNodeCode={nodoCodigo || ''}
           />
         </Card>
 
