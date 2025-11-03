@@ -546,7 +546,7 @@ export default function TiemposTransito() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className={tt.dias_transito === 0 ? "text-muted-foreground" : "font-medium"}>
+                        <span className={tt.dias_transito === 0 ? "text-destructive font-bold" : "text-green-600 font-bold"}>
                           {tt.dias_transito} {tt.dias_transito === 1 ? "day" : "days"}
                         </span>
                       </TableCell>
