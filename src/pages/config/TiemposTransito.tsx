@@ -51,8 +51,10 @@ export default function TiemposTransito() {
   const [generating, setGenerating] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterRegion, setFilterRegion] = useState<string>("all");
-  const [filterClassification, setFilterClassification] = useState<string>("all");
+  const [filterOrigenRegion, setFilterOrigenRegion] = useState<string>("all");
+  const [filterDestinoRegion, setFilterDestinoRegion] = useState<string>("all");
+  const [filterOrigenClassification, setFilterOrigenClassification] = useState<string>("all");
+  const [filterDestinoClassification, setFilterDestinoClassification] = useState<string>("all");
   const [massEditDialogOpen, setMassEditDialogOpen] = useState(false);
   const [massEditDays, setMassEditDays] = useState<number>(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -256,8 +258,10 @@ export default function TiemposTransito() {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setFilterRegion("all");
-    setFilterClassification("all");
+    setFilterOrigenRegion("all");
+    setFilterDestinoRegion("all");
+    setFilterOrigenClassification("all");
+    setFilterDestinoClassification("all");
   };
 
   const filteredTransitTimes = transitTimes.filter(tt => {
@@ -267,15 +271,20 @@ export default function TiemposTransito() {
       tt.ciudad_destino?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tt.ciudad_destino?.codigo.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesRegion = filterRegion === "all" ||
-      tt.ciudad_origen?.region?.nombre === filterRegion ||
-      tt.ciudad_destino?.region?.nombre === filterRegion;
+    const matchesOrigenRegion = filterOrigenRegion === "all" ||
+      tt.ciudad_origen?.region?.nombre === filterOrigenRegion;
 
-    const matchesClassification = filterClassification === "all" ||
-      tt.ciudad_origen?.clasificacion === filterClassification ||
-      tt.ciudad_destino?.clasificacion === filterClassification;
+    const matchesDestinoRegion = filterDestinoRegion === "all" ||
+      tt.ciudad_destino?.region?.nombre === filterDestinoRegion;
 
-    return matchesSearch && matchesRegion && matchesClassification;
+    const matchesOrigenClassification = filterOrigenClassification === "all" ||
+      tt.ciudad_origen?.clasificacion === filterOrigenClassification;
+
+    const matchesDestinoClassification = filterDestinoClassification === "all" ||
+      tt.ciudad_destino?.clasificacion === filterDestinoClassification;
+
+    return matchesSearch && matchesOrigenRegion && matchesDestinoRegion && 
+           matchesOrigenClassification && matchesDestinoClassification;
   });
 
   const getClassificationBadgeVariant = (classification: string) => {
@@ -345,45 +354,86 @@ export default function TiemposTransito() {
           </Button>
         </div>
 
-        <div className="flex gap-4 flex-wrap">
-          <Input
-            placeholder="Search cities..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-xs"
-          />
+        <div className="space-y-4">
+          <div className="flex gap-4 flex-wrap">
+            <Input
+              placeholder="Search cities..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-xs"
+            />
 
-          <Select value={filterRegion} onValueChange={setFilterRegion}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by region" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Regions</SelectItem>
-              {regiones.map((region) => (
-                <SelectItem key={region.id} value={region.nombre}>
-                  {region.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {(searchTerm || filterOrigenRegion !== "all" || filterDestinoRegion !== "all" || 
+              filterOrigenClassification !== "all" || filterDestinoClassification !== "all") && (
+              <Button variant="outline" onClick={clearFilters}>
+                Clear All Filters
+              </Button>
+            )}
+          </div>
 
-          <Select value={filterClassification} onValueChange={setFilterClassification}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by classification" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Classifications</SelectItem>
-              <SelectItem value="A">Class A</SelectItem>
-              <SelectItem value="B">Class B</SelectItem>
-              <SelectItem value="C">Class C</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Origin Filters</h3>
+              <div className="flex gap-2">
+                <Select value={filterOrigenRegion} onValueChange={setFilterOrigenRegion}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Origin region" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Regions</SelectItem>
+                    {regiones.map((region) => (
+                      <SelectItem key={region.id} value={region.nombre}>
+                        {region.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-          {(searchTerm || filterRegion !== "all" || filterClassification !== "all") && (
-            <Button variant="outline" onClick={clearFilters}>
-              Clear Filters
-            </Button>
-          )}
+                <Select value={filterOrigenClassification} onValueChange={setFilterOrigenClassification}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Origin class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Classes</SelectItem>
+                    <SelectItem value="A">Class A</SelectItem>
+                    <SelectItem value="B">Class B</SelectItem>
+                    <SelectItem value="C">Class C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Destination Filters</h3>
+              <div className="flex gap-2">
+                <Select value={filterDestinoRegion} onValueChange={setFilterDestinoRegion}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Dest region" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Regions</SelectItem>
+                    {regiones.map((region) => (
+                      <SelectItem key={region.id} value={region.nombre}>
+                        {region.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterDestinoClassification} onValueChange={setFilterDestinoClassification}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Dest class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Classes</SelectItem>
+                    <SelectItem value="A">Class A</SelectItem>
+                    <SelectItem value="B">Class B</SelectItem>
+                    <SelectItem value="C">Class C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
         </div>
 
         {selectedIds.size > 0 && (
