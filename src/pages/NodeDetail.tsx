@@ -416,7 +416,7 @@ const NodeDetail = () => {
                     {nodeRisk.panelista_nombre || <span className="text-muted-foreground italic">Sin panelista</span>}
                   </p>
                   {nodeRisk.leave_start && nodeRisk.leave_end && (
-                    <p className="text-xs text-warning-foreground">
+                    <p className="text-xs text-foreground">
                       Baja: {format(new Date(nodeRisk.leave_start), 'dd/MM')} - {format(new Date(nodeRisk.leave_end), 'dd/MM')}
                     </p>
                   )}
