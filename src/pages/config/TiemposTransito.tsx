@@ -62,6 +62,7 @@ export default function TiemposTransito() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false);
+  const [massDeleteDialogOpen, setMassDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (clienteId) {
@@ -235,6 +236,34 @@ export default function TiemposTransito() {
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
+    }
+  };
+
+  const handleMassDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    try {
+      const { error } = await supabase
+        .from("ciudad_transit_times")
+        .delete()
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: `Deleted ${selectedIds.size} transit times`,
+      });
+
+      setMassDeleteDialogOpen(false);
+      setSelectedIds(new Set());
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -442,6 +471,13 @@ export default function TiemposTransito() {
             <Button onClick={() => setMassEditDialogOpen(true)}>
               Set Transit Days
             </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => setMassDeleteDialogOpen(true)}
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected
+            </Button>
             <Button variant="outline" onClick={() => setSelectedIds(new Set())}>
               Clear Selection
             </Button>
@@ -627,6 +663,28 @@ export default function TiemposTransito() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={generateAllCombinations}>Generate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Mass Delete Confirmation Dialog */}
+      <AlertDialog open={massDeleteDialogOpen} onOpenChange={setMassDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedIds.size} transit times?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete {selectedIds.size} transit time configurations. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleMassDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
