@@ -114,7 +114,7 @@ const NodosDescubiertos = () => {
           ciudad,
           pais,
           panelista_id,
-          panelista:panelistas(id, nombre_completo),
+          panelista:panelistas!fk_nodos_panelista(id, nombre_completo),
           region:regiones(nombre),
           ciudad_info:ciudades(nombre)
         `)
