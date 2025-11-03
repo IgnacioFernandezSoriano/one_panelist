@@ -107,36 +107,8 @@ const NodeDetail = () => {
 
       setMaxEventsPerWeek(cliente?.max_events_per_panelist_week || 5);
 
-      // Load affected events
-      const eventsQuery = await supabase
-        .from('generated_allocation_plan_details')
-        .select(`
-          id,
-          fecha_programada,
-          nodo_origen,
-          nodo_destino,
-          plan_id,
-          status,
-          plan:generated_allocation_plans!inner(status)
-        `)
-        .eq('cliente_id', clienteId)
-        .or(`nodo_origen.eq.${nodoCodigo},nodo_destino.eq.${nodoCodigo}`)
-        .in('plan.status', ['draft', 'merged'])
-        .order('fecha_programada');
-
-      const formattedEvents: AffectedEvent[] = (eventsQuery.data || []).map((e: any) => ({
-        id: e.id,
-        fecha_programada: e.fecha_programada,
-        nodo_origen: e.nodo_origen,
-        nodo_destino: e.nodo_destino,
-        status: e.status || 'PENDING',
-        plan_id: e.plan_id,
-      }));
-
-      setAffectedEvents(formattedEvents);
-
-      // Check for scheduled leaves
-      let leaveInfo = {};
+      // Check for scheduled leaves first
+      let leaveInfo: { leave_start?: string; leave_end?: string; leave_reason?: string } = {};
       if (nodoData.panelista_id) {
         const { data: leaves } = await supabase
           .from('scheduled_leaves')
@@ -155,6 +127,48 @@ const NodeDetail = () => {
           };
         }
       }
+
+      // Load affected events
+      const eventsQuery = await supabase
+        .from('generated_allocation_plan_details')
+        .select(`
+          id,
+          fecha_programada,
+          nodo_origen,
+          nodo_destino,
+          plan_id,
+          status,
+          plan:generated_allocation_plans!inner(status)
+        `)
+        .eq('cliente_id', clienteId)
+        .or(`nodo_origen.eq.${nodoCodigo},nodo_destino.eq.${nodoCodigo}`)
+        .in('plan.status', ['draft', 'merged'])
+        .order('fecha_programada');
+
+      let filteredEvents = eventsQuery.data || [];
+
+      // Filter events based on risk type
+      // If panelista_baja with leave dates, only show events during leave period
+      if (nodoData.panelista_id && leaveInfo.leave_start && leaveInfo.leave_end) {
+        const leaveStart = new Date(leaveInfo.leave_start);
+        const leaveEnd = new Date(leaveInfo.leave_end);
+        
+        filteredEvents = filteredEvents.filter((e: any) => {
+          const eventDate = new Date(e.fecha_programada);
+          return eventDate >= leaveStart && eventDate <= leaveEnd;
+        });
+      }
+
+      const formattedEvents: AffectedEvent[] = filteredEvents.map((e: any) => ({
+        id: e.id,
+        fecha_programada: e.fecha_programada,
+        nodo_origen: e.nodo_origen,
+        nodo_destino: e.nodo_destino,
+        status: e.status || 'PENDING',
+        plan_id: e.plan_id,
+      }));
+
+      setAffectedEvents(formattedEvents);
 
       const risk: NodeRisk = {
         nodo_codigo: nodoData.codigo,
