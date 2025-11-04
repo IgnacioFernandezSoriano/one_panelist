@@ -24,6 +24,15 @@ export default function RegulatorDashboard() {
   const [period, setPeriod] = useState<number>(30);
   const [selectedCarrier, setSelectedCarrier] = useState<string>("all");
   const [selectedProduct, setSelectedProduct] = useState<string>("all");
+
+  // Calculate YTD days
+  const getYTDDays = () => {
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - startOfYear.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
   
   const { data: carriers } = useQuery({
     queryKey: ['carriers', clienteId],
@@ -57,12 +66,13 @@ export default function RegulatorDashboard() {
 
   const carrierId = selectedCarrier === "all" ? null : Number(selectedCarrier);
   const productId = selectedProduct === "all" ? null : Number(selectedProduct);
+  const actualPeriod = period === 999 ? getYTDDays() : period;
   
-  const { data: healthData, isLoading: healthLoading } = useNetworkHealth(clienteId, period, carrierId, productId);
-  const { data: routeData, isLoading: routeLoading } = useRoutePerformance(clienteId, period, carrierId, productId);
-  const { data: trendsData, isLoading: trendsLoading } = usePerformanceTrends(clienteId, period, 'day', carrierId, productId);
-  const { data: slaData, isLoading: slaLoading } = useSLACompliance(clienteId, period, carrierId, productId);
-  const { data: issuesData, isLoading: issuesLoading } = useIssuesAnalysis(clienteId, period, carrierId, productId);
+  const { data: healthData, isLoading: healthLoading } = useNetworkHealth(clienteId, actualPeriod, carrierId, productId);
+  const { data: routeData, isLoading: routeLoading } = useRoutePerformance(clienteId, actualPeriod, carrierId, productId);
+  const { data: trendsData, isLoading: trendsLoading } = usePerformanceTrends(clienteId, actualPeriod, 'day', carrierId, productId);
+  const { data: slaData, isLoading: slaLoading } = useSLACompliance(clienteId, actualPeriod, carrierId, productId);
+  const { data: issuesData, isLoading: issuesLoading } = useIssuesAnalysis(clienteId, actualPeriod, carrierId, productId);
 
   const handleExport = (format: 'pdf' | 'csv') => {
     toast.info(`Exporting as ${format.toUpperCase()}...`);
@@ -86,6 +96,7 @@ export default function RegulatorDashboard() {
               <SelectItem value="7">Last 7 days</SelectItem>
               <SelectItem value="30">Last 30 days</SelectItem>
               <SelectItem value="90">Last 90 days</SelectItem>
+              <SelectItem value="999">YTD (Year to Date)</SelectItem>
             </SelectContent>
           </Select>
           <Select value={selectedCarrier} onValueChange={setSelectedCarrier}>
