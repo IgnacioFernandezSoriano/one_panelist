@@ -32,9 +32,8 @@ export default function Auth() {
         if (user) {
           console.log("User authenticated:", user.email);
           setError("");
-          alert(`Login successful! Welcome ${user.email}`);
-          // Por ahora, no redirigir al dashboard hasta que esté completamente configurado
-          // navigate("/dashboard");
+          // Redirigir al dashboard después del login exitoso
+          navigate("/dashboard");
         } else {
           setError("Authentication verification failed");
         }
