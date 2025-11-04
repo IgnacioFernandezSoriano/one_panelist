@@ -265,38 +265,38 @@ export type Database = {
       }
       ciudad_transit_times: {
         Row: {
-          carrier_id: number | null
+          carrier_id: number
           ciudad_destino_id: number
           ciudad_origen_id: number
           cliente_id: number
           created_at: string
           dias_transito: number
           id: number
-          producto_id: number | null
+          producto_id: number
           target_percentage: number
           updated_at: string
         }
         Insert: {
-          carrier_id?: number | null
+          carrier_id: number
           ciudad_destino_id: number
           ciudad_origen_id: number
           cliente_id: number
           created_at?: string
           dias_transito?: number
           id?: number
-          producto_id?: number | null
+          producto_id: number
           target_percentage?: number
           updated_at?: string
         }
         Update: {
-          carrier_id?: number | null
+          carrier_id?: number
           ciudad_destino_id?: number
           ciudad_origen_id?: number
           cliente_id?: number
           created_at?: string
           dias_transito?: number
           id?: number
-          producto_id?: number | null
+          producto_id?: number
           target_percentage?: number
           updated_at?: string
         }
