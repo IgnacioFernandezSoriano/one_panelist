@@ -50,7 +50,8 @@ import {
   Brain,
   Clock,
   Wrench,
-  BookOpen
+  BookOpen,
+  CheckCircle
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
@@ -178,8 +179,10 @@ const AppSidebarContent = () => {
 
   const allocationPlanItems = [
     { icon: Send, label: "View Plan", path: "/envios" },
-        { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
+    { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
     { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
+    { icon: AlertCircle, label: "Pending Validation Events", path: "/envios/eventos-pendientes-validar" },
+    { icon: CheckCircle, label: "Validated Events", path: "/envios/eventos-reales" },
   ];
 
   const issuesItems = [
