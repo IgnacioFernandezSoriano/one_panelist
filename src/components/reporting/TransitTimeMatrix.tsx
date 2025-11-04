@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -45,6 +45,13 @@ export function TransitTimeMatrix({
     },
     enabled: !!clienteId
   });
+
+  // Auto-select first city when cities are loaded
+  useEffect(() => {
+    if (originCities && originCities.length > 0 && !selectedOrigin) {
+      setSelectedOrigin(originCities[0].nombre);
+    }
+  }, [originCities, selectedOrigin]);
 
   const { data: matrixData, isLoading: matrixLoading } = useTransitTimeDistribution(
     clienteId,
@@ -139,7 +146,10 @@ export function TransitTimeMatrix({
           <Skeleton className="h-[400px] w-full" />
         ) : !matrixData || matrixData.routes.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            No data available for the selected filters
+            <p>No data available for the selected filters</p>
+            <p className="text-sm mt-2">
+              Period: Last {period} days | Origin: {selectedOrigin}
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">

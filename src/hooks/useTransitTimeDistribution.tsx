@@ -34,7 +34,7 @@ export function useTransitTimeDistribution(
       }
       
       const endDate = new Date().toISOString().split('T')[0];
-      const startDate = subDays(new Date(), days).toISOString().split('T')[0];
+      const startDate = subDays(new Date(), Math.max(days, 365)).toISOString().split('T')[0];
       
       const { data, error } = await supabase.rpc('get_transit_time_distribution', {
         p_cliente_id: clienteId,
