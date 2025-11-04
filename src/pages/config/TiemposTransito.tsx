@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCliente } from "@/contexts/ClienteContext";
 import { useToast } from "@/hooks/use-toast";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -54,7 +54,7 @@ interface Region {
 }
 
 export default function TiemposTransito() {
-  const { clienteId } = useUserRole();
+  const { clienteId } = useCliente();
   const { toast } = useToast();
   const [transitTimes, setTransitTimes] = useState<TransitTime[]>([]);
   const [regiones, setRegiones] = useState<Region[]>([]);
@@ -78,6 +78,7 @@ export default function TiemposTransito() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false);
   const [massDeleteDialogOpen, setMassDeleteDialogOpen] = useState(false);
+
 
   useEffect(() => {
     if (clienteId) {

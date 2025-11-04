@@ -56,10 +56,42 @@ import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useMenuPermissions } from "@/hooks/useMenuPermissions";
+import { useCliente } from "@/contexts/ClienteContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
+
+const ClienteSelector = () => {
+  const { isSuperAdmin } = useUserRole();
+  const { clienteId, availableClientes, setSelectedClienteId } = useCliente();
+
+  if (!isSuperAdmin()) {
+    return null;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm text-muted-foreground">Account:</span>
+      <Select
+        value={clienteId?.toString() || ""}
+        onValueChange={(value) => setSelectedClienteId(parseInt(value))}
+      >
+        <SelectTrigger className="w-[200px]">
+          <SelectValue placeholder="Select account" />
+        </SelectTrigger>
+        <SelectContent>
+          {availableClientes.map((cliente) => (
+            <SelectItem key={cliente.id} value={cliente.id.toString()}>
+              {cliente.nombre}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+};
 
 const AppSidebarContent = () => {
   const { open: sidebarOpen } = useSidebar();
@@ -749,8 +781,9 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
         </Sidebar>
 
         <div className="flex-1 flex flex-col">
-          <header className="h-12 flex items-center border-b px-4">
+          <header className="h-12 flex items-center justify-between border-b px-4">
             <SidebarTrigger />
+            <ClienteSelector />
           </header>
 
           <main className="flex-1 overflow-auto p-6">
