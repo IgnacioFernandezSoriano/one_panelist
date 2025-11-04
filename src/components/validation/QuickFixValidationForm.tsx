@@ -324,12 +324,12 @@ export function QuickFixValidationForm({ envio, validationErrors, onSuccess, onC
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="panelistaOrigen">Panelista Origen</Label>
-                <Select value={panelistaOrigenId.toString()} onValueChange={setPanelistaOrigenId}>
+                <Select value={panelistaOrigenId.toString() || "none"} onValueChange={(val) => setPanelistaOrigenId(val === "none" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sin asignar" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin asignar</SelectItem>
+                    <SelectItem value="none">Sin asignar</SelectItem>
                     {panelistas.map(p => (
                       <SelectItem key={p.id} value={p.id.toString()}>
                         {p.codigo_panelista} - {p.nombre_completo}
@@ -341,12 +341,12 @@ export function QuickFixValidationForm({ envio, validationErrors, onSuccess, onC
 
               <div className="space-y-2">
                 <Label htmlFor="panelistaDestino">Panelista Destino</Label>
-                <Select value={panelistaDestinoId.toString()} onValueChange={setPanelistaDestinoId}>
+                <Select value={panelistaDestinoId.toString() || "none"} onValueChange={(val) => setPanelistaDestinoId(val === "none" ? "" : val)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Sin asignar" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sin asignar</SelectItem>
+                    <SelectItem value="none">Sin asignar</SelectItem>
                     {panelistas.map(p => (
                       <SelectItem key={p.id} value={p.id.toString()}>
                         {p.codigo_panelista} - {p.nombre_completo}
