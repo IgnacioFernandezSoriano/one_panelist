@@ -7,6 +7,7 @@ export interface TransitDistributionData {
   clasificacion: string;
   totalEvents: number;
   standardDays: number;
+  targetPercentage: number;
   distribution: Map<number, {
     count: number;
     cumulativePercentage: number;
@@ -57,13 +58,14 @@ export function useTransitTimeDistribution(
           const key = row.ciudad_destino;
           
           if (!routesMap.has(key)) {
-            routesMap.set(key, {
-              ciudadDestino: row.ciudad_destino,
-              clasificacion: row.clasificacion_destino,
-              totalEvents: row.total_events_route,
-              standardDays: row.standard_days,
-              distribution: new Map()
-            });
+      routesMap.set(key, {
+        ciudadDestino: row.ciudad_destino,
+        clasificacion: row.clasificacion_destino,
+        totalEvents: row.total_events_route,
+        standardDays: row.standard_days,
+        targetPercentage: row.target_percentage || 90,
+        distribution: new Map()
+      });
           }
           
           const route = routesMap.get(key)!;

@@ -83,6 +83,16 @@ export function TransitTimeMatrix({
     }
   };
 
+  const getStandardCellColor = (
+    cumulativePercentage: number,
+    targetPercentage: number
+  ): string => {
+    const complianceRatio = cumulativePercentage / targetPercentage;
+    if (complianceRatio >= 1) return 'bg-green-500/30';
+    if (complianceRatio >= 0.85) return 'bg-yellow-400/30';
+    return 'bg-red-400/30';
+  };
+
   const getClassBadgeVariant = (clasificacion: string): "default" | "secondary" | "outline" => {
     if (clasificacion === 'A') return 'default';
     if (clasificacion === 'B') return 'secondary';
@@ -191,15 +201,24 @@ export function TransitTimeMatrix({
                     ).map((day) => {
                       const data = route.distribution.get(day);
                       const isStandard = day === route.standardDays;
+                      const cumulativePct = data?.cumulativePercentage || 0;
 
                       return (
                         <TableCell
                           key={day}
                           className={cn(
                             "text-center",
-                            isStandard && "font-bold",
-                            data && getHeatMapColor(data, viewMode, route.totalEvents)
+                            isStandard && "font-bold border-2 border-primary",
+                            data &&
+                              (isStandard 
+                                ? getStandardCellColor(cumulativePct, route.targetPercentage)
+                                : getHeatMapColor(data, viewMode, route.totalEvents))
                           )}
+                          title={
+                            isStandard
+                              ? `Standard: J+${day} (Target: ${route.targetPercentage}%)\nActual: ${cumulativePct.toFixed(1)}%`
+                              : undefined
+                          }
                         >
                           {data ? (
                             viewMode === 'count' ? (

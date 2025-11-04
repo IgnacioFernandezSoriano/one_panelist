@@ -21,6 +21,17 @@ interface TransitTime {
   ciudad_origen_id: number;
   ciudad_destino_id: number;
   dias_transito: number;
+  carrier_id?: number | null;
+  producto_id?: number | null;
+  target_percentage?: number;
+  carrier?: {
+    carrier_code: string;
+    legal_name: string;
+  };
+  producto?: {
+    codigo_producto: string;
+    nombre_producto: string;
+  };
   ciudad_origen?: {
     id: number;
     codigo: string;
@@ -87,7 +98,35 @@ export default function TiemposTransito() {
         .order("ciudad_origen_id", { ascending: true });
 
       if (error) throw error;
-      setTransitTimes(data || []);
+      
+      // Load carriers and products separately for now
+      const transitTimesWithRelations = await Promise.all(
+        (data || []).map(async (tt: any) => {
+          const result: any = { ...tt };
+          
+          if (tt.carrier_id) {
+            const { data: carrier } = await supabase
+              .from("carriers")
+              .select("carrier_code, legal_name")
+              .eq("id", tt.carrier_id)
+              .single();
+            result.carrier = carrier;
+          }
+          
+          if (tt.producto_id) {
+            const { data: producto } = await supabase
+              .from("productos_cliente")
+              .select("codigo_producto, nombre_producto")
+              .eq("id", tt.producto_id)
+              .single();
+            result.producto = producto;
+          }
+          
+          return result;
+        })
+      );
+      
+      setTransitTimes(transitTimesWithRelations as TransitTime[]);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -507,14 +546,17 @@ export default function TiemposTransito() {
                   <TableHead>Destination City</TableHead>
                   <TableHead>Dest Region</TableHead>
                   <TableHead>Dest Class</TableHead>
+                  <TableHead>Carrier</TableHead>
+                  <TableHead>Product</TableHead>
                   <TableHead>Transit Days</TableHead>
+                  <TableHead>Target %</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTransitTimes.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={11} className="text-center py-8 text-muted-foreground">
                       No transit times configured. Click "Generate All Combinations" to get started.
                     </TableCell>
                   </TableRow>
@@ -548,9 +590,30 @@ export default function TiemposTransito() {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        {tt.carrier ? (
+                          <div className="text-sm">
+                            <span className="font-medium">{tt.carrier.carrier_code}</span>
+                          </div>
+                        ) : (
+                          <Badge variant="outline">All</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {tt.producto ? (
+                          <div className="text-sm">
+                            <span className="font-medium">{tt.producto.codigo_producto}</span>
+                          </div>
+                        ) : (
+                          <Badge variant="outline">All</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <span className={tt.dias_transito === 0 ? "text-destructive font-bold" : "text-green-600 font-bold"}>
                           {tt.dias_transito} {tt.dias_transito === 1 ? "day" : "days"}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium">{tt.target_percentage || 90}%</span>
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
