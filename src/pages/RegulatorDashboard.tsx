@@ -13,6 +13,7 @@ import { PerformanceTrendsChart } from "@/components/reporting/PerformanceTrends
 import { RouteRanking } from "@/components/reporting/RouteRanking";
 import { SLAComplianceGauges } from "@/components/reporting/SLAComplianceGauges";
 import { IssuesAnalysis } from "@/components/reporting/IssuesAnalysis";
+import { TransitTimeMatrix } from "@/components/reporting/TransitTimeMatrix";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -201,6 +202,14 @@ export default function RegulatorDashboard() {
           loading={issuesLoading}
         />
       )}
+
+      {/* Transit Time Distribution Matrix */}
+      <TransitTimeMatrix
+        clienteId={clienteId}
+        period={actualPeriod}
+        carrierId={carrierId}
+        productId={productId}
+      />
     </div>
   );
 }

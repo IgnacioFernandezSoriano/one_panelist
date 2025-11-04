@@ -2268,6 +2268,26 @@ export type Database = {
               total_events: number
             }[]
           }
+      get_transit_time_distribution: {
+        Args: {
+          p_carrier_id?: number
+          p_ciudad_origen: string
+          p_cliente_id: number
+          p_end_date?: string
+          p_producto_id?: number
+          p_start_date?: string
+        }
+        Returns: {
+          ciudad_destino: string
+          clasificacion_destino: string
+          cumulative_count: number
+          cumulative_percentage: number
+          event_count: number
+          standard_days: number
+          total_events_route: number
+          transit_days: number
+        }[]
+      }
       get_user_cliente_id: { Args: never; Returns: number }
       has_role: {
         Args: {
