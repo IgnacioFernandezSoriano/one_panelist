@@ -290,6 +290,21 @@ export default function TiemposTransito() {
 
       if (productosError) throw productosError;
 
+      // Warn user if no carriers or products exist
+      const hasCarriers = carriers && carriers.length > 0;
+      const hasProductos = productos && productos.length > 0;
+      
+      if (!hasCarriers || !hasProductos) {
+        const missingItems = [];
+        if (!hasCarriers) missingItems.push("carriers");
+        if (!hasProductos) missingItems.push("products");
+        
+        toast({
+          title: "Notice",
+          description: `No ${missingItems.join(" or ")} configured. Generic transit times (without carrier/product) will be created. You can configure ${missingItems.join(" and ")} later for more specific transit times.`,
+        });
+      }
+
       // Get valid carrier-producto relationships
       const { data: carrierProductRelations, error: relationsError } = await supabase
         .from("carrier_productos")
@@ -334,7 +349,7 @@ export default function TiemposTransito() {
                 }
               }
             } else {
-              // If no carriers or products exist, create generic combinations
+              // Create generic combinations (without carrier/product)
               combinations.push({
                 ...baseCombo,
                 carrier_id: null,
