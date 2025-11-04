@@ -95,7 +95,35 @@ export default function TiemposTransito() {
           ciudad_destino:ciudades!ciudad_destino_id(id, codigo, nombre, clasificacion, region:regiones(nombre))
         `)
         .eq("cliente_id", clienteId)
-        .order("ciudad_origen_id", { ascending: true });
+        .order("ciudad_origen_id", { ascending: true }) as unknown as {
+          data: Array<{
+            id: number;
+            cliente_id: number;
+            ciudad_origen_id: number;
+            ciudad_destino_id: number;
+            dias_transito: number;
+            carrier_id: number | null;
+            producto_id: number | null;
+            target_percentage: number;
+            created_at: string;
+            updated_at: string;
+            ciudad_origen: { 
+              id: number; 
+              codigo: string; 
+              nombre: string; 
+              clasificacion: string; 
+              region: { nombre: string } 
+            };
+            ciudad_destino: { 
+              id: number; 
+              codigo: string; 
+              nombre: string; 
+              clasificacion: string; 
+              region: { nombre: string } 
+            };
+          }> | null;
+          error: any;
+        };
 
       if (error) throw error;
       
