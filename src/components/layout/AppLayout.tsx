@@ -161,6 +161,9 @@ const AppSidebarContent = () => {
     if (location.pathname.startsWith("/incidencias") || location.pathname.startsWith("/issues")) {
       setIssuesOpen(true);
     }
+    if (location.pathname.startsWith("/reporting")) {
+      setReportingOpen(true);
+    }
   }, [location.pathname]);
 
   const handleLogout = async () => {

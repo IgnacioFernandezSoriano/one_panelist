@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, TrendingUp, Clock, Package, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function RegulatorDashboard() {
   const { clienteId } = useUserRole();
@@ -81,7 +82,8 @@ export default function RegulatorDashboard() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -210,6 +212,7 @@ export default function RegulatorDashboard() {
         carrierId={carrierId}
         productId={productId}
       />
-    </div>
+      </div>
+    </AppLayout>
   );
 }
