@@ -78,6 +78,8 @@ export default function TiemposTransito() {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [confirmGenerateOpen, setConfirmGenerateOpen] = useState(false);
   const [massDeleteDialogOpen, setMassDeleteDialogOpen] = useState(false);
+  const [hasCarriers, setHasCarriers] = useState(false);
+  const [hasProductos, setHasProductos] = useState(false);
 
 
   useEffect(() => {
@@ -227,6 +229,7 @@ export default function TiemposTransito() {
 
       if (error) throw error;
       setAvailableCarriers(data || []);
+      setHasCarriers((data || []).length > 0);
     } catch (error: any) {
       console.error("Error loading carriers:", error);
     }
@@ -245,6 +248,7 @@ export default function TiemposTransito() {
 
       if (error) throw error;
       setAvailableProductos(data || []);
+      setHasProductos((data || []).length > 0);
     } catch (error: any) {
       console.error("Error loading productos:", error);
     }
@@ -290,20 +294,9 @@ export default function TiemposTransito() {
 
       if (productosError) throw productosError;
 
-      // Warn user if no carriers or products exist
+      // Check if carriers or products exist (already tracked in state)
       const hasCarriers = carriers && carriers.length > 0;
       const hasProductos = productos && productos.length > 0;
-      
-      if (!hasCarriers || !hasProductos) {
-        const missingItems = [];
-        if (!hasCarriers) missingItems.push("carriers");
-        if (!hasProductos) missingItems.push("products");
-        
-        toast({
-          title: "Notice",
-          description: `No ${missingItems.join(" or ")} configured. Generic transit times (without carrier/product) will be created. You can configure ${missingItems.join(" and ")} later for more specific transit times.`,
-        });
-      }
 
       // Get valid carrier-producto relationships
       const { data: carrierProductRelations, error: relationsError } = await supabase
@@ -972,13 +965,50 @@ export default function TiemposTransito() {
           <AlertDialogHeader>
             <AlertDialogTitle>Generate All Combinations?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>This will create transit time entries for:</p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li><strong>General routes</strong> (city-to-city without carrier/product)</li>
-                <li><strong>Carrier-specific routes</strong> (for each active carrier)</li>
-                <li><strong>Product-specific routes</strong> (for each active product)</li>
-                <li><strong>Carrier+Product routes</strong> (all combinations)</li>
-              </ul>
+              {!hasCarriers && !hasProductos ? (
+                <>
+                  <p className="text-yellow-600 dark:text-yellow-500 font-semibold">⚠️ No carriers or products configured</p>
+                  <p>This will create <strong>generic transit time entries</strong> (city-to-city routes without carrier/product specificity).</p>
+                  <p className="text-sm text-muted-foreground">
+                    You can configure carriers and products later in Configuration → Carriers and Configuration → Products, 
+                    then regenerate to create more specific transit times.
+                  </p>
+                </>
+              ) : !hasCarriers ? (
+                <>
+                  <p className="text-yellow-600 dark:text-yellow-500 font-semibold">⚠️ No carriers configured</p>
+                  <p>This will create transit time entries for:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li><strong>General routes</strong> (city-to-city without carrier)</li>
+                    <li><strong>Product-specific routes</strong> (for each active product)</li>
+                  </ul>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Configure carriers in Configuration → Carriers to create carrier-specific transit times.
+                  </p>
+                </>
+              ) : !hasProductos ? (
+                <>
+                  <p className="text-yellow-600 dark:text-yellow-500 font-semibold">⚠️ No products configured</p>
+                  <p>This will create transit time entries for:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li><strong>General routes</strong> (city-to-city without product)</li>
+                    <li><strong>Carrier-specific routes</strong> (for each active carrier)</li>
+                  </ul>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Configure products in Configuration → Products to create product-specific transit times.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p>This will create transit time entries for:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm">
+                    <li><strong>General routes</strong> (city-to-city without carrier/product)</li>
+                    <li><strong>Carrier-specific routes</strong> (for each active carrier)</li>
+                    <li><strong>Product-specific routes</strong> (for each active product)</li>
+                    <li><strong>Carrier+Product routes</strong> (all valid combinations)</li>
+                  </ul>
+                </>
+              )}
               <p className="text-xs text-muted-foreground mt-2">
                 Existing combinations will be preserved. This operation may take a few moments.
               </p>
