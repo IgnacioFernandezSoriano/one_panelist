@@ -11,14 +11,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { CheckSquare, Package, Send } from "lucide-react";
+import { CheckSquare, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 import { format } from "date-fns";
-
-interface Panelista {
-  id: number;
-  nombre_completo: string;
-  nodo_asignado: string;
-}
 
 interface Envio {
   id: number;
@@ -28,22 +22,25 @@ interface Envio {
   fecha_programada: string;
   numero_etiqueta: string | null;
   carrier_id: number | null;
+  panelista_origen_id?: number | null;
+  panelista_destino_id?: number | null;
   productos_cliente?: {
     nombre_producto: string;
   };
   carriers?: {
     legal_name: string;
   };
+  panelista_origen?: {
+    nombre_completo: string;
+  };
+  panelista_destino?: {
+    nombre_completo: string;
+  };
 }
 
 export default function RegistrarEnvioRecepcion() {
   const { clienteId } = useUserRole();
   const { toast } = useToast();
-  
-  // Panelistas
-  const [panelistas, setPanelistas] = useState<Panelista[]>([]);
-  const [selectedPanelistaEnvio, setSelectedPanelistaEnvio] = useState<string>("");
-  const [selectedPanelistaRecepcion, setSelectedPanelistaRecepcion] = useState<string>("");
   
   // Eventos disponibles
   const [eventosEnvio, setEventosEnvio] = useState<Envio[]>([]);
@@ -61,49 +58,13 @@ export default function RegistrarEnvioRecepcion() {
   
   const [loading, setLoading] = useState(false);
 
-  // Cargar panelistas
+  // Cargar eventos al montar
   useEffect(() => {
-    loadPanelistas();
+    loadEventosEnvio();
+    loadEventosRecepcion();
   }, [clienteId]);
 
-  // Cargar eventos cuando cambia el panelista
-  useEffect(() => {
-    if (selectedPanelistaEnvio) {
-      loadEventosEnvio(parseInt(selectedPanelistaEnvio));
-    } else {
-      setEventosEnvio([]);
-    }
-    setSelectedEnvios(new Set());
-  }, [selectedPanelistaEnvio]);
-
-  useEffect(() => {
-    if (selectedPanelistaRecepcion) {
-      loadEventosRecepcion(parseInt(selectedPanelistaRecepcion));
-    } else {
-      setEventosRecepcion([]);
-    }
-    setSelectedRecepciones(new Set());
-  }, [selectedPanelistaRecepcion]);
-
-  const loadPanelistas = async () => {
-    if (!clienteId) return;
-
-    const { data, error } = await supabase
-      .from("panelistas")
-      .select("id, nombre_completo, nodo_asignado")
-      .eq("cliente_id", clienteId)
-      .eq("estado", "activo")
-      .order("nombre_completo");
-
-    if (error) {
-      console.error("Error loading panelistas:", error);
-      return;
-    }
-
-    setPanelistas(data || []);
-  };
-
-  const loadEventosEnvio = async (panelistaId: number) => {
+  const loadEventosEnvio = async () => {
     if (!clienteId) return;
     setLoading(true);
 
@@ -117,16 +78,19 @@ export default function RegistrarEnvioRecepcion() {
         fecha_programada,
         numero_etiqueta,
         carrier_id,
+        panelista_origen_id,
         productos_cliente:producto_id (
           nombre_producto
         ),
         carriers:carrier_id (
           legal_name
+        ),
+        panelista_origen:panelistas!panelista_origen_id (
+          nombre_completo
         )
       `)
       .eq("cliente_id", clienteId)
       .eq("estado", "NOTIFIED")
-      .eq("panelista_origen_id", panelistaId)
       .order("fecha_programada", { ascending: true });
 
     if (error) {
@@ -142,7 +106,7 @@ export default function RegistrarEnvioRecepcion() {
     setLoading(false);
   };
 
-  const loadEventosRecepcion = async (panelistaId: number) => {
+  const loadEventosRecepcion = async () => {
     if (!clienteId) return;
     setLoading(true);
 
@@ -156,17 +120,20 @@ export default function RegistrarEnvioRecepcion() {
         fecha_programada,
         numero_etiqueta,
         carrier_id,
+        panelista_destino_id,
         fecha_envio_real,
         productos_cliente:producto_id (
           nombre_producto
         ),
         carriers:carrier_id (
           legal_name
+        ),
+        panelista_destino:panelistas!panelista_destino_id (
+          nombre_completo
         )
       `)
       .eq("cliente_id", clienteId)
       .eq("estado", "SENT")
-      .eq("panelista_destino_id", panelistaId)
       .order("fecha_programada", { ascending: true });
 
     if (error) {
@@ -246,7 +213,7 @@ export default function RegistrarEnvioRecepcion() {
       setSelectedEnvios(new Set());
       setFechaEnvio("");
       setNotasEnvio("");
-      loadEventosEnvio(parseInt(selectedPanelistaEnvio));
+      loadEventosEnvio();
     } catch (error) {
       console.error("Error registrando envío:", error);
       toast({
@@ -319,7 +286,7 @@ export default function RegistrarEnvioRecepcion() {
       setSelectedRecepciones(new Set());
       setFechaRecepcion("");
       setNotasRecepcion("");
-      loadEventosRecepcion(parseInt(selectedPanelistaRecepcion));
+      loadEventosRecepcion();
     } catch (error) {
       console.error("Error registrando recepción:", error);
       toast({
@@ -361,11 +328,11 @@ export default function RegistrarEnvioRecepcion() {
         <Tabs defaultValue="envio" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
             <TabsTrigger value="envio">
-              <Send className="w-4 h-4 mr-2" />
+              <ArrowUpRight className="w-4 h-4 mr-2" />
               Registrar Envío
             </TabsTrigger>
             <TabsTrigger value="recepcion">
-              <Package className="w-4 h-4 mr-2" />
+              <ArrowDownLeft className="w-4 h-4 mr-2" />
               Registrar Recepción
             </TabsTrigger>
           </TabsList>
@@ -377,29 +344,8 @@ export default function RegistrarEnvioRecepcion() {
                 <CardTitle>Registrar Eventos Enviados (NOTIFIED → SENT)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Selector de Panelista */}
-                <div className="space-y-2">
-                  <Label>Panelista (Origen)</Label>
-                  <Select
-                    value={selectedPanelistaEnvio}
-                    onValueChange={setSelectedPanelistaEnvio}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un panelista" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {panelistas.map((p) => (
-                        <SelectItem key={p.id} value={p.id.toString()}>
-                          {p.nombre_completo} - {p.nodo_asignado}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Eventos Disponibles */}
-                {selectedPanelistaEnvio && (
-                  <>
+                <>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Eventos Pendientes de Envío ({eventosEnvio.length})</Label>
@@ -426,8 +372,10 @@ export default function RegistrarEnvioRecepcion() {
                               <TableRow>
                                 <TableHead className="w-12"></TableHead>
                                 <TableHead>ID</TableHead>
-                                <TableHead>Fecha Programada</TableHead>
+                                <TableHead>Panelista Origen</TableHead>
+                                <TableHead>Origen</TableHead>
                                 <TableHead>Destino</TableHead>
+                                <TableHead>Fecha Programada</TableHead>
                                 <TableHead>Producto</TableHead>
                                 <TableHead>Carrier</TableHead>
                                 <TableHead>Etiqueta</TableHead>
@@ -443,8 +391,10 @@ export default function RegistrarEnvioRecepcion() {
                                     />
                                   </TableCell>
                                   <TableCell>{evento.id}</TableCell>
-                                  <TableCell>{format(new Date(evento.fecha_programada), "dd/MM/yyyy")}</TableCell>
+                                  <TableCell>{evento.panelista_origen?.nombre_completo || "-"}</TableCell>
+                                  <TableCell>{evento.nodo_origen}</TableCell>
                                   <TableCell>{evento.nodo_destino}</TableCell>
+                                  <TableCell>{format(new Date(evento.fecha_programada), "dd/MM/yyyy")}</TableCell>
                                   <TableCell>{evento.productos_cliente?.nombre_producto || "-"}</TableCell>
                                   <TableCell>{evento.carriers?.legal_name || "-"}</TableCell>
                                   <TableCell>{evento.numero_etiqueta || "-"}</TableCell>
@@ -486,13 +436,12 @@ export default function RegistrarEnvioRecepcion() {
                           disabled={loading}
                           className="w-full"
                         >
-                          <Send className="w-4 h-4 mr-2" />
+                          <ArrowUpRight className="w-4 h-4 mr-2" />
                           Registrar Envío(s)
                         </Button>
                       </div>
                     )}
                   </>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -504,29 +453,8 @@ export default function RegistrarEnvioRecepcion() {
                 <CardTitle>Registrar Eventos Recibidos (SENT → RECEIVED)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Selector de Panelista */}
-                <div className="space-y-2">
-                  <Label>Panelista (Destino)</Label>
-                  <Select
-                    value={selectedPanelistaRecepcion}
-                    onValueChange={setSelectedPanelistaRecepcion}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un panelista" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {panelistas.map((p) => (
-                        <SelectItem key={p.id} value={p.id.toString()}>
-                          {p.nombre_completo} - {p.nodo_asignado}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 {/* Eventos Disponibles */}
-                {selectedPanelistaRecepcion && (
-                  <>
+                <>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Eventos Pendientes de Recepción ({eventosRecepcion.length})</Label>
@@ -553,8 +481,10 @@ export default function RegistrarEnvioRecepcion() {
                               <TableRow>
                                 <TableHead className="w-12"></TableHead>
                                 <TableHead>ID</TableHead>
-                                <TableHead>Fecha Programada</TableHead>
+                                <TableHead>Panelista Destino</TableHead>
                                 <TableHead>Origen</TableHead>
+                                <TableHead>Destino</TableHead>
+                                <TableHead>Fecha Programada</TableHead>
                                 <TableHead>Producto</TableHead>
                                 <TableHead>Carrier</TableHead>
                                 <TableHead>Etiqueta</TableHead>
@@ -570,8 +500,10 @@ export default function RegistrarEnvioRecepcion() {
                                     />
                                   </TableCell>
                                   <TableCell>{evento.id}</TableCell>
-                                  <TableCell>{format(new Date(evento.fecha_programada), "dd/MM/yyyy")}</TableCell>
+                                  <TableCell>{evento.panelista_destino?.nombre_completo || "-"}</TableCell>
                                   <TableCell>{evento.nodo_origen}</TableCell>
+                                  <TableCell>{evento.nodo_destino}</TableCell>
+                                  <TableCell>{format(new Date(evento.fecha_programada), "dd/MM/yyyy")}</TableCell>
                                   <TableCell>{evento.productos_cliente?.nombre_producto || "-"}</TableCell>
                                   <TableCell>{evento.carriers?.legal_name || "-"}</TableCell>
                                   <TableCell>{evento.numero_etiqueta || "-"}</TableCell>
@@ -613,13 +545,12 @@ export default function RegistrarEnvioRecepcion() {
                           disabled={loading}
                           className="w-full"
                         >
-                          <Package className="w-4 h-4 mr-2" />
+                          <ArrowDownLeft className="w-4 h-4 mr-2" />
                           Registrar Recepción(es)
                         </Button>
                       </div>
                     )}
                   </>
-                )}
               </CardContent>
             </Card>
           </TabsContent>
