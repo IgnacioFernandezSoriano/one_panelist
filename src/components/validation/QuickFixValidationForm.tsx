@@ -146,7 +146,7 @@ export function QuickFixValidationForm({ envio, validationErrors, onSuccess, onC
         tiempoTransito = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       }
 
-      // Update envio with corrected data
+      // Update envio with corrected data and reset validation status
       const updateData: any = {};
       
       if (fieldsToShow.showCarrier) updateData.carrier_id = carrierId ? parseInt(carrierId) : null;
@@ -166,17 +166,47 @@ export function QuickFixValidationForm({ envio, validationErrors, onSuccess, onC
         updateData.tiempo_transito_dias = tiempoTransito;
       }
 
-      const { error } = await supabase
+      // Mark as not_validated so it can be re-validated
+      updateData.validation_status = 'not_validated';
+
+      const { error: updateError } = await supabase
         .from('envios')
         .update(updateData)
         .eq('id', envio.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      toast({
-        title: "Éxito",
-        description: "Evento corregido. Re-ejecute la validación para verificar.",
-      });
+      // Automatically re-validate the corrected event
+      const { data: validationResult, error: validationError } = await supabase.functions.invoke(
+        'validate-received-events',
+        {
+          body: { envioIds: [envio.id] }
+        }
+      );
+
+      if (validationError) {
+        console.error('Error en validación automática:', validationError);
+        toast({
+          title: "Advertencia",
+          description: "Evento actualizado pero falló la re-validación automática.",
+          variant: "default",
+        });
+      } else if (validationResult) {
+        const { validated, pending } = validationResult;
+        
+        if (validated > 0) {
+          toast({
+            title: "Éxito",
+            description: "✅ Evento corregido y validado correctamente",
+          });
+        } else if (pending > 0) {
+          toast({
+            title: "Correcciones guardadas",
+            description: "⚠️ El evento aún tiene errores de validación. Por favor revise los detalles.",
+            variant: "default",
+          });
+        }
+      }
 
       onSuccess();
     } catch (error: any) {
