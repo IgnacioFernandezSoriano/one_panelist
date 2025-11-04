@@ -21,10 +21,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Download, Search, CheckCircle, TrendingUp, Clock, Package } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Loader2, Download, Search, CheckCircle, TrendingUp, Clock, Package, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
-import { format } from "date-fns";
+import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 import { EventoRealDetailsDialog } from "@/components/eventos-reales/EventoRealDetailsDialog";
 
 interface EventoReal {
@@ -106,6 +107,8 @@ export default function EventosReales() {
   const [selectedCiudadDestino, setSelectedCiudadDestino] = useState<string>("all");
   const [selectedRegionOrigen, setSelectedRegionOrigen] = useState<string>("all");
   const [selectedRegionDestino, setSelectedRegionDestino] = useState<string>("all");
+  const [dateFilterType, setDateFilterType] = useState<string>("validation_date");
+  const [quickDateFilter, setQuickDateFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [carriers, setCarriers] = useState<any[]>([]);
@@ -123,7 +126,41 @@ export default function EventosReales() {
 
   useEffect(() => {
     applyFilters();
-  }, [searchTerm, selectedCarrier, selectedProduct, selectedCiudadOrigen, selectedCiudadDestino, selectedRegionOrigen, selectedRegionDestino, dateFrom, dateTo, eventos]);
+  }, [searchTerm, selectedCarrier, selectedProduct, selectedCiudadOrigen, selectedCiudadDestino, selectedRegionOrigen, selectedRegionDestino, dateFilterType, quickDateFilter, dateFrom, dateTo, eventos]);
+
+  // Sync quick filter with date inputs
+  useEffect(() => {
+    if (quickDateFilter !== "all") {
+      const range = getQuickDateRange(quickDateFilter);
+      setDateFrom(range.from);
+      setDateTo(range.to);
+    }
+  }, [quickDateFilter]);
+
+  const getQuickDateRange = (filterType: string): { from: string; to: string } => {
+    const today = new Date();
+    const todayStr = format(today, "yyyy-MM-dd");
+
+    switch (filterType) {
+      case "this_week":
+        return {
+          from: format(startOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+          to: todayStr,
+        };
+      case "this_month":
+        return {
+          from: format(startOfMonth(today), "yyyy-MM-dd"),
+          to: todayStr,
+        };
+      case "this_year":
+        return {
+          from: format(startOfYear(today), "yyyy-MM-dd"),
+          to: todayStr,
+        };
+      default:
+        return { from: "", to: "" };
+    }
+  };
 
   const fetchData = async () => {
     if (!clienteId) return;
@@ -288,12 +325,33 @@ export default function EventosReales() {
       filtered = filtered.filter((e) => e.nodo_destino_data?.region_id?.toString() === selectedRegionDestino);
     }
 
-    // Date range filter
-    if (dateFrom) {
-      filtered = filtered.filter((e) => e.fecha_validacion >= dateFrom);
-    }
-    if (dateTo) {
-      filtered = filtered.filter((e) => e.fecha_validacion <= dateTo);
+    // Date range filter based on selected date type
+    if (dateFrom || dateTo) {
+      filtered = filtered.filter((e) => {
+        let dateToCompare: string | null = null;
+        
+        switch (dateFilterType) {
+          case "validation_date":
+            dateToCompare = e.fecha_validacion;
+            break;
+          case "scheduled_date":
+            dateToCompare = e.fecha_programada;
+            break;
+          case "sent_date":
+            dateToCompare = e.fecha_envio_real;
+            break;
+          case "received_date":
+            dateToCompare = e.fecha_recepcion_real;
+            break;
+        }
+
+        if (!dateToCompare) return false;
+        
+        if (dateFrom && dateToCompare < dateFrom) return false;
+        if (dateTo && dateToCompare > dateTo) return false;
+        
+        return true;
+      });
     }
 
     setFilteredEventos(filtered);
@@ -551,20 +609,82 @@ export default function EventosReales() {
             </Select>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              placeholder="From Date"
-            />
+          {/* Date Filters Section */}
+          <div className="mt-6 pt-6 border-t">
+            <div className="flex items-center gap-2 mb-4">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm font-semibold">Date Filters</Label>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Quick Date Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="quick-date" className="text-xs text-muted-foreground">
+                  Quick Filter
+                </Label>
+                <Select value={quickDateFilter} onValueChange={setQuickDateFilter}>
+                  <SelectTrigger id="quick-date">
+                    <SelectValue placeholder="All Time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="this_week">This Week</SelectItem>
+                    <SelectItem value="this_month">This Month</SelectItem>
+                    <SelectItem value="this_year">This Year</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              placeholder="To Date"
-            />
+              {/* Date Type Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="date-type" className="text-xs text-muted-foreground">
+                  Filter By
+                </Label>
+                <Select value={dateFilterType} onValueChange={setDateFilterType}>
+                  <SelectTrigger id="date-type">
+                    <SelectValue placeholder="Validation Date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="validation_date">Validation Date</SelectItem>
+                    <SelectItem value="scheduled_date">Scheduled Date</SelectItem>
+                    <SelectItem value="sent_date">Sent Date</SelectItem>
+                    <SelectItem value="received_date">Received Date</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* From Date */}
+              <div className="space-y-2">
+                <Label htmlFor="date-from" className="text-xs text-muted-foreground">
+                  From Date
+                </Label>
+                <Input
+                  id="date-from"
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setQuickDateFilter("all");
+                  }}
+                />
+              </div>
+
+              {/* To Date */}
+              <div className="space-y-2">
+                <Label htmlFor="date-to" className="text-xs text-muted-foreground">
+                  To Date
+                </Label>
+                <Input
+                  id="date-to"
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setQuickDateFilter("all");
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
