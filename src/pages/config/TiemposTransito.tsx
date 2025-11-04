@@ -265,36 +265,7 @@ export default function TiemposTransito() {
               target_percentage: 90,
             };
 
-            // 1. General combination (no carrier, no product)
-            combinations.push({
-              ...baseCombo,
-              carrier_id: null,
-              producto_id: null,
-            });
-
-            // 2. Combinations for each carrier (no product)
-            if (carriers && carriers.length > 0) {
-              for (const carrier of carriers) {
-                combinations.push({
-                  ...baseCombo,
-                  carrier_id: carrier.id,
-                  producto_id: null,
-                });
-              }
-            }
-
-            // 3. Combinations for each product (no carrier)
-            if (productos && productos.length > 0) {
-              for (const producto of productos) {
-                combinations.push({
-                  ...baseCombo,
-                  carrier_id: null,
-                  producto_id: producto.id,
-                });
-              }
-            }
-
-            // 4. Combinations for each carrier+product pair (only valid ones)
+            // Only generate carrier+product combinations based on valid relations
             if (carriers && productos && carriers.length > 0 && productos.length > 0) {
               for (const carrier of carriers) {
                 for (const producto of productos) {
@@ -691,30 +662,28 @@ export default function TiemposTransito() {
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="All carriers" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Carriers</SelectItem>
-                    <SelectItem value="null">General (No Carrier)</SelectItem>
-                    {availableCarriers.map((carrier) => (
-                      <SelectItem key={carrier.id} value={carrier.id.toString()}>
-                        {carrier.carrier_code} - {carrier.legal_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+        <SelectContent>
+          <SelectItem value="all">All Carriers</SelectItem>
+          {availableCarriers.map((carrier) => (
+            <SelectItem key={carrier.id} value={carrier.id.toString()}>
+              {carrier.carrier_code} - {carrier.legal_name}
+            </SelectItem>
+          ))}
+        </SelectContent>
                 </Select>
 
                 <Select value={filterProducto} onValueChange={setFilterProducto}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="All products" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Products</SelectItem>
-                    <SelectItem value="null">General (No Product)</SelectItem>
-                    {availableProductos.map((producto) => (
-                      <SelectItem key={producto.id} value={producto.id.toString()}>
-                        {producto.codigo_producto} - {producto.nombre_producto}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+        <SelectContent>
+          <SelectItem value="all">All Products</SelectItem>
+          {availableProductos.map((producto) => (
+            <SelectItem key={producto.id} value={producto.id.toString()}>
+              {producto.codigo_producto} - {producto.nombre_producto}
+            </SelectItem>
+          ))}
+        </SelectContent>
                 </Select>
               </div>
             </div>
@@ -805,22 +774,14 @@ export default function TiemposTransito() {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {tt.carrier ? (
-                          <div className="text-sm">
-                            <span className="font-medium">{tt.carrier.carrier_code}</span>
-                          </div>
-                        ) : (
-                          <Badge variant="outline">All</Badge>
-                        )}
+                        <div className="text-sm">
+                          <span className="font-medium">{tt.carrier?.carrier_code || "-"}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
-                        {tt.producto ? (
-                          <div className="text-sm">
-                            <span className="font-medium">{tt.producto.codigo_producto}</span>
-                          </div>
-                        ) : (
-                          <Badge variant="outline">All</Badge>
-                        )}
+                        <div className="text-sm">
+                          <span className="font-medium">{tt.producto?.nombre_producto || "-"}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <span className={tt.dias_transito === 0 ? "text-destructive font-bold" : "text-green-600 font-bold"}>
