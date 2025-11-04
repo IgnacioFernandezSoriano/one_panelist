@@ -143,7 +143,7 @@ const AppSidebarContent = () => {
       setConfigOpen(true);
     }
     if (location.pathname.startsWith("/envios")) {
-      if (location.pathname === "/envios/eventos-reales" || location.pathname === "/envios/registrar-envio-recepcion") {
+      if (location.pathname === "/envios/eventos-reales") {
         setRealEventsOpen(true);
       } else if (location.pathname === "/envios/eventos-pendientes-validar") {
         setIssuesOpen(true);
@@ -192,7 +192,6 @@ const AppSidebarContent = () => {
 
   const realEventsItems = [
     { icon: Database, label: "Real Events DB", path: "/envios/eventos-reales" },
-    { icon: CheckCircle, label: "Registrar Envío/Recepción", path: "/envios/registrar-envio-recepcion" },
   ];
 
   const issuesItems = [
@@ -464,12 +463,24 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
+            {/* Registrar Envío/Recepción - Main Menu Item */}
+            {canAccessMenuItem('envios') && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location.pathname === "/envios/registrar-envio-recepcion"}>
+                  <Link to="/envios/registrar-envio-recepcion">
+                    <CheckCircle className="w-5 h-5" />
+                    {sidebarOpen && <span>Register Shipment/Receipt</span>}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+
             {/* Real Events Collapsible */}
             {canAccessMenuItem('envios') && (
               <SidebarMenuItem>
                  <Collapsible open={realEventsOpen} onOpenChange={setRealEventsOpen}>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton isActive={location.pathname.startsWith("/envios/eventos-reales") || location.pathname.startsWith("/envios/registrar-envio-recepcion")}>
+                    <SidebarMenuButton isActive={location.pathname === "/envios/eventos-reales"}>
                       <Database className="w-5 h-5" />
                       {sidebarOpen && <span>Real Events</span>}
                       {sidebarOpen && (realEventsOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
