@@ -271,7 +271,7 @@ export default function EventosReales() {
       setEventos(eventosWithNodos);
     } catch (error: any) {
       console.error("Error fetching eventos reales:", error);
-      toast.error("Error loading validated events");
+      toast.error("Error loading real events");
     } finally {
       setLoading(false);
     }
@@ -384,7 +384,7 @@ export default function EventosReales() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `Validated_Events_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.setAttribute("download", `Real_Events_${format(new Date(), "yyyy-MM-dd")}.csv`);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -451,7 +451,7 @@ export default function EventosReales() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Validated Events Database</h1>
+          <h1 className="text-3xl font-bold">Real Events Database</h1>
           <p className="text-muted-foreground">Quality-assured events for reporting and analysis</p>
         </div>
         <Button onClick={handleExport} disabled={filteredEventos.length === 0}>
@@ -717,7 +717,7 @@ export default function EventosReales() {
                 {filteredEventos.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
-                      No validated events found
+                      No real events found
                     </TableCell>
                   </TableRow>
                 ) : (
