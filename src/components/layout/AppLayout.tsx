@@ -50,7 +50,6 @@ import {
   Brain,
   Clock,
   Wrench,
-  BookOpen,
   CheckCircle
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -73,7 +72,6 @@ const AppSidebarContent = () => {
   const [topologyOpen, setTopologyOpen] = useState(false);
   const [panelistsOpen, setPanelistsOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
-  const [realEventsOpen, setRealEventsOpen] = useState(false);
   const { isSuperAdmin, hasAnyRole } = useUserRole();
   const { canAccessMenuItem } = useMenuPermissions();
   const { t } = useTranslation();
@@ -143,9 +141,7 @@ const AppSidebarContent = () => {
       setConfigOpen(true);
     }
     if (location.pathname.startsWith("/envios")) {
-      if (location.pathname === "/envios/eventos-reales") {
-        setRealEventsOpen(true);
-      } else if (location.pathname === "/envios/eventos-pendientes-validar") {
+      if (location.pathname === "/envios/eventos-pendientes-validar") {
         setIssuesOpen(true);
       } else {
         setAllocationPlanOpen(true);
@@ -188,10 +184,6 @@ const AppSidebarContent = () => {
     { icon: Send, label: "View Plan", path: "/envios" },
     { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
     { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
-  ];
-
-  const realEventsItems = [
-    { icon: Database, label: "Real Events DB", path: "/envios/eventos-reales" },
   ];
 
   const issuesItems = [
@@ -475,43 +467,15 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
-            {/* Real Events Collapsible */}
+            {/* Real Events - Main Menu Item */}
             {canAccessMenuItem('envios') && (
               <SidebarMenuItem>
-                 <Collapsible open={realEventsOpen} onOpenChange={setRealEventsOpen}>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton isActive={location.pathname === "/envios/eventos-reales"}>
-                      <Database className="w-5 h-5" />
-                      {sidebarOpen && <span>Real Events</span>}
-                      {sidebarOpen && (realEventsOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarGroup>
-                      <SidebarGroupContent>
-                        <SidebarMenu>
-                          {realEventsItems.map((item) => {
-                            const isActive = location.pathname === item.path;
-                            return (
-                              <SidebarMenuItem key={item.path}>
-                                <SidebarMenuButton 
-                                  asChild 
-                                  isActive={isActive} 
-                                  className="pl-8"
-                                >
-                                  <Link to={item.path}>
-                                    <item.icon className="w-4 h-4" />
-                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                  </Link>
-                                </SidebarMenuButton>
-                              </SidebarMenuItem>
-                            );
-                          })}
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    </SidebarGroup>
-                  </CollapsibleContent>
-                </Collapsible>
+                <SidebarMenuButton asChild isActive={location.pathname === "/envios/eventos-reales"}>
+                  <Link to="/envios/eventos-reales">
+                    <Database className="w-5 h-5" />
+                    {sidebarOpen && <span>Real Events</span>}
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             )}
 
@@ -659,16 +623,6 @@ const AppSidebarContent = () => {
                 </Collapsible>
               </SidebarMenuItem>
             )}
-            
-            {/* Documentation Link */}
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild isActive={location.pathname === "/documentation"}>
-                <Link to="/documentation">
-                  <BookOpen className="w-5 h-5" />
-                  {sidebarOpen && <span>Documentation</span>}
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
       </SidebarContent>
