@@ -52,10 +52,7 @@ export default function ConfigNodos() {
     setIsLoading(true);
     const { data: nodos, error } = await supabase
       .from("nodos")
-      .select(`
-        *,
-        panelistas:panelista_id (id, nombre_completo)
-      `)
+      .select("*")
       .order("codigo", { ascending: true });
 
     if (error) {
@@ -65,10 +62,22 @@ export default function ConfigNodos() {
         variant: "destructive",
       });
     } else {
-      const formattedData = nodos?.map(n => ({
-        ...n,
-        panelista_nombre: n.panelistas?.nombre_completo
-      })) || [];
+      // Cargar los nombres de panelistas por separado para evitar problemas de schema cache
+      const formattedData = await Promise.all((nodos || []).map(async (n) => {
+        let panelista_nombre = null;
+        if (n.panelista_id) {
+          const { data: panelistaData } = await supabase
+            .from("panelistas")
+            .select("nombre_completo")
+            .eq("id", n.panelista_id)
+            .single();
+          panelista_nombre = panelistaData?.nombre_completo;
+        }
+        return {
+          ...n,
+          panelista_nombre
+        };
+      }));
       setData(formattedData);
       setFilteredData(formattedData);
     }
