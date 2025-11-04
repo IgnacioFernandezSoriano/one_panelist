@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info, Search, CheckCircle2, XCircle, Loader2, Play, ChevronDown, ChevronUp, Eye } from "lucide-react";
+import { Info, Search, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp, Eye } from "lucide-react";
 import { QuickFixValidationForm } from "@/components/validation/QuickFixValidationForm";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import ValidationDetailsDialog from "@/components/validation/ValidationDetailsDialog";
@@ -69,7 +69,6 @@ export default function EventosPendientesValidar() {
     type: null,
     validation: null
   });
-  const [validating, setValidating] = useState(false);
   const [stats, setStats] = useState({
     total: 0,
     critical: 0,
@@ -168,37 +167,6 @@ export default function EventosPendientesValidar() {
     }
 
     setFilteredValidations(filtered);
-  };
-
-  const runValidation = async () => {
-    setValidating(true);
-    try {
-      const { data: result, error } = await supabase.functions.invoke('validate-received-events');
-
-      if (error) throw error;
-
-      if (result && result.success) {
-        const details = [];
-        if (result.validated > 0) details.push(`✅ ${result.validated} validado(s)`);
-        if (result.pending > 0) details.push(`⚠️ ${result.pending} requieren revisión`);
-        
-        toast({
-          title: "Validación Completada",
-          description: `Procesados ${result.processed} evento(s): ${details.join(', ')}`,
-        });
-        loadValidations();
-      } else {
-        throw new Error(result?.error || 'Error desconocido');
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setValidating(false);
-    }
   };
 
   const handleApprove = async (validation: PendingValidation) => {
@@ -414,19 +382,6 @@ export default function EventosPendientesValidar() {
               <SelectItem value="info">Info</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={runValidation} disabled={validating}>
-            {validating ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Validando...
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4 mr-2" />
-                Re-ejecutar Validación
-              </>
-            )}
-          </Button>
         </div>
 
         {/* Table */}
