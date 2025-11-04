@@ -55,6 +55,7 @@ interface EventoReal {
   productos_cliente?: {
     nombre_producto: string;
     codigo_producto: string;
+    standard_delivery_hours: number | null;
   };
   panelista_origen?: {
     nombre_completo: string;
@@ -128,7 +129,8 @@ export default function EventosReales() {
           ),
           productos_cliente:producto_id (
             nombre_producto,
-            codigo_producto
+            codigo_producto,
+            standard_delivery_hours
           ),
           panelista_origen:panelistas!panelista_origen_id (
             nombre_completo
@@ -229,17 +231,30 @@ export default function EventosReales() {
     toast.success("Exported to CSV successfully");
   };
 
-  const getPerformanceBadge = (transitDays: number | null) => {
-    if (!transitDays) return <Badge variant="outline">N/A</Badge>;
+  const getPerformanceBadge = (transitDays: number | null, standardHours: number | null) => {
+    if (!transitDays || !standardHours) return <Badge variant="outline">N/A</Badge>;
     
-    if (transitDays <= 2) {
-      return <Badge className="bg-green-500 text-white">Excellent</Badge>;
-    } else if (transitDays <= 5) {
-      return <Badge className="bg-blue-500 text-white">Normal</Badge>;
-    } else if (transitDays <= 7) {
-      return <Badge className="bg-yellow-500 text-white">Delayed</Badge>;
+    const standardDays = standardHours / 24;
+    const difference = transitDays - standardDays;
+    
+    if (Math.abs(difference) < 0.5) {
+      return <Badge className="bg-green-500 text-white">On Time</Badge>;
+    } else if (difference > 0) {
+      // Delayed - show extra days in red
+      const extraDays = Math.round(difference);
+      return (
+        <Badge className="bg-red-500 text-white">
+          +{extraDays} {extraDays === 1 ? 'day' : 'days'}
+        </Badge>
+      );
     } else {
-      return <Badge className="bg-red-500 text-white">Very Delayed</Badge>;
+      // Early - show saved days in green
+      const savedDays = Math.abs(Math.round(difference));
+      return (
+        <Badge className="bg-green-500 text-white">
+          -{savedDays} {savedDays === 1 ? 'day' : 'days'}
+        </Badge>
+      );
     }
   };
 
@@ -410,6 +425,7 @@ export default function EventosReales() {
                   <TableHead>Route</TableHead>
                   <TableHead>Scheduled</TableHead>
                   <TableHead>Transit</TableHead>
+                  <TableHead>Standard</TableHead>
                   <TableHead>Performance</TableHead>
                   <TableHead>Validated</TableHead>
                   <TableHead>Actions</TableHead>
@@ -418,7 +434,7 @@ export default function EventosReales() {
               <TableBody>
                 {filteredEventos.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                       No validated events found
                     </TableCell>
                   </TableRow>
@@ -452,7 +468,17 @@ export default function EventosReales() {
                       <TableCell>
                         {evento.tiempo_transito_dias ? `${evento.tiempo_transito_dias} days` : "N/A"}
                       </TableCell>
-                      <TableCell>{getPerformanceBadge(evento.tiempo_transito_dias)}</TableCell>
+                      <TableCell>
+                        {evento.productos_cliente?.standard_delivery_hours 
+                          ? `${(evento.productos_cliente.standard_delivery_hours / 24).toFixed(1)} days`
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {getPerformanceBadge(
+                          evento.tiempo_transito_dias, 
+                          evento.productos_cliente?.standard_delivery_hours || null
+                        )}
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col text-sm">
                           <span>{format(new Date(evento.fecha_validacion), "MMM dd, yyyy")}</span>
