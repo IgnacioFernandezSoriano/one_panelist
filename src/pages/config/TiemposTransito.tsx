@@ -178,34 +178,112 @@ export default function TiemposTransito() {
         return;
       }
 
-      // Create all combinations (origin -> destination where origin != destination)
+      // Get all active carriers
+      const { data: carriers, error: carriersError } = await supabase
+        .from("carriers")
+        .select("id")
+        .eq("cliente_id", clienteId)
+        .eq("status", "active");
+
+      if (carriersError) throw carriersError;
+
+      // Get all active products
+      const { data: productos, error: productosError } = await supabase
+        .from("productos_cliente")
+        .select("id")
+        .eq("cliente_id", clienteId)
+        .eq("estado", "activo");
+
+      if (productosError) throw productosError;
+
       const combinations = [];
+      
+      // Generate combinations for each origin-destination pair
       for (let i = 0; i < ciudades.length; i++) {
         for (let j = 0; j < ciudades.length; j++) {
           if (i !== j) {
-            combinations.push({
+            const baseCombo = {
               cliente_id: clienteId,
               ciudad_origen_id: ciudades[i].id,
               ciudad_destino_id: ciudades[j].id,
               dias_transito: 0,
+              target_percentage: 90,
+            };
+
+            // 1. General combination (no carrier, no product)
+            combinations.push({
+              ...baseCombo,
+              carrier_id: null,
+              producto_id: null,
             });
+
+            // 2. Combinations for each carrier (no product)
+            if (carriers && carriers.length > 0) {
+              for (const carrier of carriers) {
+                combinations.push({
+                  ...baseCombo,
+                  carrier_id: carrier.id,
+                  producto_id: null,
+                });
+              }
+            }
+
+            // 3. Combinations for each product (no carrier)
+            if (productos && productos.length > 0) {
+              for (const producto of productos) {
+                combinations.push({
+                  ...baseCombo,
+                  carrier_id: null,
+                  producto_id: producto.id,
+                });
+              }
+            }
+
+            // 4. Combinations for each carrier+product pair
+            if (carriers && productos && carriers.length > 0 && productos.length > 0) {
+              for (const carrier of carriers) {
+                for (const producto of productos) {
+                  combinations.push({
+                    ...baseCombo,
+                    carrier_id: carrier.id,
+                    producto_id: producto.id,
+                  });
+                }
+              }
+            }
           }
         }
       }
 
-      // Insert with ON CONFLICT DO NOTHING (upsert with ignoreDuplicates)
-      const { error: insertError } = await supabase
-        .from("ciudad_transit_times")
-        .upsert(combinations, { 
-          onConflict: "cliente_id,ciudad_origen_id,ciudad_destino_id",
-          ignoreDuplicates: true 
-        });
+      // Insert combinations in batches to avoid timeout
+      const batchSize = 500;
+      let inserted = 0;
+      
+      for (let i = 0; i < combinations.length; i += batchSize) {
+        const batch = combinations.slice(i, i + batchSize);
+        const { error: insertError } = await supabase
+          .from("ciudad_transit_times")
+          .upsert(batch, { 
+            onConflict: "cliente_id, ciudad_origen_id, ciudad_destino_id, carrier_id, producto_id",
+            ignoreDuplicates: true 
+          });
 
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
+        inserted += batch.length;
+      }
+
+      const cityCombos = ciudades.length * (ciudades.length - 1);
+      const carriersCount = carriers?.length || 0;
+      const productosCount = productos?.length || 0;
+      const totalPerRoute = 1 + carriersCount + productosCount + (carriersCount * productosCount);
 
       toast({
         title: "Success",
-        description: `Generated ${combinations.length} city pair combinations`,
+        description: `Generated ${combinations.length} combinations:\n` +
+          `- ${cityCombos} general routes\n` +
+          `- ${cityCombos * carriersCount} carrier-specific routes\n` +
+          `- ${cityCombos * productosCount} product-specific routes\n` +
+          `- ${cityCombos * carriersCount * productosCount} carrier+product routes`,
       });
 
       await loadData();
@@ -720,14 +798,24 @@ export default function TiemposTransito() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Generate All Combinations?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will create entries for all possible city pairs in your topology. 
-              Existing combinations will be preserved. This operation may take a few moments.
+            <AlertDialogDescription className="space-y-2">
+              <p>This will create transit time entries for:</p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li><strong>General routes</strong> (city-to-city without carrier/product)</li>
+                <li><strong>Carrier-specific routes</strong> (for each active carrier)</li>
+                <li><strong>Product-specific routes</strong> (for each active product)</li>
+                <li><strong>Carrier+Product routes</strong> (all combinations)</li>
+              </ul>
+              <p className="text-xs text-muted-foreground mt-2">
+                Existing combinations will be preserved. This operation may take a few moments.
+              </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={generateAllCombinations}>Generate</AlertDialogAction>
+            <AlertDialogCancel disabled={generating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={generateAllCombinations} disabled={generating}>
+              {generating ? "Generating..." : "Generate"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
