@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { CheckSquare, ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { CheckSquare, ArrowUpRight, ArrowDownLeft, Search, Filter, X } from "lucide-react";
 import { format } from "date-fns";
 
 interface Envio {
@@ -45,6 +45,16 @@ export default function RegistrarEnvioRecepcion() {
   // Eventos disponibles
   const [eventosEnvio, setEventosEnvio] = useState<Envio[]>([]);
   const [eventosRecepcion, setEventosRecepcion] = useState<Envio[]>([]);
+  const [filteredEventosEnvio, setFilteredEventosEnvio] = useState<Envio[]>([]);
+  const [filteredEventosRecepcion, setFilteredEventosRecepcion] = useState<Envio[]>([]);
+  
+  // Búsqueda y filtros
+  const [searchTermEnvio, setSearchTermEnvio] = useState("");
+  const [searchTermRecepcion, setSearchTermRecepcion] = useState("");
+  const [selectedCarrierEnvio, setSelectedCarrierEnvio] = useState<string>("all");
+  const [selectedCarrierRecepcion, setSelectedCarrierRecepcion] = useState<string>("all");
+  const [selectedProductEnvio, setSelectedProductEnvio] = useState<string>("all");
+  const [selectedProductRecepcion, setSelectedProductRecepcion] = useState<string>("all");
   
   // Selección
   const [selectedEnvios, setSelectedEnvios] = useState<Set<number>>(new Set());
@@ -56,13 +66,101 @@ export default function RegistrarEnvioRecepcion() {
   const [notasEnvio, setNotasEnvio] = useState("");
   const [notasRecepcion, setNotasRecepcion] = useState("");
   
+  // Catálogos
+  const [carriers, setCarriers] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  
   const [loading, setLoading] = useState(false);
 
-  // Cargar eventos al montar
+  // Cargar eventos y catálogos al montar
   useEffect(() => {
     loadEventosEnvio();
     loadEventosRecepcion();
+    loadCarriers();
+    loadProducts();
   }, [clienteId]);
+
+  // Aplicar filtros a eventos de envío
+  useEffect(() => {
+    let filtered = eventosEnvio;
+
+    if (searchTermEnvio) {
+      const search = searchTermEnvio.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.id.toString().includes(search) ||
+        e.nodo_origen.toLowerCase().includes(search) ||
+        e.nodo_destino.toLowerCase().includes(search) ||
+        e.panelista_origen?.nombre_completo.toLowerCase().includes(search) ||
+        e.numero_etiqueta?.toLowerCase().includes(search)
+      );
+    }
+
+    if (selectedCarrierEnvio !== "all") {
+      filtered = filtered.filter(e => e.carrier_id?.toString() === selectedCarrierEnvio);
+    }
+
+    if (selectedProductEnvio !== "all") {
+      filtered = filtered.filter(e => e.producto_id?.toString() === selectedProductEnvio);
+    }
+
+    setFilteredEventosEnvio(filtered);
+  }, [eventosEnvio, searchTermEnvio, selectedCarrierEnvio, selectedProductEnvio]);
+
+  // Aplicar filtros a eventos de recepción
+  useEffect(() => {
+    let filtered = eventosRecepcion;
+
+    if (searchTermRecepcion) {
+      const search = searchTermRecepcion.toLowerCase();
+      filtered = filtered.filter(e =>
+        e.id.toString().includes(search) ||
+        e.nodo_origen.toLowerCase().includes(search) ||
+        e.nodo_destino.toLowerCase().includes(search) ||
+        e.panelista_destino?.nombre_completo.toLowerCase().includes(search) ||
+        e.numero_etiqueta?.toLowerCase().includes(search)
+      );
+    }
+
+    if (selectedCarrierRecepcion !== "all") {
+      filtered = filtered.filter(e => e.carrier_id?.toString() === selectedCarrierRecepcion);
+    }
+
+    if (selectedProductRecepcion !== "all") {
+      filtered = filtered.filter(e => e.producto_id?.toString() === selectedProductRecepcion);
+    }
+
+    setFilteredEventosRecepcion(filtered);
+  }, [eventosRecepcion, searchTermRecepcion, selectedCarrierRecepcion, selectedProductRecepcion]);
+
+  const loadCarriers = async () => {
+    if (!clienteId) return;
+
+    const { data } = await supabase
+      .from("carriers")
+      .select("id, legal_name")
+      .eq("cliente_id", clienteId)
+      .eq("status", "active")
+      .order("legal_name");
+
+    if (data) {
+      setCarriers(data);
+    }
+  };
+
+  const loadProducts = async () => {
+    if (!clienteId) return;
+
+    const { data } = await supabase
+      .from("productos_cliente")
+      .select("id, nombre_producto, codigo_producto")
+      .eq("cliente_id", clienteId)
+      .eq("estado", "activo")
+      .order("nombre_producto");
+
+    if (data) {
+      setProducts(data);
+    }
+  };
 
   const loadEventosEnvio = async () => {
     if (!clienteId) return;
@@ -167,6 +265,34 @@ export default function RegistrarEnvioRecepcion() {
       newSelected.add(id);
     }
     setSelectedRecepciones(newSelected);
+  };
+
+  const handleSelectAllEnvios = () => {
+    if (selectedEnvios.size === filteredEventosEnvio.length) {
+      setSelectedEnvios(new Set());
+    } else {
+      setSelectedEnvios(new Set(filteredEventosEnvio.map(e => e.id)));
+    }
+  };
+
+  const handleSelectAllRecepciones = () => {
+    if (selectedRecepciones.size === filteredEventosRecepcion.length) {
+      setSelectedRecepciones(new Set());
+    } else {
+      setSelectedRecepciones(new Set(filteredEventosRecepcion.map(e => e.id)));
+    }
+  };
+
+  const clearFiltersEnvio = () => {
+    setSearchTermEnvio("");
+    setSelectedCarrierEnvio("all");
+    setSelectedProductEnvio("all");
+  };
+
+  const clearFiltersRecepcion = () => {
+    setSearchTermRecepcion("");
+    setSelectedCarrierRecepcion("all");
+    setSelectedProductRecepcion("all");
   };
 
   const handleRegistrarEnvio = async () => {
@@ -299,21 +425,8 @@ export default function RegistrarEnvioRecepcion() {
     }
   };
 
-  const handleSelectAllEnvios = () => {
-    if (selectedEnvios.size === eventosEnvio.length) {
-      setSelectedEnvios(new Set());
-    } else {
-      setSelectedEnvios(new Set(eventosEnvio.map(e => e.id)));
-    }
-  };
-
-  const handleSelectAllRecepciones = () => {
-    if (selectedRecepciones.size === eventosRecepcion.length) {
-      setSelectedRecepciones(new Set());
-    } else {
-      setSelectedRecepciones(new Set(eventosRecepcion.map(e => e.id)));
-    }
-  };
+  const hasActiveFiltersEnvio = searchTermEnvio || selectedCarrierEnvio !== "all" || selectedProductEnvio !== "all";
+  const hasActiveFiltersRecepcion = searchTermRecepcion || selectedCarrierRecepcion !== "all" || selectedProductRecepcion !== "all";
 
   return (
     <AppLayout>
@@ -344,27 +457,92 @@ export default function RegistrarEnvioRecepcion() {
                 <CardTitle>Registrar Eventos Enviados (NOTIFIED → SENT)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Filtros de Búsqueda */}
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        placeholder="Buscar por ID, nodo, panelista, etiqueta..."
+                        value={searchTermEnvio}
+                        onChange={(e) => setSearchTermEnvio(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    {hasActiveFiltersEnvio && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={clearFiltersEnvio}
+                        title="Limpiar filtros"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label className="text-sm mb-1.5 block">Carrier</Label>
+                      <Select value={selectedCarrierEnvio} onValueChange={setSelectedCarrierEnvio}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos los carriers" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los carriers</SelectItem>
+                          {carriers.map((c) => (
+                            <SelectItem key={c.id} value={c.id.toString()}>
+                              {c.legal_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex-1">
+                      <Label className="text-sm mb-1.5 block">Producto</Label>
+                      <Select value={selectedProductEnvio} onValueChange={setSelectedProductEnvio}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos los productos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los productos</SelectItem>
+                          {products.map((p) => (
+                            <SelectItem key={p.id} value={p.id.toString()}>
+                              {p.codigo_producto} - {p.nombre_producto}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Eventos Disponibles */}
                 <>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label>Eventos Pendientes de Envío ({eventosEnvio.length})</Label>
-                        {eventosEnvio.length > 0 && (
+                        <Label>Eventos Pendientes de Envío ({filteredEventosEnvio.length})</Label>
+                        {filteredEventosEnvio.length > 0 && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={handleSelectAllEnvios}
                           >
                             <CheckSquare className="w-4 h-4 mr-2" />
-                            {selectedEnvios.size === eventosEnvio.length ? "Deseleccionar" : "Seleccionar"} Todos
+                            {selectedEnvios.size === filteredEventosEnvio.length ? "Deseleccionar" : "Seleccionar"} Todos
                           </Button>
                         )}
                       </div>
                       
                       {loading ? (
                         <p className="text-sm text-muted-foreground">Cargando eventos...</p>
-                      ) : eventosEnvio.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No hay eventos pendientes de envío para este panelista</p>
+                      ) : filteredEventosEnvio.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          {eventosEnvio.length === 0 
+                            ? "No hay eventos pendientes de envío" 
+                            : "No se encontraron eventos con los filtros aplicados"}
+                        </p>
                       ) : (
                         <div className="border rounded-md">
                           <Table>
@@ -382,7 +560,7 @@ export default function RegistrarEnvioRecepcion() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {eventosEnvio.map((evento) => (
+                              {filteredEventosEnvio.map((evento) => (
                                 <TableRow key={evento.id}>
                                   <TableCell>
                                     <Checkbox
@@ -453,27 +631,92 @@ export default function RegistrarEnvioRecepcion() {
                 <CardTitle>Registrar Eventos Recibidos (SENT → RECEIVED)</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {/* Filtros de Búsqueda */}
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                      <Input
+                        placeholder="Buscar por ID, nodo, panelista, etiqueta..."
+                        value={searchTermRecepcion}
+                        onChange={(e) => setSearchTermRecepcion(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    {hasActiveFiltersRecepcion && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={clearFiltersRecepcion}
+                        title="Limpiar filtros"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <Label className="text-sm mb-1.5 block">Carrier</Label>
+                      <Select value={selectedCarrierRecepcion} onValueChange={setSelectedCarrierRecepcion}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos los carriers" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los carriers</SelectItem>
+                          {carriers.map((c) => (
+                            <SelectItem key={c.id} value={c.id.toString()}>
+                              {c.legal_name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="flex-1">
+                      <Label className="text-sm mb-1.5 block">Producto</Label>
+                      <Select value={selectedProductRecepcion} onValueChange={setSelectedProductRecepcion}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Todos los productos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los productos</SelectItem>
+                          {products.map((p) => (
+                            <SelectItem key={p.id} value={p.id.toString()}>
+                              {p.codigo_producto} - {p.nombre_producto}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Eventos Disponibles */}
                 <>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label>Eventos Pendientes de Recepción ({eventosRecepcion.length})</Label>
-                        {eventosRecepcion.length > 0 && (
+                        <Label>Eventos Pendientes de Recepción ({filteredEventosRecepcion.length})</Label>
+                        {filteredEventosRecepcion.length > 0 && (
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={handleSelectAllRecepciones}
                           >
                             <CheckSquare className="w-4 h-4 mr-2" />
-                            {selectedRecepciones.size === eventosRecepcion.length ? "Deseleccionar" : "Seleccionar"} Todos
+                            {selectedRecepciones.size === filteredEventosRecepcion.length ? "Deseleccionar" : "Seleccionar"} Todos
                           </Button>
                         )}
                       </div>
                       
                       {loading ? (
                         <p className="text-sm text-muted-foreground">Cargando eventos...</p>
-                      ) : eventosRecepcion.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No hay eventos pendientes de recepción para este panelista</p>
+                      ) : filteredEventosRecepcion.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          {eventosRecepcion.length === 0 
+                            ? "No hay eventos pendientes de recepción" 
+                            : "No se encontraron eventos con los filtros aplicados"}
+                        </p>
                       ) : (
                         <div className="border rounded-md">
                           <Table>
@@ -491,7 +734,7 @@ export default function RegistrarEnvioRecepcion() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {eventosRecepcion.map((evento) => (
+                              {filteredEventosRecepcion.map((evento) => (
                                 <TableRow key={evento.id}>
                                   <TableCell>
                                     <Checkbox
