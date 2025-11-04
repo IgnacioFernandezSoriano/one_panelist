@@ -27,7 +27,17 @@ export default function Auth() {
         setError(error.message);
       } else {
         console.log("Sign-in successful!");
-        navigate("/dashboard");
+        // Verificar que el usuario esté autenticado
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          console.log("User authenticated:", user.email);
+          setError("");
+          alert(`Login successful! Welcome ${user.email}`);
+          // Por ahora, no redirigir al dashboard hasta que esté completamente configurado
+          // navigate("/dashboard");
+        } else {
+          setError("Authentication verification failed");
+        }
       }
     } catch (err: any) {
       console.error("Unexpected error:", err.message);
