@@ -265,33 +265,56 @@ export type Database = {
       }
       ciudad_transit_times: {
         Row: {
+          carrier_id: number | null
           ciudad_destino_id: number
           ciudad_origen_id: number
           cliente_id: number
           created_at: string
           dias_transito: number
           id: number
+          producto_id: number | null
+          target_percentage: number
           updated_at: string
         }
         Insert: {
+          carrier_id?: number | null
           ciudad_destino_id: number
           ciudad_origen_id: number
           cliente_id: number
           created_at?: string
           dias_transito?: number
           id?: number
+          producto_id?: number | null
+          target_percentage?: number
           updated_at?: string
         }
         Update: {
+          carrier_id?: number | null
           ciudad_destino_id?: number
           ciudad_origen_id?: number
           cliente_id?: number
           created_at?: string
           dias_transito?: number
           id?: number
+          producto_id?: number | null
+          target_percentage?: number
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "ciudad_transit_times_carrier_fk"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ciudad_transit_times_carrier_fk"
+            columns: ["carrier_id"]
+            isOneToOne: false
+            referencedRelation: "carriers_public_view"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "ciudad_transit_times_ciudad_destino_id_fkey"
             columns: ["ciudad_destino_id"]
@@ -311,6 +334,13 @@ export type Database = {
             columns: ["cliente_id"]
             isOneToOne: false
             referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ciudad_transit_times_producto_fk"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos_cliente"
             referencedColumns: ["id"]
           },
         ]
