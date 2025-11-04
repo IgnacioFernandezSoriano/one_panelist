@@ -317,8 +317,9 @@ export default function TiemposTransito() {
               target_percentage: 90,
             };
 
-            // Only generate carrier+product combinations based on valid relations
+            // Generate combinations based on available carriers and products
             if (carriers && productos && carriers.length > 0 && productos.length > 0) {
+              // Generate carrier+product combinations based on valid relations
               for (const carrier of carriers) {
                 for (const producto of productos) {
                   const relationKey = `${carrier.id}-${producto.id}`;
@@ -332,6 +333,13 @@ export default function TiemposTransito() {
                   }
                 }
               }
+            } else {
+              // If no carriers or products exist, create generic combinations
+              combinations.push({
+                ...baseCombo,
+                carrier_id: null,
+                producto_id: null,
+              });
             }
           }
         }
