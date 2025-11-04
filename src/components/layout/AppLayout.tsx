@@ -73,6 +73,7 @@ const AppSidebarContent = () => {
   const [topologyOpen, setTopologyOpen] = useState(false);
   const [panelistsOpen, setPanelistsOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
+  const [realEventsOpen, setRealEventsOpen] = useState(false);
   const { isSuperAdmin, hasAnyRole } = useUserRole();
   const { canAccessMenuItem } = useMenuPermissions();
   const { t } = useTranslation();
@@ -142,7 +143,11 @@ const AppSidebarContent = () => {
       setConfigOpen(true);
     }
     if (location.pathname.startsWith("/envios")) {
-      setAllocationPlanOpen(true);
+      if (location.pathname === "/envios/eventos-reales") {
+        setRealEventsOpen(true);
+      } else {
+        setAllocationPlanOpen(true);
+      }
       // Also open panelists menu if on massive-change or materials-plan pages
       if (location.pathname === "/envios/massive-change" || location.pathname === "/envios/materials-plan") {
         setPanelistsOpen(true);
@@ -182,7 +187,10 @@ const AppSidebarContent = () => {
     { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
     { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
     { icon: AlertCircle, label: "Pending Validation Events", path: "/envios/eventos-pendientes-validar" },
-    { icon: CheckCircle, label: "Validated Events", path: "/envios/eventos-reales" },
+  ];
+
+  const realEventsItems = [
+    { icon: Database, label: "Real Events DB", path: "/envios/eventos-reales" },
   ];
 
   const issuesItems = [
@@ -429,6 +437,46 @@ const AppSidebarContent = () => {
                       <SidebarGroupContent>
                         <SidebarMenu>
                           {issuesItems.map((item) => {
+                            const isActive = location.pathname === item.path;
+                            return (
+                              <SidebarMenuItem key={item.path}>
+                                <SidebarMenuButton 
+                                  asChild 
+                                  isActive={isActive} 
+                                  className="pl-8"
+                                >
+                                  <Link to={item.path}>
+                                    <item.icon className="w-4 h-4" />
+                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
+                                  </Link>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            );
+                          })}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
+                  </CollapsibleContent>
+                </Collapsible>
+              </SidebarMenuItem>
+            )}
+
+            {/* Real Events Collapsible */}
+            {canAccessMenuItem('envios') && (
+              <SidebarMenuItem>
+                <Collapsible open={realEventsOpen} onOpenChange={setRealEventsOpen}>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton isActive={location.pathname.startsWith("/envios/eventos-reales")}>
+                      <Database className="w-5 h-5" />
+                      {sidebarOpen && <span>Real Events</span>}
+                      {sidebarOpen && (realEventsOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarGroup>
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {realEventsItems.map((item) => {
                             const isActive = location.pathname === item.path;
                             return (
                               <SidebarMenuItem key={item.path}>
