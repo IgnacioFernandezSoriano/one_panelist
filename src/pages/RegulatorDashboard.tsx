@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useNetworkHealth } from "@/hooks/useNetworkHealth";
 import { useRoutePerformance } from "@/hooks/useRoutePerformance";
@@ -20,12 +22,47 @@ import { toast } from "sonner";
 export default function RegulatorDashboard() {
   const { clienteId } = useUserRole();
   const [period, setPeriod] = useState<number>(30);
+  const [selectedCarrier, setSelectedCarrier] = useState<string>("all");
+  const [selectedProduct, setSelectedProduct] = useState<string>("all");
   
-  const { data: healthData, isLoading: healthLoading } = useNetworkHealth(clienteId, period);
-  const { data: routeData, isLoading: routeLoading } = useRoutePerformance(clienteId, period);
-  const { data: trendsData, isLoading: trendsLoading } = usePerformanceTrends(clienteId, period, 'day');
-  const { data: slaData, isLoading: slaLoading } = useSLACompliance(clienteId, period);
-  const { data: issuesData, isLoading: issuesLoading } = useIssuesAnalysis(clienteId, period);
+  const { data: carriers } = useQuery({
+    queryKey: ['carriers', clienteId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('carriers')
+        .select('id, commercial_name')
+        .eq('cliente_id', clienteId)
+        .eq('status', 'active')
+        .order('commercial_name');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!clienteId,
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ['productos', clienteId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('productos_cliente')
+        .select('id, codigo_producto, nombre_producto')
+        .eq('cliente_id', clienteId)
+        .eq('estado', 'activo')
+        .order('nombre_producto');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!clienteId,
+  });
+
+  const carrierId = selectedCarrier === "all" ? null : Number(selectedCarrier);
+  const productId = selectedProduct === "all" ? null : Number(selectedProduct);
+  
+  const { data: healthData, isLoading: healthLoading } = useNetworkHealth(clienteId, period, carrierId, productId);
+  const { data: routeData, isLoading: routeLoading } = useRoutePerformance(clienteId, period, carrierId, productId);
+  const { data: trendsData, isLoading: trendsLoading } = usePerformanceTrends(clienteId, period, 'day', carrierId, productId);
+  const { data: slaData, isLoading: slaLoading } = useSLACompliance(clienteId, period, carrierId, productId);
+  const { data: issuesData, isLoading: issuesLoading } = useIssuesAnalysis(clienteId, period, carrierId, productId);
 
   const handleExport = (format: 'pdf' | 'csv') => {
     toast.info(`Exporting as ${format.toUpperCase()}...`);
@@ -40,7 +77,7 @@ export default function RegulatorDashboard() {
           <h1 className="text-3xl font-bold">Regulator Dashboard</h1>
           <p className="text-muted-foreground">Network performance monitoring and analytics</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Select value={period.toString()} onValueChange={(v) => setPeriod(Number(v))}>
             <SelectTrigger className="w-[180px]">
               <SelectValue />
@@ -49,6 +86,32 @@ export default function RegulatorDashboard() {
               <SelectItem value="7">Last 7 days</SelectItem>
               <SelectItem value="30">Last 30 days</SelectItem>
               <SelectItem value="90">Last 90 days</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={selectedCarrier} onValueChange={setSelectedCarrier}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All Carriers" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Carriers</SelectItem>
+              {carriers?.map((carrier) => (
+                <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                  {carrier.commercial_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={selectedProduct} onValueChange={setSelectedProduct}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All Products" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Products</SelectItem>
+              {products?.map((product) => (
+                <SelectItem key={product.id} value={product.id.toString()}>
+                  {product.codigo_producto} - {product.nombre_producto}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
           <Button variant="outline" onClick={() => handleExport('csv')}>

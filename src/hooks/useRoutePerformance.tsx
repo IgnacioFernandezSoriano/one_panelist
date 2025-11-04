@@ -2,9 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { subDays } from "date-fns";
 
-export function useRoutePerformance(clienteId: number | null, days: number = 30) {
+export function useRoutePerformance(
+  clienteId: number | null, 
+  days: number = 30,
+  carrierId: number | null = null,
+  productId: number | null = null
+) {
   return useQuery({
-    queryKey: ['route-performance', clienteId, days],
+    queryKey: ['route-performance', clienteId, days, carrierId, productId],
     queryFn: async () => {
       if (!clienteId) throw new Error("Cliente ID required");
       
@@ -14,7 +19,9 @@ export function useRoutePerformance(clienteId: number | null, days: number = 30)
       const { data, error } = await supabase.rpc('get_route_performance', {
         p_cliente_id: clienteId,
         p_start_date: startDate,
-        p_end_date: endDate
+        p_end_date: endDate,
+        p_carrier_id: carrierId,
+        p_producto_id: productId
       });
       
       if (error) throw error;
