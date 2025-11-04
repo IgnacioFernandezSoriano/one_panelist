@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -8,10 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info, Search, CheckCircle2, XCircle, Loader2, Edit, Eye, Play } from "lucide-react";
+import { Info, Search, CheckCircle2, XCircle, Loader2, Play, ChevronDown, ChevronUp, Eye } from "lucide-react";
+import { EnvioForm } from "@/components/config/forms/EnvioForm";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import ValidationDetailsDialog from "@/components/validation/ValidationDetailsDialog";
 import { format } from "date-fns";
@@ -51,7 +50,6 @@ function parseValidationErrors(json: Json): ValidationError[] {
 
 export default function EventosPendientesValidar() {
   const { toast } = useToast();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [validations, setValidations] = useState<PendingValidation[]>([]);
   const [filteredValidations, setFilteredValidations] = useState<PendingValidation[]>([]);
@@ -59,7 +57,7 @@ export default function EventosPendientesValidar() {
   const [severityFilter, setSeverityFilter] = useState("all");
   const [selectedValidation, setSelectedValidation] = useState<PendingValidation | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [actionDialog, setActionDialog] = useState<{ open: boolean; type: 'approve' | 'cancel' | null; validation: PendingValidation | null }>({
     open: false,
     type: null,
@@ -428,6 +426,7 @@ export default function EventosPendientesValidar() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12"></TableHead>
                 <TableHead>Event ID</TableHead>
                 <TableHead>Route</TableHead>
                 <TableHead>Scheduled Date</TableHead>
@@ -441,95 +440,150 @@ export default function EventosPendientesValidar() {
             <TableBody>
               {filteredValidations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                     No pending validations found
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredValidations.map((validation) => (
-                  <TableRow key={validation.id}>
-                    <TableCell className="font-medium">#{validation.envio_id}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <span className="font-mono text-xs">{validation.envios.nodo_origen}</span>
-                        <span>→</span>
-                        <span className="font-mono text-xs">{validation.envios.nodo_destino}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(validation.envios.fecha_programada), 'PP')}
-                    </TableCell>
-                    <TableCell>{validation.envios.carrier_name || '-'}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {validation.envios.numero_etiqueta || '-'}
-                    </TableCell>
-                    <TableCell>{getSeverityBadge(validation.validaciones_fallidas)}</TableCell>
-                    <TableCell>
-                      <HoverCard>
-                        <HoverCardTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <Info className="h-4 w-4" />
+                  <>
+                    <TableRow key={validation.id}>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setExpandedRow(expandedRow === validation.id ? null : validation.id)}
+                        >
+                          {expandedRow === validation.id ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </TableCell>
+                      <TableCell className="font-medium">#{validation.envio_id}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono text-xs">{validation.envios.nodo_origen}</span>
+                          <span>→</span>
+                          <span className="font-mono text-xs">{validation.envios.nodo_destino}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(validation.envios.fecha_programada), 'PP')}
+                      </TableCell>
+                      <TableCell>{validation.envios.carrier_name || '-'}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {validation.envios.numero_etiqueta || '-'}
+                      </TableCell>
+                      <TableCell>{getSeverityBadge(validation.validaciones_fallidas)}</TableCell>
+                      <TableCell>
+                        <HoverCard>
+                          <HoverCardTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Info className="h-4 w-4" />
+                            </Button>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-80">
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">Quick Summary:</p>
+                              {parseValidationErrors(validation.validaciones_fallidas).slice(0, 3).map((error, idx) => (
+                                <div key={idx} className="text-xs border-l-2 pl-2 border-muted">
+                                  <Badge variant={error.severidad === 'critical' ? 'destructive' : 'default'} className="text-xs mb-1">
+                                    {error.severidad}
+                                  </Badge>
+                                  <p className="font-medium">{error.descripcion}</p>
+                                </div>
+                              ))}
+                              {parseValidationErrors(validation.validaciones_fallidas).length > 3 && (
+                                <p className="text-xs text-muted-foreground">
+                                  +{parseValidationErrors(validation.validaciones_fallidas).length - 3} more...
+                                </p>
+                              )}
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedValidation(validation);
+                              setDetailsDialogOpen(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        </HoverCardTrigger>
-                        <HoverCardContent className="w-80">
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium">Quick Summary:</p>
-                            {parseValidationErrors(validation.validaciones_fallidas).slice(0, 3).map((error, idx) => (
-                              <div key={idx} className="text-xs border-l-2 pl-2 border-muted">
-                                <Badge variant={error.severidad === 'critical' ? 'destructive' : 'default'} className="text-xs mb-1">
-                                  {error.severidad}
-                                </Badge>
-                                <p className="font-medium">{error.descripcion}</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setActionDialog({ open: true, type: 'approve', validation })}
+                          >
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setActionDialog({ open: true, type: 'cancel', validation })}
+                          >
+                            <XCircle className="h-4 w-4 text-red-600" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {expandedRow === validation.id && (
+                      <TableRow>
+                        <TableCell colSpan={9} className="bg-muted/30 p-6">
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-semibold">Edit Event #{validation.envio_id}</h3>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setExpandedRow(null)}
+                              >
+                                Close
+                              </Button>
+                            </div>
+                            
+                            {/* Validation Errors Summary */}
+                            <div className="bg-background border rounded-lg p-4 mb-4">
+                              <h4 className="text-sm font-semibold mb-2">Validation Issues:</h4>
+                              <div className="space-y-2">
+                                {parseValidationErrors(validation.validaciones_fallidas).map((error, idx) => (
+                                  <div key={idx} className="flex items-start gap-2 text-sm">
+                                    <Badge variant={error.severidad === 'critical' ? 'destructive' : error.severidad === 'warning' ? 'default' : 'secondary'}>
+                                      {error.severidad}
+                                    </Badge>
+                                    <div className="flex-1">
+                                      <p className="font-medium">{error.descripcion}</p>
+                                      <p className="text-xs text-muted-foreground">{error.detalle}</p>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                            {parseValidationErrors(validation.validaciones_fallidas).length > 3 && (
-                              <p className="text-xs text-muted-foreground">
-                                +{parseValidationErrors(validation.validaciones_fallidas).length - 3} more...
-                              </p>
-                            )}
+                            </div>
+
+                            {/* Event Edit Form */}
+                            <EnvioForm
+                              initialData={validation.envios}
+                              onSuccess={() => {
+                                setExpandedRow(null);
+                                loadValidations();
+                                toast({
+                                  title: "Success",
+                                  description: "Event updated successfully. Please run validation again to check if issues are resolved.",
+                                });
+                              }}
+                              onCancel={() => setExpandedRow(null)}
+                            />
                           </div>
-                        </HoverCardContent>
-                      </HoverCard>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedValidation(validation);
-                            setDetailsDialogOpen(true);
-                          }}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedValidation(validation);
-                            setEditDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setActionDialog({ open: true, type: 'approve', validation })}
-                        >
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setActionDialog({ open: true, type: 'cancel', validation })}
-                        >
-                          <XCircle className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 ))
               )}
             </TableBody>
@@ -545,22 +599,6 @@ export default function EventosPendientesValidar() {
           validaciones={parseValidationErrors(selectedValidation.validaciones_fallidas)}
           envioId={selectedValidation.envio_id}
         />
-      )}
-
-      {/* Edit Dialog - Note: Manual edit required */}
-      {selectedValidation && editDialogOpen && (
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Event #{selectedValidation.envio_id}</DialogTitle>
-            </DialogHeader>
-            <p className="text-sm text-muted-foreground">Navigate to Envios to edit this event.</p>
-            <Button onClick={() => {
-              setEditDialogOpen(false);
-              navigate(`/envios/${selectedValidation.envio_id}`);
-            }}>Go to Event</Button>
-          </DialogContent>
-        </Dialog>
       )}
 
       {/* Action Confirmation Dialog */}
