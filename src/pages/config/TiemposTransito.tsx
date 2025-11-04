@@ -81,10 +81,19 @@ export default function TiemposTransito() {
 
   useEffect(() => {
     if (clienteId) {
-      loadData();
-      loadRegiones();
-      loadAvailableCarriers();
-      loadAvailableProductos();
+      // Cargar datos de forma secuencial con manejo de errores
+      const loadAllData = async () => {
+        try {
+          await loadRegiones();
+          await loadAvailableCarriers();
+          await loadAvailableProductos();
+          await loadData();
+        } catch (error) {
+          console.error('Error loading data:', error);
+          setLoading(false);
+        }
+      };
+      loadAllData();
     }
   }, [clienteId]);
 
