@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -268,7 +269,8 @@ export default function EventosReales() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="p-8">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -485,6 +487,7 @@ export default function EventosReales() {
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
       />
-    </div>
+      </div>
+    </AppLayout>
   );
 }
