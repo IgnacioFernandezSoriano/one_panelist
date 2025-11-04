@@ -66,6 +66,32 @@ interface EventoReal {
   validado_por_usuario?: {
     nombre_completo: string;
   };
+  nodo_origen_data?: {
+    codigo: string;
+    ciudad_id: number;
+    region_id: number;
+    ciudad: string;
+    ciudades?: {
+      nombre: string;
+      region_id: number;
+      regiones?: {
+        nombre: string;
+      };
+    };
+  };
+  nodo_destino_data?: {
+    codigo: string;
+    ciudad_id: number;
+    region_id: number;
+    ciudad: string;
+    ciudades?: {
+      nombre: string;
+      region_id: number;
+      regiones?: {
+        nombre: string;
+      };
+    };
+  };
 }
 
 export default function EventosReales() {
@@ -76,10 +102,16 @@ export default function EventosReales() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCarrier, setSelectedCarrier] = useState<string>("all");
   const [selectedProduct, setSelectedProduct] = useState<string>("all");
+  const [selectedCiudadOrigen, setSelectedCiudadOrigen] = useState<string>("all");
+  const [selectedCiudadDestino, setSelectedCiudadDestino] = useState<string>("all");
+  const [selectedRegionOrigen, setSelectedRegionOrigen] = useState<string>("all");
+  const [selectedRegionDestino, setSelectedRegionDestino] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [carriers, setCarriers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [ciudades, setCiudades] = useState<any[]>([]);
+  const [regiones, setRegiones] = useState<any[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<EventoReal | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
@@ -91,7 +123,7 @@ export default function EventosReales() {
 
   useEffect(() => {
     applyFilters();
-  }, [searchTerm, selectedCarrier, selectedProduct, dateFrom, dateTo, eventos]);
+  }, [searchTerm, selectedCarrier, selectedProduct, selectedCiudadOrigen, selectedCiudadDestino, selectedRegionOrigen, selectedRegionDestino, dateFrom, dateTo, eventos]);
 
   const fetchData = async () => {
     if (!clienteId) return;
@@ -99,8 +131,8 @@ export default function EventosReales() {
     try {
       setLoading(true);
 
-      // Fetch carriers and products for filters
-      const [carriersRes, productsRes] = await Promise.all([
+      // Fetch carriers, products, ciudades, and regiones for filters
+      const [carriersRes, productsRes, ciudadesRes, regionesRes] = await Promise.all([
         supabase
           .from("carriers")
           .select("id, legal_name, carrier_code")
@@ -111,10 +143,24 @@ export default function EventosReales() {
           .select("id, nombre_producto, codigo_producto")
           .eq("cliente_id", clienteId)
           .eq("estado", "activo"),
+        supabase
+          .from("ciudades")
+          .select("id, nombre")
+          .eq("cliente_id", clienteId)
+          .eq("estado", "activo")
+          .order("nombre"),
+        supabase
+          .from("regiones")
+          .select("id, nombre")
+          .eq("cliente_id", clienteId)
+          .eq("estado", "activo")
+          .order("nombre"),
       ]);
 
       setCarriers(carriersRes.data || []);
       setProducts(productsRes.data || []);
+      setCiudades(ciudadesRes.data || []);
+      setRegiones(regionesRes.data || []);
 
       // Fetch eventos reales with joins
       const { data, error } = await supabase
@@ -143,11 +189,49 @@ export default function EventosReales() {
           )
         `)
         .eq("cliente_id", clienteId)
-        .order("fecha_validacion", { ascending: false });
+        .order("fecha_validacion", { ascending: false});
 
       if (error) throw error;
 
-      setEventos(data || []);
+      // Fetch nodo data separately since nodo_origen/nodo_destino are strings, not FK
+      const nodoCodigos = new Set<string>();
+      data?.forEach(evento => {
+        nodoCodigos.add(evento.nodo_origen);
+        nodoCodigos.add(evento.nodo_destino);
+      });
+
+      const { data: nodosData } = await supabase
+        .from("nodos")
+        .select(`
+          codigo,
+          ciudad_id,
+          region_id,
+          ciudad,
+          ciudades (
+            nombre,
+            region_id,
+            regiones (
+              nombre
+            )
+          )
+        `)
+        .eq("cliente_id", clienteId)
+        .in("codigo", Array.from(nodoCodigos));
+
+      // Create a map of nodos by codigo
+      const nodosMap = new Map();
+      nodosData?.forEach(nodo => {
+        nodosMap.set(nodo.codigo, nodo);
+      });
+
+      // Enhance eventos with nodo data
+      const eventosWithNodos = data?.map(evento => ({
+        ...evento,
+        nodo_origen_data: nodosMap.get(evento.nodo_origen),
+        nodo_destino_data: nodosMap.get(evento.nodo_destino),
+      })) || [];
+
+      setEventos(eventosWithNodos);
     } catch (error: any) {
       console.error("Error fetching eventos reales:", error);
       toast.error("Error loading validated events");
@@ -182,6 +266,26 @@ export default function EventosReales() {
     // Product filter
     if (selectedProduct !== "all") {
       filtered = filtered.filter((e) => e.producto_id?.toString() === selectedProduct);
+    }
+
+    // Ciudad Origen filter
+    if (selectedCiudadOrigen !== "all") {
+      filtered = filtered.filter((e) => e.nodo_origen_data?.ciudad_id?.toString() === selectedCiudadOrigen);
+    }
+
+    // Ciudad Destino filter
+    if (selectedCiudadDestino !== "all") {
+      filtered = filtered.filter((e) => e.nodo_destino_data?.ciudad_id?.toString() === selectedCiudadDestino);
+    }
+
+    // Region Origen filter
+    if (selectedRegionOrigen !== "all") {
+      filtered = filtered.filter((e) => e.nodo_origen_data?.region_id?.toString() === selectedRegionOrigen);
+    }
+
+    // Region Destino filter
+    if (selectedRegionDestino !== "all") {
+      filtered = filtered.filter((e) => e.nodo_destino_data?.region_id?.toString() === selectedRegionDestino);
     }
 
     // Date range filter
@@ -351,7 +455,7 @@ export default function EventosReales() {
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -390,6 +494,64 @@ export default function EventosReales() {
               </SelectContent>
             </Select>
 
+            <Select value={selectedRegionOrigen} onValueChange={setSelectedRegionOrigen}>
+              <SelectTrigger>
+                <SelectValue placeholder="Origin Region" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Origin Regions</SelectItem>
+                {regiones.map((r) => (
+                  <SelectItem key={r.id} value={r.id.toString()}>
+                    {r.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedCiudadOrigen} onValueChange={setSelectedCiudadOrigen}>
+              <SelectTrigger>
+                <SelectValue placeholder="Origin City" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Origin Cities</SelectItem>
+                {ciudades.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>
+                    {c.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedRegionDestino} onValueChange={setSelectedRegionDestino}>
+              <SelectTrigger>
+                <SelectValue placeholder="Dest. Region" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Dest. Regions</SelectItem>
+                {regiones.map((r) => (
+                  <SelectItem key={r.id} value={r.id.toString()}>
+                    {r.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={selectedCiudadDestino} onValueChange={setSelectedCiudadDestino}>
+              <SelectTrigger>
+                <SelectValue placeholder="Dest. City" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Dest. Cities</SelectItem>
+                {ciudades.map((c) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>
+                    {c.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <Input
               type="date"
               value={dateFrom}
@@ -459,9 +621,13 @@ export default function EventosReales() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col text-sm">
-                          <span>{evento.nodo_origen}</span>
+                          <span>
+                            {evento.nodo_origen_data?.ciudades?.regiones?.nombre || "N/A"} - {evento.nodo_origen_data?.ciudades?.nombre || "N/A"}
+                          </span>
                           <span className="text-muted-foreground">↓</span>
-                          <span>{evento.nodo_destino}</span>
+                          <span>
+                            {evento.nodo_destino_data?.ciudades?.regiones?.nombre || "N/A"} - {evento.nodo_destino_data?.ciudades?.nombre || "N/A"}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>{format(new Date(evento.fecha_programada), "MMM dd, yyyy")}</TableCell>
