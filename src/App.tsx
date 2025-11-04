@@ -46,6 +46,7 @@ import EditarEnvio from "./pages/EditarEnvio";
 import IntelligentPlanGenerator from "./pages/IntelligentPlanGenerator";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
+import RegistrarEnvioRecepcion from "./pages/RegistrarEnvioRecepcion";
 import Documentation from "./pages/Documentation";
 import Profile from "./pages/Profile";
 
@@ -73,6 +74,7 @@ const App = () => {
             <Route path="/envios/intelligent-plan-generator" element={<IntelligentPlanGenerator />} />
             <Route path="/envios/eventos-pendientes-validar" element={<EventosPendientesValidar />} />
             <Route path="/envios/eventos-reales" element={<EventosReales />} />
+            <Route path="/envios/registrar-envio-recepcion" element={<RegistrarEnvioRecepcion />} />
             <Route path="/envios/massive-change" element={<MassivePanelistChange />} />
             <Route path="/envios/materials-plan" element={<PanelistMaterialsPlan />} />
             <Route path="/envios/:id" element={<EditarEnvio />} />

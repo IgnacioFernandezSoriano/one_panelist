@@ -143,7 +143,7 @@ const AppSidebarContent = () => {
       setConfigOpen(true);
     }
     if (location.pathname.startsWith("/envios")) {
-      if (location.pathname === "/envios/eventos-reales") {
+      if (location.pathname === "/envios/eventos-reales" || location.pathname === "/envios/registrar-envio-recepcion") {
         setRealEventsOpen(true);
       } else if (location.pathname === "/envios/eventos-pendientes-validar") {
         setIssuesOpen(true);
@@ -192,6 +192,7 @@ const AppSidebarContent = () => {
 
   const realEventsItems = [
     { icon: Database, label: "Real Events DB", path: "/envios/eventos-reales" },
+    { icon: CheckCircle, label: "Registrar Envío/Recepción", path: "/envios/registrar-envio-recepcion" },
   ];
 
   const issuesItems = [
@@ -466,9 +467,9 @@ const AppSidebarContent = () => {
             {/* Real Events Collapsible */}
             {canAccessMenuItem('envios') && (
               <SidebarMenuItem>
-                <Collapsible open={realEventsOpen} onOpenChange={setRealEventsOpen}>
+                 <Collapsible open={realEventsOpen} onOpenChange={setRealEventsOpen}>
                   <CollapsibleTrigger asChild>
-                    <SidebarMenuButton isActive={location.pathname.startsWith("/envios/eventos-reales")}>
+                    <SidebarMenuButton isActive={location.pathname.startsWith("/envios/eventos-reales") || location.pathname.startsWith("/envios/registrar-envio-recepcion")}>
                       <Database className="w-5 h-5" />
                       {sidebarOpen && <span>Real Events</span>}
                       {sidebarOpen && (realEventsOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
