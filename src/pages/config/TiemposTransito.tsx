@@ -66,6 +66,10 @@ export default function TiemposTransito() {
   const [filterDestinoRegion, setFilterDestinoRegion] = useState<string>("all");
   const [filterOrigenClassification, setFilterOrigenClassification] = useState<string>("all");
   const [filterDestinoClassification, setFilterDestinoClassification] = useState<string>("all");
+  const [filterCarrier, setFilterCarrier] = useState<string>("all");
+  const [filterProducto, setFilterProducto] = useState<string>("all");
+  const [availableCarriers, setAvailableCarriers] = useState<{id: number, carrier_code: string, legal_name: string}[]>([]);
+  const [availableProductos, setAvailableProductos] = useState<{id: number, codigo_producto: string, nombre_producto: string}[]>([]);
   const [massEditDialogOpen, setMassEditDialogOpen] = useState(false);
   const [massEditDays, setMassEditDays] = useState<number>(0);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -79,6 +83,8 @@ export default function TiemposTransito() {
     if (clienteId) {
       loadData();
       loadRegiones();
+      loadAvailableCarriers();
+      loadAvailableProductos();
     }
   }, [clienteId]);
 
@@ -156,6 +162,42 @@ export default function TiemposTransito() {
     }
   };
 
+  const loadAvailableCarriers = async () => {
+    if (!clienteId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("carriers")
+        .select("id, carrier_code, legal_name")
+        .eq("cliente_id", clienteId)
+        .eq("status", "active")
+        .order("carrier_code");
+
+      if (error) throw error;
+      setAvailableCarriers(data || []);
+    } catch (error: any) {
+      console.error("Error loading carriers:", error);
+    }
+  };
+
+  const loadAvailableProductos = async () => {
+    if (!clienteId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("productos_cliente")
+        .select("id, codigo_producto, nombre_producto")
+        .eq("cliente_id", clienteId)
+        .eq("estado", "activo")
+        .order("codigo_producto");
+
+      if (error) throw error;
+      setAvailableProductos(data || []);
+    } catch (error: any) {
+      console.error("Error loading productos:", error);
+    }
+  };
+
   const generateAllCombinations = async () => {
     if (!clienteId) return;
     
@@ -195,6 +237,19 @@ export default function TiemposTransito() {
         .eq("estado", "activo");
 
       if (productosError) throw productosError;
+
+      // Get valid carrier-producto relationships
+      const { data: carrierProductRelations, error: relationsError } = await supabase
+        .from("carrier_productos")
+        .select("carrier_id, producto_id")
+        .eq("cliente_id", clienteId);
+
+      if (relationsError) throw relationsError;
+
+      // Create a Set for quick lookup of valid carrier+product combinations
+      const validRelations = new Set(
+        carrierProductRelations?.map(r => `${r.carrier_id}-${r.producto_id}`) || []
+      );
 
       const combinations = [];
       
@@ -239,15 +294,19 @@ export default function TiemposTransito() {
               }
             }
 
-            // 4. Combinations for each carrier+product pair
+            // 4. Combinations for each carrier+product pair (only valid ones)
             if (carriers && productos && carriers.length > 0 && productos.length > 0) {
               for (const carrier of carriers) {
                 for (const producto of productos) {
-                  combinations.push({
-                    ...baseCombo,
-                    carrier_id: carrier.id,
-                    producto_id: producto.id,
-                  });
+                  const relationKey = `${carrier.id}-${producto.id}`;
+                  // Only create if this carrier-producto relationship exists
+                  if (validRelations.has(relationKey)) {
+                    combinations.push({
+                      ...baseCombo,
+                      carrier_id: carrier.id,
+                      producto_id: producto.id,
+                    });
+                  }
                 }
               }
             }
@@ -439,6 +498,8 @@ export default function TiemposTransito() {
     setFilterDestinoRegion("all");
     setFilterOrigenClassification("all");
     setFilterDestinoClassification("all");
+    setFilterCarrier("all");
+    setFilterProducto("all");
   };
 
   const filteredTransitTimes = transitTimes.filter(tt => {
@@ -460,8 +521,17 @@ export default function TiemposTransito() {
     const matchesDestinoClassification = filterDestinoClassification === "all" ||
       tt.ciudad_destino?.clasificacion === filterDestinoClassification;
 
+    const matchesCarrier = filterCarrier === "all" || 
+      (filterCarrier === "null" && !tt.carrier_id) ||
+      (tt.carrier_id && tt.carrier_id.toString() === filterCarrier);
+
+    const matchesProducto = filterProducto === "all" || 
+      (filterProducto === "null" && !tt.producto_id) ||
+      (tt.producto_id && tt.producto_id.toString() === filterProducto);
+
     return matchesSearch && matchesOrigenRegion && matchesDestinoRegion && 
-           matchesOrigenClassification && matchesDestinoClassification;
+           matchesOrigenClassification && matchesDestinoClassification &&
+           matchesCarrier && matchesProducto;
   });
 
   const getClassificationBadgeVariant = (classification: string) => {
@@ -544,13 +614,14 @@ export default function TiemposTransito() {
               variant="outline" 
               onClick={clearFilters}
               disabled={!searchTerm && filterOrigenRegion === "all" && filterDestinoRegion === "all" && 
-                        filterOrigenClassification === "all" && filterDestinoClassification === "all"}
+                        filterOrigenClassification === "all" && filterDestinoClassification === "all" &&
+                        filterCarrier === "all" && filterProducto === "all"}
             >
               Clear All Filters
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <h3 className="text-sm font-medium">Origin Filters</h3>
               <div className="flex gap-2">
@@ -608,6 +679,41 @@ export default function TiemposTransito() {
                     <SelectItem value="A">Class A</SelectItem>
                     <SelectItem value="B">Class B</SelectItem>
                     <SelectItem value="C">Class C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Additional Filters</h3>
+              <div className="flex gap-2">
+                <Select value={filterCarrier} onValueChange={setFilterCarrier}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All carriers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Carriers</SelectItem>
+                    <SelectItem value="null">General (No Carrier)</SelectItem>
+                    {availableCarriers.map((carrier) => (
+                      <SelectItem key={carrier.id} value={carrier.id.toString()}>
+                        {carrier.carrier_code} - {carrier.legal_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={filterProducto} onValueChange={setFilterProducto}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="All products" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Products</SelectItem>
+                    <SelectItem value="null">General (No Product)</SelectItem>
+                    {availableProductos.map((producto) => (
+                      <SelectItem key={producto.id} value={producto.id.toString()}>
+                        {producto.codigo_producto} - {producto.nombre_producto}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
