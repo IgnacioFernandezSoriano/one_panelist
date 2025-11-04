@@ -1,6 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.76.1';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 interface ValidationError {
   codigo: string;
   severidad: 'critical' | 'warning' | 'info';
@@ -413,17 +418,32 @@ async function validateEvent(envio: any, supabase: any): Promise<ValidationError
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: eventos, error: fetchError } = await supabase
+    // Accept optional envioIds parameter for targeted validation
+    const { envioIds } = await req.json().catch(() => ({}));
+
+    let query = supabase
       .from('envios')
       .select('*')
       .eq('estado', 'RECEIVED')
       .eq('validation_status', 'not_validated');
+
+    // If specific IDs are provided, filter only those
+    if (envioIds && Array.isArray(envioIds) && envioIds.length > 0) {
+      query = query.in('id', envioIds);
+    }
+
+    const { data: eventos, error: fetchError } = await query;
 
     if (fetchError) throw fetchError;
 
@@ -493,15 +513,17 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true, 
         processed: resultados.length,
+        validated: resultados.filter(r => r.status === 'validated').length,
+        pending: resultados.filter(r => r.status === 'pending_review').length,
         resultados 
       }),
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
     return new Response(
       JSON.stringify({ success: false, error: error.message }),
-      { headers: { "Content-Type": "application/json" }, status: 500 }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
 });

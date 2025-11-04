@@ -441,10 +441,35 @@ export default function RegistrarEnvioRecepcion() {
           .eq("id", evento.id);
       }
 
-      toast({
-        title: "Éxito",
-        description: `${selectedRecepciones.size} evento(s) registrado(s) como recibido(s)`,
-      });
+      // Automatic validation after registration
+      const { data: validationResult, error: validationError } = await supabase.functions.invoke(
+        'validate-received-events',
+        {
+          body: { envioIds: eventosIds }
+        }
+      );
+
+      if (validationError) {
+        console.error('Error en validación automática:', validationError);
+        toast({
+          title: "Advertencia",
+          description: "Eventos registrados pero la validación automática falló. Por favor ejecute 'Re-run Validation' manualmente.",
+          variant: "default",
+        });
+      } else if (validationResult) {
+        const { validated, pending } = validationResult;
+        
+        let message = `${selectedRecepciones.size} evento(s) registrado(s)`;
+        const details = [];
+        if (validated > 0) details.push(`✅ ${validated} validado(s)`);
+        if (pending > 0) details.push(`⚠️ ${pending} requieren revisión`);
+        if (details.length > 0) message += `: ${details.join(', ')}`;
+        
+        toast({
+          title: "Éxito",
+          description: message,
+        });
+      }
 
       // Reset
       setSelectedRecepciones(new Set());

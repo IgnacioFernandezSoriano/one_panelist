@@ -173,26 +173,22 @@ export default function EventosPendientesValidar() {
   const runValidation = async () => {
     setValidating(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-received-events`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-        }
-      );
+      const { data: result, error } = await supabase.functions.invoke('validate-received-events');
 
-      const result = await response.json();
+      if (error) throw error;
 
-      if (result.success) {
+      if (result && result.success) {
+        const details = [];
+        if (result.validated > 0) details.push(`✅ ${result.validated} validado(s)`);
+        if (result.pending > 0) details.push(`⚠️ ${result.pending} requieren revisión`);
+        
         toast({
-          title: "Validation Complete",
-          description: `Processed ${result.processed} events`,
+          title: "Validación Completada",
+          description: `Procesados ${result.processed} evento(s): ${details.join(', ')}`,
         });
         loadValidations();
       } else {
-        throw new Error(result.error);
+        throw new Error(result?.error || 'Error desconocido');
       }
     } catch (error: any) {
       toast({
@@ -422,12 +418,12 @@ export default function EventosPendientesValidar() {
             {validating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Validating...
+                Validando...
               </>
             ) : (
               <>
                 <Play className="h-4 w-4 mr-2" />
-                Run Validation
+                Re-ejecutar Validación
               </>
             )}
           </Button>
