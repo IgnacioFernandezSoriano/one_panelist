@@ -255,18 +255,49 @@ export default function TiemposTransito() {
         }
       }
 
-      // Insert combinations in batches to avoid timeout
+      // Fetch existing records to filter out duplicates
+      const { data: existingRecords } = await supabase
+        .from("ciudad_transit_times")
+        .select("ciudad_origen_id, ciudad_destino_id, carrier_id, producto_id")
+        .eq("cliente_id", clienteId) as { 
+          data: Array<{
+            ciudad_origen_id: number;
+            ciudad_destino_id: number;
+            carrier_id: number | null;
+            producto_id: number | null;
+          }> | null 
+        };
+
+      // Create a Set of existing combination keys
+      const existingSet = new Set(
+        existingRecords?.map(r => 
+          `${r.ciudad_origen_id}-${r.ciudad_destino_id}-${r.carrier_id || 'null'}-${r.producto_id || 'null'}`
+        ) || []
+      );
+
+      // Filter only new combinations
+      const newCombinations = combinations.filter(combo => {
+        const key = `${combo.ciudad_origen_id}-${combo.ciudad_destino_id}-${combo.carrier_id || 'null'}-${combo.producto_id || 'null'}`;
+        return !existingSet.has(key);
+      });
+
+      if (newCombinations.length === 0) {
+        toast({
+          title: "No changes",
+          description: "All combinations already exist in the database",
+        });
+        return;
+      }
+
+      // Insert new combinations in batches to avoid timeout
       const batchSize = 500;
       let inserted = 0;
       
-      for (let i = 0; i < combinations.length; i += batchSize) {
-        const batch = combinations.slice(i, i + batchSize);
+      for (let i = 0; i < newCombinations.length; i += batchSize) {
+        const batch = newCombinations.slice(i, i + batchSize);
         const { error: insertError } = await supabase
           .from("ciudad_transit_times")
-          .upsert(batch, { 
-            onConflict: "cliente_id, ciudad_origen_id, ciudad_destino_id, carrier_id, producto_id",
-            ignoreDuplicates: true 
-          });
+          .insert(batch);
 
         if (insertError) throw insertError;
         inserted += batch.length;
@@ -279,7 +310,7 @@ export default function TiemposTransito() {
 
       toast({
         title: "Success",
-        description: `Generated ${combinations.length} combinations:\n` +
+        description: `Inserted ${newCombinations.length} new combinations (${combinations.length - newCombinations.length} already existed):\n` +
           `- ${cityCombos} general routes\n` +
           `- ${cityCombos * carriersCount} carrier-specific routes\n` +
           `- ${cityCombos * productosCount} product-specific routes\n` +
