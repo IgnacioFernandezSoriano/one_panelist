@@ -145,6 +145,8 @@ const AppSidebarContent = () => {
     if (location.pathname.startsWith("/envios")) {
       if (location.pathname === "/envios/eventos-reales") {
         setRealEventsOpen(true);
+      } else if (location.pathname === "/envios/eventos-pendientes-validar") {
+        setIssuesOpen(true);
       } else {
         setAllocationPlanOpen(true);
       }
@@ -186,7 +188,6 @@ const AppSidebarContent = () => {
     { icon: Send, label: "View Plan", path: "/envios" },
     { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
     { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
-    { icon: AlertCircle, label: "Pending Validation Events", path: "/envios/eventos-pendientes-validar" },
   ];
 
   const realEventsItems = [
@@ -195,7 +196,8 @@ const AppSidebarContent = () => {
 
   const issuesItems = [
     { icon: AlertCircle, label: "View Issues", path: "/incidencias" },
-    { icon: UserX, label: "Nodos Descubiertos", path: "/issues/nodos-descubiertos" },
+    { icon: UserX, label: "Eventos sin panelista", path: "/issues/nodos-descubiertos" },
+    { icon: AlertCircle, label: "Pending Validation Events", path: "/envios/eventos-pendientes-validar" },
   ];
 
   const measurementTopologyItems = [
