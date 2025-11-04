@@ -2124,6 +2124,18 @@ export type Database = {
       }
     }
     Functions: {
+      analyze_issues: {
+        Args: { p_cliente_id: number; p_end_date: string; p_start_date: string }
+        Returns: Json
+      }
+      calculate_network_health: {
+        Args: { p_cliente_id: number; p_end_date: string; p_start_date: string }
+        Returns: Json
+      }
+      calculate_sla_compliance: {
+        Args: { p_cliente_id: number; p_end_date: string; p_start_date: string }
+        Returns: Json
+      }
       generate_next_material_code: {
         Args: { p_cliente_id: number }
         Returns: string
@@ -2137,6 +2149,36 @@ export type Database = {
         Returns: string
       }
       get_current_user_id: { Args: never; Returns: number }
+      get_performance_trends: {
+        Args: {
+          p_cliente_id: number
+          p_days_back?: number
+          p_granularity?: string
+        }
+        Returns: {
+          avg_transit_time: number
+          issue_count: number
+          on_time_rate: number
+          period_date: string
+          total_events: number
+        }[]
+      }
+      get_route_performance: {
+        Args: { p_cliente_id: number; p_end_date: string; p_start_date: string }
+        Returns: {
+          avg_transit_time: number
+          ciudad_destino: string
+          ciudad_origen: string
+          clasificacion_destino: string
+          clasificacion_origen: string
+          nodo_destino: string
+          nodo_origen: string
+          on_time_events: number
+          on_time_rate: number
+          route_score: number
+          total_events: number
+        }[]
+      }
       get_user_cliente_id: { Args: never; Returns: number }
       has_role: {
         Args: {

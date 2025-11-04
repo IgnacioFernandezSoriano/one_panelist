@@ -72,6 +72,7 @@ const AppSidebarContent = () => {
   const [topologyOpen, setTopologyOpen] = useState(false);
   const [panelistsOpen, setPanelistsOpen] = useState(false);
   const [issuesOpen, setIssuesOpen] = useState(false);
+  const [reportingOpen, setReportingOpen] = useState(false);
   const { isSuperAdmin, hasAnyRole } = useUserRole();
   const { canAccessMenuItem } = useMenuPermissions();
   const { t } = useTranslation();
@@ -479,16 +480,44 @@ const AppSidebarContent = () => {
               </SidebarMenuItem>
             )}
 
-            {/* Reporting - Not developed yet */}
-            <SidebarMenuItem>
-              <SidebarMenuButton 
-                disabled 
-                className="opacity-50 cursor-not-allowed"
-              >
-                <FileBarChart className="w-5 h-5" />
-                {sidebarOpen && <span>Reporting</span>}
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {/* Reporting */}
+            {hasAnyRole(['superadmin', 'admin', 'coordinator', 'manager']) && (
+              <SidebarMenuItem>
+                <Collapsible
+                  open={reportingOpen}
+                  onOpenChange={setReportingOpen}
+                >
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton>
+                      <FileBarChart className="w-5 h-5" />
+                      {sidebarOpen && <span>Reporting</span>}
+                      {sidebarOpen && (
+                        <ChevronDown
+                          className={`ml-auto h-4 w-4 transition-transform ${
+                            reportingOpen ? "" : "-rotate-90"
+                          }`}
+                        />
+                      )}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  {sidebarOpen && (
+                    <CollapsibleContent className="pl-4">
+                      <Link
+                        to="/reporting/regulator"
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                          location.pathname === "/reporting/regulator"
+                            ? "bg-accent text-accent-foreground"
+                            : "hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        <FileBarChart className="w-4 h-4" />
+                        <span>Regulator Dashboard</span>
+                      </Link>
+                    </CollapsibleContent>
+                  )}
+                </Collapsible>
+              </SidebarMenuItem>
+            )}
 
             {/* Configuration Collapsible - Admin & Super Admin only */}
             {hasAnyRole(['superadmin', 'admin']) && (

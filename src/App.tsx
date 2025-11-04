@@ -49,6 +49,7 @@ import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
 import RegistrarEnvioRecepcion from "./pages/RegistrarEnvioRecepcion";
 import Documentation from "./pages/Documentation";
 import Profile from "./pages/Profile";
+import RegulatorDashboard from "./pages/RegulatorDashboard";
 
 const queryClient = new QueryClient();
 
@@ -108,6 +109,9 @@ const App = () => {
                 <Mantenimiento />
               </RoleGuard>
             } />
+
+            {/* Reporting Routes */}
+            <Route path="/reporting/regulator" element={<RegulatorDashboard />} />
 
             {/* Admin & Super Admin Routes */}
             <Route path="/configuracion/usuarios" element={
