@@ -95,20 +95,62 @@ export default function TiemposTransito() {
     try {
       const { data, error } = await supabase
         .from("ciudad_transit_times")
-        .select(`
-          *,
-          ciudad_origen:ciudades!ciudad_origen_id(id, codigo, nombre, clasificacion, region:regiones(nombre)),
-          ciudad_destino:ciudades!ciudad_destino_id(id, codigo, nombre, clasificacion, region:regiones(nombre))
-        `)
+        .select("*")
         .eq("cliente_id", clienteId)
         .order("ciudad_origen_id", { ascending: true });
 
       if (error) throw error;
       
-      // Load carriers and products separately for now
+      // Load all relations separately to avoid schema cache issues
       const transitTimesWithRelations = await Promise.all(
         (data || []).map(async (tt: any) => {
           const result: any = { ...tt };
+          
+          // Load ciudad_origen
+          if (tt.ciudad_origen_id) {
+            const { data: ciudadOrigen } = await supabase
+              .from("ciudades")
+              .select("id, codigo, nombre, clasificacion, region_id")
+              .eq("id", tt.ciudad_origen_id)
+              .single();
+            
+            if (ciudadOrigen) {
+              result.ciudad_origen = ciudadOrigen;
+              
+              // Load region for ciudad_origen
+              if (ciudadOrigen.region_id) {
+                const { data: region } = await supabase
+                  .from("regiones")
+                  .select("nombre")
+                  .eq("id", ciudadOrigen.region_id)
+                  .single();
+                result.ciudad_origen.region = region;
+              }
+            }
+          }
+          
+          // Load ciudad_destino
+          if (tt.ciudad_destino_id) {
+            const { data: ciudadDestino } = await supabase
+              .from("ciudades")
+              .select("id, codigo, nombre, clasificacion, region_id")
+              .eq("id", tt.ciudad_destino_id)
+              .single();
+            
+            if (ciudadDestino) {
+              result.ciudad_destino = ciudadDestino;
+              
+              // Load region for ciudad_destino
+              if (ciudadDestino.region_id) {
+                const { data: region } = await supabase
+                  .from("regiones")
+                  .select("nombre")
+                  .eq("id", ciudadDestino.region_id)
+                  .single();
+                result.ciudad_destino.region = region;
+              }
+            }
+          }
           
           if (tt.carrier_id) {
             const { data: carrier } = await supabase
