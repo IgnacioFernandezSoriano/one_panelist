@@ -339,9 +339,19 @@ export default function EventosPendientesValidar() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Pending Validation Events
+          </h1>
+          <p className="text-muted-foreground">
+            Review and validate events that require manual approval
+          </p>
+        </div>
+
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium">Total Pending</CardTitle>
