@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Loader2, Download, Search, CheckCircle, TrendingUp, Clock, Package, Calendar } from "lucide-react";
+import { Loader2, Download, Search, CheckCircle, TrendingUp, Clock, Package, Calendar, X } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
 import { format, startOfWeek, startOfMonth, startOfYear } from "date-fns";
@@ -160,6 +160,21 @@ export default function EventosReales() {
       default:
         return { from: "", to: "" };
     }
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm("");
+    setSelectedCarrier("all");
+    setSelectedProduct("all");
+    setSelectedCiudadOrigen("all");
+    setSelectedCiudadDestino("all");
+    setSelectedRegionOrigen("all");
+    setSelectedRegionDestino("all");
+    setDateFilterType("validation_date");
+    setQuickDateFilter("all");
+    setDateFrom("");
+    setDateTo("");
+    toast.success("Filters cleared");
   };
 
   const fetchData = async () => {
@@ -509,8 +524,17 @@ export default function EventosReales() {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Filters</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleClearFilters}
+            className="gap-2"
+          >
+            <X className="h-4 w-4" />
+            Clear Filters
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
