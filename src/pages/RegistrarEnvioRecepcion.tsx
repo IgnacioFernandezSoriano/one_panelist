@@ -319,6 +319,22 @@ export default function RegistrarEnvioRecepcion() {
     try {
       const eventosIds = Array.from(selectedEnvios);
 
+      // Get eventos to verify numero_etiqueta
+      const { data: eventosData } = await supabase
+        .from("envios")
+        .select("id, numero_etiqueta")
+        .in("id", eventosIds);
+
+      // Check for missing tracking numbers
+      const missingEtiqueta = eventosData?.filter(e => !e.numero_etiqueta);
+      if (missingEtiqueta && missingEtiqueta.length > 0) {
+        toast({
+          title: "Advertencia",
+          description: `${missingEtiqueta.length} evento(s) no tienen número de etiqueta. Esto puede causar problemas de validación.`,
+          variant: "default",
+        });
+      }
+
       const { error } = await supabase
         .from("envios")
         .update({
@@ -376,19 +392,41 @@ export default function RegistrarEnvioRecepcion() {
     try {
       const eventosIds = Array.from(selectedRecepciones);
 
-      // Get eventos to calculate transit time
+      // Get eventos to calculate transit time and verify data
       const { data: eventosData } = await supabase
         .from("envios")
-        .select("id, fecha_envio_real")
+        .select("id, fecha_envio_real, numero_etiqueta")
         .in("id", eventosIds);
 
       if (!eventosData) throw new Error("No se pudieron cargar los eventos");
 
       const fechaRecepcionDate = new Date(fechaRecepcion);
 
+      // Check for missing tracking numbers
+      const missingEtiqueta = eventosData.filter(e => !e.numero_etiqueta);
+      if (missingEtiqueta.length > 0) {
+        toast({
+          title: "Advertencia",
+          description: `${missingEtiqueta.length} evento(s) no tienen número de etiqueta. Esto causará problemas de validación.`,
+          variant: "default",
+        });
+      }
+
       // Update each event with calculated transit time
       for (const evento of eventosData) {
         const fechaEnvioDate = new Date(evento.fecha_envio_real);
+        
+        // Validate date order
+        if (fechaRecepcionDate <= fechaEnvioDate) {
+          toast({
+            title: "Error",
+            description: `Evento #${evento.id}: La fecha de recepción debe ser posterior a la fecha de envío`,
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         const diffTime = Math.abs(fechaRecepcionDate.getTime() - fechaEnvioDate.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 

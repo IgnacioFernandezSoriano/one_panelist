@@ -10,7 +10,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Info, Search, CheckCircle2, XCircle, Loader2, Play, ChevronDown, ChevronUp, Eye } from "lucide-react";
-import { EnvioForm } from "@/components/config/forms/EnvioForm";
+import { QuickFixValidationForm } from "@/components/validation/QuickFixValidationForm";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import ValidationDetailsDialog from "@/components/validation/ValidationDetailsDialog";
 import { format } from "date-fns";
@@ -32,12 +32,18 @@ interface PendingValidation {
   created_at: string;
   envios: {
     id: number;
+    cliente_id: number;
     nodo_origen: string;
     nodo_destino: string;
     fecha_programada: string;
     numero_etiqueta: string;
     carrier_name: string;
+    carrier_id: number | null;
     producto_id: number;
+    fecha_envio_real: string | null;
+    fecha_recepcion_real: string | null;
+    panelista_origen_id: number | null;
+    panelista_destino_id: number | null;
   };
 }
 
@@ -88,12 +94,18 @@ export default function EventosPendientesValidar() {
           *,
           envios (
             id,
+            cliente_id,
             nodo_origen,
             nodo_destino,
             fecha_programada,
             numero_etiqueta,
             carrier_name,
-            producto_id
+            carrier_id,
+            producto_id,
+            fecha_envio_real,
+            fecha_recepcion_real,
+            panelista_origen_id,
+            panelista_destino_id
           )
         `)
         .eq('estado', 'pending_review')
@@ -538,19 +550,12 @@ export default function EventosPendientesValidar() {
                         <TableCell colSpan={9} className="bg-muted/30 p-6">
                           <div className="space-y-4">
                             <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-semibold">Edit Event #{validation.envio_id}</h3>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setExpandedRow(null)}
-                              >
-                                Close
-                              </Button>
+                              <h3 className="text-lg font-semibold">Quick Fix Event #{validation.envio_id}</h3>
                             </div>
                             
                             {/* Validation Errors Summary */}
                             <div className="bg-background border rounded-lg p-4 mb-4">
-                              <h4 className="text-sm font-semibold mb-2">Validation Issues:</h4>
+                              <h4 className="text-sm font-semibold mb-2">Validation Issues to Fix:</h4>
                               <div className="space-y-2">
                                 {parseValidationErrors(validation.validaciones_fallidas).map((error, idx) => (
                                   <div key={idx} className="flex items-start gap-2 text-sm">
@@ -566,15 +571,16 @@ export default function EventosPendientesValidar() {
                               </div>
                             </div>
 
-                            {/* Event Edit Form */}
-                            <EnvioForm
-                              initialData={validation.envios}
+                            {/* Quick Fix Form - Only shows relevant fields */}
+                            <QuickFixValidationForm
+                              envio={validation.envios}
+                              validationErrors={parseValidationErrors(validation.validaciones_fallidas)}
                               onSuccess={() => {
                                 setExpandedRow(null);
                                 loadValidations();
                                 toast({
                                   title: "Success",
-                                  description: "Event updated successfully. Please run validation again to check if issues are resolved.",
+                                  description: "Event corrected. Run validation again to verify.",
                                 });
                               }}
                               onCancel={() => setExpandedRow(null)}

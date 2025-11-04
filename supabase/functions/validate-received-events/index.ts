@@ -36,20 +36,20 @@ async function validateEvent(envio: any, supabase: any): Promise<ValidationError
   if (!envio.panelista_origen_id) {
     errors.push({
       codigo: 'PANELISTA_ORIGEN_FALTANTE',
-      severidad: 'critical',
+      severidad: 'warning',
       campo: 'panelista_origen_id',
-      descripcion: 'Panelista de origen no asignado',
-      detalle: 'Es necesario identificar el panelista que envió el paquete'
+      descripcion: 'Panelista de origen no asignado (opcional)',
+      detalle: 'Es recomendable identificar el panelista que envió el paquete para mejor trazabilidad'
     });
   }
 
   if (!envio.panelista_destino_id) {
     errors.push({
       codigo: 'PANELISTA_DESTINO_FALTANTE',
-      severidad: 'critical',
+      severidad: 'warning',
       campo: 'panelista_destino_id',
-      descripcion: 'Panelista de destino no asignado',
-      detalle: 'Es necesario identificar el panelista que recibió el paquete'
+      descripcion: 'Panelista de destino no asignado (opcional)',
+      detalle: 'Es recomendable identificar el panelista que recibió el paquete para mejor trazabilidad'
     });
   }
 
@@ -199,7 +199,7 @@ async function validateEvent(envio: any, supabase: any): Promise<ValidationError
     if (!panelista) {
       errors.push({
         codigo: 'PANELISTA_ORIGEN_NO_EXISTE',
-        severidad: 'critical',
+        severidad: 'warning',
         campo: 'panelista_origen_id',
         descripcion: 'Panelista de origen no encontrado',
         detalle: `El panelista con ID ${envio.panelista_origen_id} no existe`
@@ -225,7 +225,7 @@ async function validateEvent(envio: any, supabase: any): Promise<ValidationError
     if (!panelista) {
       errors.push({
         codigo: 'PANELISTA_DESTINO_NO_EXISTE',
-        severidad: 'critical',
+        severidad: 'warning',
         campo: 'panelista_destino_id',
         descripcion: 'Panelista de destino no encontrado',
         detalle: `El panelista con ID ${envio.panelista_destino_id} no existe`
