@@ -49,7 +49,7 @@ import GeneratedAllocationPlans from "./pages/GeneratedAllocationPlans";
 import ImportCSVPlan from "./pages/ImportCSVPlan";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
-import RegistrarEnvioRecepcion from "./pages/RegistrarEnvioRecepcion";
+import RegistrarEnvioRecepcion from "./pages/RegistrarEnvioRecepcion2";
 import Documentation from "./pages/Documentation";
 import Profile from "./pages/Profile";
 import RegulatorDashboard from "./pages/RegulatorDashboard";
