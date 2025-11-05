@@ -161,6 +161,7 @@ export default function GeneratedAllocationPlans() {
           fecha_programada,
           producto_id,
           carrier_id,
+          status,
           generated_allocation_plans!inner (
             plan_name,
             status
@@ -215,7 +216,7 @@ export default function GeneratedAllocationPlans() {
         producto_nombre: item.productos_cliente?.nombre_producto || "N/A",
         carrier_id: item.carrier_id,
         carrier_name: item.carriers?.commercial_name || "N/A",
-        status: item.generated_allocation_plans?.status || "draft",
+        status: item.status || "PENDING",
         line_number: index + 1,
       }));
 
