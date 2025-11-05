@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCliente } from "@/contexts/ClienteContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ interface Evento {
 }
 
 export default function RegistrarEnvioRecepcion() {
-  const { clienteId } = useUserRole();
+  const { clienteId } = useCliente();
   const { toast } = useToast();
   
   // Estados para eventos
