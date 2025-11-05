@@ -67,7 +67,7 @@ export default function IntelligentPlanGenerator() {
           productos_cliente (codigo_producto, nombre_producto)
         `)
         .eq('status', 'draft')
-        .order('created_at', { ascending: false });
+        .order('generation_date', { ascending: false });
 
       if (error) throw error;
       setDraftPlans(data || []);
