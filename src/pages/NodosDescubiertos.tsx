@@ -431,7 +431,7 @@ const NodosDescubiertos = () => {
 
       if (error) throw error;
 
-      const formattedEvents: AffectedEvent[] = (events || []).map(e => ({
+      let formattedEvents: AffectedEvent[] = (events || []).map(e => ({
         id: e.id,
         fecha_programada: e.fecha_programada,
         nodo_origen: e.nodo_origen,
@@ -442,6 +442,19 @@ const NodosDescubiertos = () => {
         plan_id: e.plan_id,
         plan_name: e.plan?.plan_name || '',
       }));
+
+      // Filter events based on risk type
+      if (risk.risk_type === 'panelista_de_baja' && risk.leave_info) {
+        // Only show events that fall within the leave period
+        const leaveStart = new Date(risk.leave_info.leave_start_date);
+        const leaveEnd = new Date(risk.leave_info.leave_end_date);
+        
+        formattedEvents = formattedEvents.filter(event => {
+          const eventDate = new Date(event.fecha_programada);
+          return eventDate >= leaveStart && eventDate <= leaveEnd;
+        });
+      }
+      // For 'sin_panelista' risk type, show all events (no filtering needed)
 
       setEventsMap(prev => new Map(prev).set(nodoCodigo, formattedEvents));
       
