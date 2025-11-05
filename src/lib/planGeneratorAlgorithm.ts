@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { differenceInDays, format, getMonth, addMonths, startOfMonth, endOfMonth, startOfDay, addDays, getYear } from "date-fns";
+import { differenceInDays, format, getMonth, addMonths, startOfMonth, endOfMonth, startOfDay, addDays, getYear, getWeek, parseISO } from "date-fns";
 
 export interface PlanConfig {
   cliente_id: number;
@@ -305,8 +305,12 @@ function selectRandomOriginByClassification(
   return availableNodes[randomIndex].codigo;
 }
 
-function getWeekKey(monthKey: string): string {
-  return monthKey;
+function getWeekKey(monthKey: string, dateStr: string): string {
+  // Parse the date and get the ISO week number
+  const date = parseISO(dateStr);
+  const weekNum = getWeek(date, { weekStartsOn: 1 }); // Monday as start of week
+  const year = date.getFullYear();
+  return `${year}-W${String(weekNum).padStart(2, '0')}`;
 }
 
 function balanceBySourceClassification(
@@ -320,7 +324,6 @@ function balanceBySourceClassification(
   monthKey: string
 ): { assigned: GeneratedEvent[], unassigned: number } {
   const assigned: GeneratedEvent[] = [];
-  const weekKey = getWeekKey(monthKey);
   const weeklyEventCount: Record<string, number> = {};
 
   // Sort nodes for deterministic sequential filling
@@ -344,14 +347,6 @@ function balanceBySourceClassification(
         const currentIndex = (nodeIndex + i) % sortedNodes.length;
         const node = sortedNodes[currentIndex];
 
-        const nodeWeekKey = `${weekKey}_${node.codigo}`;
-        const currentWeekCount = weeklyEventCount[nodeWeekKey] || 0;
-
-        // Check if node has capacity
-        if (currentWeekCount >= maxEventsPerWeek) {
-          continue;
-        }
-
         // Find origin from specified classification
         const randomOrigin = selectRandomOriginByClassification(
           allTopology,
@@ -361,11 +356,22 @@ function balanceBySourceClassification(
         
         if (!randomOrigin) continue;
 
+        // Generate random date for this event
+        const eventDate = getRandomDateInMonth(monthKey);
+        const weekKey = getWeekKey(monthKey, eventDate);
+        const nodeWeekKey = `${weekKey}_${node.codigo}`;
+        const currentWeekCount = weeklyEventCount[nodeWeekKey] || 0;
+
+        // Check if node has capacity for this week
+        if (currentWeekCount >= maxEventsPerWeek) {
+          continue;
+        }
+
         // Assign event to this node
         assigned.push({
           nodo_origen: randomOrigin,
           nodo_destino: node.codigo,
-          fecha_programada: getRandomDateInMonth(monthKey),
+          fecha_programada: eventDate,
         });
 
         weeklyEventCount[nodeWeekKey] = currentWeekCount + 1;
