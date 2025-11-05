@@ -264,7 +264,9 @@ export default function IntelligentPlanGenerator() {
         let remaining = totalNewEvents;
         let nodeIndex = 0;
 
-        while (remaining > 0 && nodeIndex < sortedNodes.length) {
+        // First pass: try to respect capacity limits
+        let attempts = 0;
+        while (remaining > 0 && nodeIndex < sortedNodes.length && attempts < sortedNodes.length) {
           const node = sortedNodes[nodeIndex];
           const existingEvents = eventCountByNode[node.codigo] || 0;
           const currentAssigned = nodeAssignment[node.codigo];
@@ -273,9 +275,21 @@ export default function IntelligentPlanGenerator() {
           if (totalAfterAssignment <= maxEventsPerNode) {
             nodeAssignment[node.codigo]++;
             remaining--;
+            attempts = 0; // Reset attempts when progress is made
           } else {
             nodeIndex++;
+            attempts++;
           }
+        }
+
+        // Second pass: assign remaining events even if exceeding capacity
+        // This ensures ALL events are assigned, user can adjust manually later
+        nodeIndex = 0;
+        while (remaining > 0) {
+          const node = sortedNodes[nodeIndex % sortedNodes.length];
+          nodeAssignment[node.codigo]++;
+          remaining--;
+          nodeIndex++;
         }
 
         // Calculate totals
