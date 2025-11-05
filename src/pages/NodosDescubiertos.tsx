@@ -420,14 +420,14 @@ const NodosDescubiertos = () => {
           fecha_programada,
           nodo_origen,
           nodo_destino,
-          status,
           plan_id,
+          status,
           producto:productos_cliente(nombre_producto),
           carrier:carriers(legal_name),
-          plan:generated_allocation_plans!inner(plan_name, status)
+          plan:generated_allocation_plans!inner(plan_name, plan_status:status)
         `)
         .or(`nodo_origen.eq.${nodoCodigo},nodo_destino.eq.${nodoCodigo}`)
-        .in('plan.status', ['draft', 'merged'])
+        .in('plan.plan_status', ['draft', 'merged'])
         .order('fecha_programada');
 
       if (error) throw error;
@@ -439,7 +439,7 @@ const NodosDescubiertos = () => {
         nodo_destino: e.nodo_destino,
         producto_nombre: e.producto?.nombre_producto || '',
         carrier_nombre: e.carrier?.legal_name || '',
-        status: e.status,
+        status: e.status || 'PENDING',
         plan_id: e.plan_id,
         plan_name: e.plan?.plan_name || '',
       }));
