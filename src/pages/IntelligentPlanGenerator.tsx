@@ -138,7 +138,7 @@ export default function IntelligentPlanGenerator() {
           ciudad_id,
           estado,
           panelista_id,
-          panelistas (nombre, apellidos)
+          panelistas (nombre_completo)
         `)
         .eq('cliente_id', config.cliente_id)
         .in('ciudad_id', ciudadIds)
@@ -312,9 +312,7 @@ export default function IntelligentPlanGenerator() {
           const totalEvents = existingEventsCount + newEvents;
           const eventsPerWeek = totalWeeks > 0 ? totalEvents / totalWeeks : 0;
 
-          const panelistaName = (n as any).panelistas 
-            ? `${(n as any).panelistas.nombre} ${(n as any).panelistas.apellidos}`.trim()
-            : null;
+          const panelistaName = (n as any).panelistas?.nombre_completo || null;
 
           return {
             codigo: n.codigo,
