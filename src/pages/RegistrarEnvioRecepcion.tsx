@@ -46,9 +46,13 @@ export default function RegistrarEnvioRecepcion() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    console.log("RegistrarEnvioRecepcion - clienteId:", clienteId);
     if (clienteId) {
+      console.log("Loading eventos...");
       loadEventosNotified();
       loadEventosSent();
+    } else {
+      console.log("No clienteId, skipping load");
     }
   }, [clienteId]);
 
