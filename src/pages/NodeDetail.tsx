@@ -96,16 +96,34 @@ const NodeDetail = () => {
         ciudad_info: { id: number; nombre: string; clasificacion: string } | null;
       };
 
-      // Fetch panelista information separately if exists
+      // Fetch panelista information from TWO sources:
       let panelistaNombre: string | null = null;
-      if (nodoData.panelista_id) {
+      let panelistaId: number | null = nodoData.panelista_id;
+      
+      // 1. From nodos.panelista_id (if event already sent)
+      if (panelistaId) {
         const { data: panelista } = await supabase
           .from('panelistas')
           .select('nombre_completo')
-          .eq('id', nodoData.panelista_id)
+          .eq('id', panelistaId)
           .single();
         
         panelistaNombre = panelista?.nombre_completo || null;
+      }
+      
+      // 2. From panelistas.nodo_asignado (before event is sent)
+      if (!panelistaId) {
+        const { data: panelistaByNodo } = await supabase
+          .from('panelistas')
+          .select('id, nombre_completo')
+          .eq('nodo_asignado', nodoCodigo)
+          .eq('cliente_id', clienteId)
+          .maybeSingle();
+        
+        if (panelistaByNodo) {
+          panelistaId = panelistaByNodo.id;
+          panelistaNombre = panelistaByNodo.nombre_completo;
+        }
       }
 
       // Load client configuration
@@ -119,11 +137,11 @@ const NodeDetail = () => {
 
       // Check for scheduled leaves first
       let leaveInfo: { leave_start?: string; leave_end?: string; leave_reason?: string } = {};
-      if (nodoData.panelista_id) {
+      if (panelistaId) {
         const { data: leaves } = await supabase
           .from('scheduled_leaves')
           .select('leave_start_date, leave_end_date, reason')
-          .eq('panelista_id', nodoData.panelista_id)
+          .eq('panelista_id', panelistaId)
           .eq('status', 'scheduled')
           .gte('leave_end_date', format(new Date(), 'yyyy-MM-dd'))
           .order('leave_start_date')
@@ -186,8 +204,8 @@ const NodeDetail = () => {
         region: nodoData.region?.nombre || '',
         pais: nodoData.pais,
         panelista_nombre: panelistaNombre,
-        panelista_id: nodoData.panelista_id,
-        risk_type: nodoData.panelista_id ? 'panelista_baja' : 'sin_panelista',
+        panelista_id: panelistaId,
+        risk_type: panelistaId ? 'panelista_baja' : 'sin_panelista',
         affected_events_count: formattedEvents.length,
         first_event_date: formattedEvents[0]?.fecha_programada || format(new Date(), 'yyyy-MM-dd'),
         last_event_date: formattedEvents[formattedEvents.length - 1]?.fecha_programada || format(new Date(), 'yyyy-MM-dd'),

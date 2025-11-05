@@ -123,29 +123,52 @@ const NodosDescubiertos = () => {
 
       if (nodosError) throw nodosError;
 
-      // Fetch panelistas information
+      // Fetch panelistas information from TWO sources:
+      // 1. From nodos.panelista_id (if assigned)
       const panelistaIds = nodos
         ?.filter(n => n.panelista_id)
         .map(n => n.panelista_id) || [];
 
-      const { data: panelistas, error: panelistasError } = await supabase
+      const { data: panelistasByIds, error: panelistasByIdsError } = await supabase
         .from('panelistas')
         .select('id, nombre_completo')
         .in('id', panelistaIds);
 
-      if (panelistasError) throw panelistasError;
+      if (panelistasByIdsError) throw panelistasByIdsError;
 
-      // Create a map for quick panelista lookup
-      const panelistasMap = new Map(
-        panelistas?.map(p => [p.id, p.nombre_completo]) || []
+      // 2. From panelistas.nodo_asignado (main source until event is sent)
+      const { data: panelistasByNodo, error: panelistasByNodoError } = await supabase
+        .from('panelistas')
+        .select('id, nombre_completo, nodo_asignado')
+        .in('nodo_asignado', nodeCodes);
+
+      if (panelistasByNodoError) throw panelistasByNodoError;
+
+      // Create maps for quick panelista lookup
+      // Map by panelista ID
+      const panelistasByIdMap = new Map(
+        panelistasByIds?.map(p => [p.id, p.nombre_completo]) || []
+      );
+      
+      // Map by nodo codigo
+      const panelistasByNodoMap = new Map(
+        panelistasByNodo?.map(p => [p.nodo_asignado, { id: p.id, nombre_completo: p.nombre_completo }]) || []
       );
 
-      // Fetch all scheduled leaves
+      // Combine both sources: prioritize nodos.panelista_id, fallback to panelistas.nodo_asignado
+      const panelistasMap = new Map();
+      panelistasByIdMap.forEach((nombre, id) => panelistasMap.set(id, nombre));
+      
+      // Also collect all panelista IDs for leaves query
+      const allPanelistaIds = new Set<number>();
+      panelistaIds.forEach(id => allPanelistaIds.add(id));
+      panelistasByNodo?.forEach(p => allPanelistaIds.add(p.id));
 
+      // Fetch all scheduled leaves for all panelistas found
       const { data: leaves, error: leavesError } = await supabase
         .from('scheduled_leaves')
         .select('*')
-        .in('panelista_id', panelistaIds)
+        .in('panelista_id', Array.from(allPanelistaIds))
         .in('status', ['scheduled', 'active']);
 
       if (leavesError) throw leavesError;
@@ -154,13 +177,27 @@ const NodosDescubiertos = () => {
       const nodosMap = new Map(nodos?.map(n => [n.codigo, n]) || []);
 
       // Helper function to check if a node has available panelist on a specific date
-      const hasAvailablePanelist = (nodoCodigo: string, eventDate: Date): { available: boolean; reason?: string; leaveInfo?: any } => {
+      const hasAvailablePanelist = (nodoCodigo: string, eventDate: Date): { available: boolean; reason?: string; leaveInfo?: any; panelistaId?: number } => {
         const nodo = nodosMap.get(nodoCodigo);
         if (!nodo) return { available: false, reason: 'sin_panelista' };
-        if (!nodo.panelista_id) return { available: false, reason: 'sin_panelista' };
+        
+        // Try to find panelista from TWO sources:
+        // 1. From nodos.panelista_id (if event already sent)
+        let panelistaId = nodo.panelista_id;
+        
+        // 2. From panelistas.nodo_asignado (before event is sent)
+        if (!panelistaId) {
+          const panelistaInfo = panelistasByNodoMap.get(nodoCodigo);
+          if (panelistaInfo) {
+            panelistaId = panelistaInfo.id;
+          }
+        }
+        
+        // If no panelista found in either source, node has no panelista
+        if (!panelistaId) return { available: false, reason: 'sin_panelista' };
 
         // Check if panelist is on leave on this date
-        const panelistLeaves = leaves?.filter(l => l.panelista_id === nodo.panelista_id) || [];
+        const panelistLeaves = leaves?.filter(l => l.panelista_id === panelistaId) || [];
         for (const leave of panelistLeaves) {
           const leaveStart = new Date(leave.leave_start_date);
           const leaveEnd = new Date(leave.leave_end_date);
@@ -168,6 +205,7 @@ const NodosDescubiertos = () => {
             return {
               available: false,
               reason: 'panelista_de_baja',
+              panelistaId: panelistaId,
               leaveInfo: {
                 leave_start_date: leave.leave_start_date,
                 leave_end_date: leave.leave_end_date,
@@ -177,7 +215,7 @@ const NodosDescubiertos = () => {
           }
         }
 
-        return { available: true };
+        return { available: true, panelistaId: panelistaId };
       };
 
       // Process risks by checking both origin and destination nodes for each event
@@ -219,13 +257,24 @@ const NodosDescubiertos = () => {
                 existing.last_event_date = event.fecha_programada;
               }
             } else {
+              // Get panelista info from either source
+              const panelistaId = origenCheck.panelistaId || nodo.panelista_id;
+              let panelistaNombre = null;
+              if (panelistaId) {
+                panelistaNombre = panelistasMap.get(panelistaId);
+                if (!panelistaNombre) {
+                  const panelistaInfo = panelistasByNodoMap.get(nodo.codigo);
+                  panelistaNombre = panelistaInfo?.nombre_completo || null;
+                }
+              }
+              
               risksMap.set(key, {
                 nodo_codigo: nodo.codigo,
                 ciudad: nodo.ciudad_info?.nombre || nodo.ciudad,
                 region_nombre: nodo.region?.nombre || null,
                 pais: nodo.pais,
-                panelista_id: nodo.panelista_id,
-                panelista_nombre: nodo.panelista_id ? panelistasMap.get(nodo.panelista_id) || null : null,
+                panelista_id: panelistaId,
+                panelista_nombre: panelistaNombre,
                 risk_type: origenCheck.reason as 'sin_panelista' | 'panelista_de_baja',
                 affected_events_count: 1,
                 first_event_date: event.fecha_programada,
@@ -266,13 +315,24 @@ const NodosDescubiertos = () => {
                 existing.last_event_date = event.fecha_programada;
               }
             } else {
+              // Get panelista info from either source
+              const panelistaId = destinoCheck.panelistaId || nodo.panelista_id;
+              let panelistaNombre = null;
+              if (panelistaId) {
+                panelistaNombre = panelistasMap.get(panelistaId);
+                if (!panelistaNombre) {
+                  const panelistaInfo = panelistasByNodoMap.get(nodo.codigo);
+                  panelistaNombre = panelistaInfo?.nombre_completo || null;
+                }
+              }
+              
               risksMap.set(key, {
                 nodo_codigo: nodo.codigo,
                 ciudad: nodo.ciudad_info?.nombre || nodo.ciudad,
                 region_nombre: nodo.region?.nombre || null,
                 pais: nodo.pais,
-                panelista_id: nodo.panelista_id,
-                panelista_nombre: nodo.panelista_id ? panelistasMap.get(nodo.panelista_id) || null : null,
+                panelista_id: panelistaId,
+                panelista_nombre: panelistaNombre,
                 risk_type: destinoCheck.reason as 'sin_panelista' | 'panelista_de_baja',
                 affected_events_count: 1,
                 first_event_date: event.fecha_programada,
