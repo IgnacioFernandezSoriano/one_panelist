@@ -20,12 +20,8 @@ interface Evento {
   fecha_programada: string;
   numero_etiqueta: string | null;
   status: string;
-  producto?: {
-    nombre_producto: string;
-  };
-  carrier?: {
-    legal_name: string;
-  };
+  producto_id: number;
+  carrier_id: number;
 }
 
 export default function RegistrarEnvioRecepcion() {
@@ -69,8 +65,8 @@ export default function RegistrarEnvioRecepcion() {
         fecha_programada,
         numero_etiqueta,
         status,
-        producto:productos_cliente(nombre_producto),
-        carrier:carriers(legal_name)
+        producto_id,
+        carrier_id
       `)
       .eq("cliente_id", clienteId)
       .eq("status", "NOTIFIED")
@@ -110,8 +106,8 @@ export default function RegistrarEnvioRecepcion() {
         fecha_programada,
         numero_etiqueta,
         status,
-        producto:productos_cliente(nombre_producto),
-        carrier:carriers(legal_name)
+        producto_id,
+        carrier_id
       `)
       .eq("cliente_id", clienteId)
       .eq("status", "SENT")
@@ -382,8 +378,8 @@ export default function RegistrarEnvioRecepcion() {
                               <TableCell>
                                 {format(new Date(evento.fecha_programada), "dd/MM/yyyy")}
                               </TableCell>
-                              <TableCell>{evento.producto?.nombre_producto || "-"}</TableCell>
-                              <TableCell>{evento.carrier?.legal_name || "-"}</TableCell>
+                              <TableCell>{evento.producto_id}</TableCell>
+                              <TableCell>{evento.carrier_id}</TableCell>
                               <TableCell>
                                 <Input
                                   placeholder="Etiqueta"
@@ -494,8 +490,8 @@ export default function RegistrarEnvioRecepcion() {
                               <TableCell>
                                 {format(new Date(evento.fecha_programada), "dd/MM/yyyy")}
                               </TableCell>
-                              <TableCell>{evento.producto?.nombre_producto || "-"}</TableCell>
-                              <TableCell>{evento.carrier?.legal_name || "-"}</TableCell>
+                              <TableCell>{evento.producto_id}</TableCell>
+                              <TableCell>{evento.carrier_id}</TableCell>
                               <TableCell>{evento.numero_etiqueta || "-"}</TableCell>
                             </TableRow>
                           ))}
