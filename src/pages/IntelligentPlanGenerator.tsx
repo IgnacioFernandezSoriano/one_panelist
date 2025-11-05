@@ -129,11 +129,17 @@ export default function IntelligentPlanGenerator() {
         december: seasonalityData?.december_percentage || defaultPercentage,
       };
 
-      // 4. Load active nodes
+      // 4. Load active nodes with panelist names
       const ciudadIds = ciudades?.map(c => c.id) || [];
-      const { data: nodos, error: nodosError } = await supabase
+      const { data: nodos, error: nodosError} = await supabase
         .from('nodos')
-        .select('codigo, ciudad_id, estado, panelista_id')
+        .select(`
+          codigo,
+          ciudad_id,
+          estado,
+          panelista_id,
+          panelistas (nombre, apellidos)
+        `)
         .eq('cliente_id', config.cliente_id)
         .in('ciudad_id', ciudadIds)
         .eq('estado', 'activo');
@@ -266,8 +272,12 @@ export default function IntelligentPlanGenerator() {
       const cityTotals: Record<number, number> = {};
       const nodeAssignments: Record<string, number> = {};
 
+      console.log('[Preview] Monthly distribution:', monthlyDistribution);
+      console.log('[Preview] Total calculated events:', calculatedEvents);
+
       for (const [monthKey, monthEvents] of Object.entries(monthlyDistribution)) {
         const monthlyCityDistribution = distributeByCitiesAndClassification(monthEvents);
+        console.log(`[Preview] Month ${monthKey}: ${monthEvents} events, distribution:`, monthlyCityDistribution);
 
         for (const [ciudadIdStr, allocation] of Object.entries(monthlyCityDistribution)) {
           const ciudadId = parseInt(ciudadIdStr);
@@ -275,14 +285,21 @@ export default function IntelligentPlanGenerator() {
           cityTotals[ciudadId] = (cityTotals[ciudadId] || 0) + cityTotal;
 
           const cityNodes = nodos?.filter(n => n.ciudad_id === ciudadId) || [];
+          console.log(`[Preview] City ${ciudadId}: ${cityTotal} events, ${cityNodes.length} nodes`);
+          
           if (cityNodes.length > 0) {
             const { newEvents } = fillNodesSequentially(cityNodes, cityTotal, config.max_events_per_week, eventCountByNode);
+            console.log(`[Preview] New events for city ${ciudadId}:`, newEvents);
+            
             for (const [codigo, events] of Object.entries(newEvents)) {
               nodeAssignments[codigo] = (nodeAssignments[codigo] || 0) + events;
             }
           }
         }
       }
+
+      console.log('[Preview] Final node assignments:', nodeAssignments);
+      console.log('[Preview] City totals:', cityTotals);
 
       // 11. Build city distribution for UI
       const cityDistribution = ciudades?.map(city => {
@@ -295,9 +312,14 @@ export default function IntelligentPlanGenerator() {
           const totalEvents = existingEventsCount + newEvents;
           const eventsPerWeek = totalWeeks > 0 ? totalEvents / totalWeeks : 0;
 
+          const panelistaName = (n as any).panelistas 
+            ? `${(n as any).panelistas.nombre} ${(n as any).panelistas.apellidos}`.trim()
+            : null;
+
           return {
             codigo: n.codigo,
             has_panelista: n.panelista_id !== null,
+            panelista_name: panelistaName,
             estado: n.estado,
             existing_events: existingEventsCount,
             new_events: newEvents,

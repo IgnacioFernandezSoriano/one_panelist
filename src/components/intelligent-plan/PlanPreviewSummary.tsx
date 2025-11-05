@@ -7,6 +7,7 @@ import { useState } from "react";
 interface NodeInfo {
   codigo: string;
   has_panelista: boolean;
+  panelista_name?: string | null;
   estado: string;
   existing_events: number;
   new_events: number;
@@ -143,12 +144,22 @@ export function PlanPreviewSummary({
                             <MapPin className="h-3 w-3 text-muted-foreground" />
                             <div className="flex items-center gap-2">
                               <span className="font-mono text-xs">{nodo.codigo}</span>
-                              <Badge 
-                                variant={nodo.has_panelista ? 'default' : 'secondary'}
-                                className="text-xs"
-                              >
-                                {nodo.has_panelista ? 'Assigned' : 'Unassigned'}
-                              </Badge>
+                              {nodo.panelista_name ? (
+                                <Badge 
+                                  variant="default"
+                                  className="text-xs flex items-center gap-1"
+                                >
+                                  <User className="h-3 w-3" />
+                                  {nodo.panelista_name}
+                                </Badge>
+                              ) : (
+                                <Badge 
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  Unassigned
+                                </Badge>
+                              )}
                             </div>
                             <div className="text-xs text-right">
                               <div className="text-muted-foreground">Current</div>
