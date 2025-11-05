@@ -474,7 +474,7 @@ export default function IntelligentPlanGenerator() {
         fecha_programada: detail.fecha_programada,
         motivo_creacion: 'programado',
         estado: 'PENDING',
-        observaciones: `Generated on ${format(new Date((plan as any).created_at), 'yyyy-MM-dd')}`,
+        observaciones: `Generated on ${format(new Date((plan as any).generation_date), 'yyyy-MM-dd')}`,
       }));
 
       const csv = Papa.unparse(csvRows);
