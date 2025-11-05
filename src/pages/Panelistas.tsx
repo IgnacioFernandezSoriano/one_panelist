@@ -34,11 +34,6 @@ interface Panelista {
   fecha_alta: string;
   availability_status: string | null;
   cliente_id: number;
-  scheduled_leaves?: Array<{
-    leave_start_date: string;
-    leave_end_date: string;
-    status: string;
-  }>;
 }
 
 export default function Panelistas() {
@@ -73,14 +68,7 @@ export default function Panelistas() {
     try {
       let query = supabase
         .from("panelistas")
-        .select(`
-          *,
-          scheduled_leaves!left(
-            leave_start_date,
-            leave_end_date,
-            status
-          )
-        `)
+        .select("*")
         .order("fecha_alta", { ascending: false });
       
       // Filter by cliente_id
@@ -159,43 +147,16 @@ export default function Panelistas() {
   };
 
   const getEstadoBadge = (panelista: Panelista) => {
-    // Priority 1: Check availability status (temporary leave)
+    // Check availability status (temporary leave)
     if (panelista.availability_status === 'temporary_leave') {
-      const activeLeave = panelista.scheduled_leaves?.find(
-        leave => leave.status === 'active'
-      );
-      
       return (
-        <div className="space-y-1">
-          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
-            Baja Temporal
-          </Badge>
-          {activeLeave && (
-            <p className="text-xs text-muted-foreground">
-              Hasta: {new Date(activeLeave.leave_end_date).toLocaleDateString('es-ES')}
-            </p>
-          )}
-        </div>
+        <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+          Temporary Leave
+        </Badge>
       );
     }
 
-    // Priority 2: Check scheduled future leaves
-    const scheduledLeave = panelista.scheduled_leaves?.find(
-      leave => leave.status === 'scheduled'
-    );
-    
-    if (scheduledLeave && panelista.estado === 'activo') {
-      return (
-        <div className="space-y-1">
-          <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>
-          <p className="text-xs text-blue-600">
-            Baja desde: {new Date(scheduledLeave.leave_start_date).toLocaleDateString('es-ES')} hasta {new Date(scheduledLeave.leave_end_date).toLocaleDateString('es-ES')}
-          </p>
-        </div>
-      );
-    }
-
-    // Priority 3: Regular status
+    // Regular status
     if (panelista.estado === "activo") {
       return <Badge variant="default" className="bg-success text-white">{t('status.active')}</Badge>;
     } else if (panelista.estado === "suspendido") {
