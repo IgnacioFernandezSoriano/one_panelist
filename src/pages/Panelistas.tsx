@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { PanelistaForm } from "@/components/config/forms/PanelistaForm";
 import { useTranslation } from "@/hooks/useTranslation";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCliente } from "@/contexts/ClienteContext";
 
 interface Panelista {
   id: number;
@@ -44,7 +44,7 @@ interface Panelista {
 
 export default function Panelistas() {
   const { t } = useTranslation();
-  const { clienteId, isSuperAdmin } = useUserRole();
+  const { clienteId } = useCliente();
   const [panelistas, setPanelistas] = useState<Panelista[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -84,8 +84,8 @@ export default function Panelistas() {
         `)
         .order("fecha_alta", { ascending: false });
       
-      // Filter by cliente_id unless user is superadmin
-      if (!isSuperAdmin() && clienteId) {
+      // Filter by cliente_id
+      if (clienteId) {
         query = query.eq("cliente_id", clienteId);
       }
 
