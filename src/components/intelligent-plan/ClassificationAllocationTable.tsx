@@ -2,7 +2,8 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, Info } from "lucide-react";
+import { AlertCircle, Info, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -310,10 +311,19 @@ export function ClassificationAllocationTable({
             <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
               <Info className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-600">
-                Matrix is valid and sums to 100%. {saving && '(Saving...)'}
+                Matrix is valid and sums to 100%.
               </AlertDescription>
             </Alert>
           )}
+
+          <Button
+            onClick={() => saveMatrix(matrix)}
+            disabled={!allValid || saving}
+            className="w-full"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {saving ? "Saving..." : "Save Matrix"}
+          </Button>
         </div>
       </CardContent>
     </Card>
