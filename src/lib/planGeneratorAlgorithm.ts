@@ -522,6 +522,7 @@ async function saveDraftPlan(
     producto_id: config.producto_id,
     carrier_id: config.carrier_id,
     cliente_id: config.cliente_id,
+    status: 'PENDING',
     ...event
   }));
 

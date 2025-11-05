@@ -437,9 +437,10 @@ export default function GeneratedAllocationPlans() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-      draft: "secondary",
-      merged: "default",
-      cancelled: "destructive",
+      PENDING: "secondary",
+      NOTIFIED: "outline",
+      SENT: "default",
+      RECEIVED: "default",
     };
     return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
   };
@@ -508,9 +509,10 @@ export default function GeneratedAllocationPlans() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="merged">Merged</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="NOTIFIED">Notified</SelectItem>
+              <SelectItem value="SENT">Sent</SelectItem>
+              <SelectItem value="RECEIVED">Received</SelectItem>
             </SelectContent>
           </Select>
 
@@ -726,7 +728,26 @@ export default function GeneratedAllocationPlans() {
                           format(new Date(event.fecha_programada), "MMM dd, yyyy")
                         )}
                       </TableCell>
-                      <TableCell>{getStatusBadge(event.status)}</TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Select
+                            value={editValues.status || event.status}
+                            onValueChange={(value) => setEditValues({ ...editValues, status: value })}
+                          >
+                            <SelectTrigger className="h-8">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="PENDING">Pending</SelectItem>
+                              <SelectItem value="NOTIFIED">Notified</SelectItem>
+                              <SelectItem value="SENT">Sent</SelectItem>
+                              <SelectItem value="RECEIVED">Received</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          getStatusBadge(event.status)
+                        )}
+                      </TableCell>
                       <TableCell>
                         {isEditing ? (
                           <div className="flex gap-1">
@@ -855,6 +876,7 @@ export default function GeneratedAllocationPlans() {
                     <SelectItem value="fecha_programada">Scheduled Date</SelectItem>
                     <SelectItem value="carrier_id">Carrier</SelectItem>
                     <SelectItem value="producto_id">Product</SelectItem>
+                    <SelectItem value="status">Status</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -888,6 +910,18 @@ export default function GeneratedAllocationPlans() {
                           {p.code} - {p.name}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                ) : bulkUpdateField === "status" ? (
+                  <Select value={bulkUpdateValue} onValueChange={setBulkUpdateValue}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PENDING">Pending</SelectItem>
+                      <SelectItem value="NOTIFIED">Notified</SelectItem>
+                      <SelectItem value="SENT">Sent</SelectItem>
+                      <SelectItem value="RECEIVED">Received</SelectItem>
                     </SelectContent>
                   </Select>
                 ) : (

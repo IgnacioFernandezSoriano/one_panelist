@@ -216,12 +216,7 @@ const AppSidebarContent = () => {
     { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
   ];
 
-  const allocationPlanItems = [
-    { icon: Send, label: "View Plan", path: "/envios" },
-    { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
-    { icon: FileBarChart, label: "Generated Plans", path: "/envios/generated-allocation-plans" },
-    { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
-  ];
+
 
   const issuesItems = [
     { icon: AlertCircle, label: "View Issues", path: "/incidencias" },
@@ -405,7 +400,15 @@ const AppSidebarContent = () => {
               <SidebarMenuItem>
                 <Collapsible open={allocationPlanOpen} onOpenChange={setAllocationPlanOpen}>
                 <CollapsibleTrigger asChild>
-                  <SidebarMenuButton isActive={location.pathname.startsWith("/envios")}>
+                  <SidebarMenuButton 
+                    isActive={location.pathname.startsWith("/envios")}
+                    onClick={(e) => {
+                      if (!allocationPlanOpen) {
+                        e.preventDefault();
+                        navigate("/envios/generated-allocation-plans");
+                      }
+                    }}
+                  >
                     <Send className="w-5 h-5" />
                     {sidebarOpen && <span>Allocation Plan</span>}
                     {sidebarOpen && (allocationPlanOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
@@ -415,35 +418,48 @@ const AppSidebarContent = () => {
                   <SidebarGroup>
                     <SidebarGroupContent>
                       <SidebarMenu>
-                        {/* Submenu items */}
-                        {allocationPlanItems.map((item) => {
-                          const isActive = location.pathname === item.path;
-                          return (
-                            <SidebarMenuItem key={item.path + (item.action || '')}>
-                              <SidebarMenuButton 
-                                asChild={!item.action} 
-                                isActive={isActive} 
-                                className="pl-8"
-                                onClick={item.action === 'import-csv' ? () => {
-                                  // Dispatch custom event to open import dialog
-                                  window.dispatchEvent(new CustomEvent('openImportDialog'));
-                                } : undefined}
-                              >
-                                {item.action ? (
-                                  <button className="w-full flex items-center gap-2">
-                                    <item.icon className="w-4 h-4" />
-                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                  </button>
-                                ) : (
-                                  <Link to={item.path}>
-                                    <item.icon className="w-4 h-4" />
-                                    {sidebarOpen && <span className="text-sm">{item.label}</span>}
-                                  </Link>
-                                )}
-                              </SidebarMenuButton>
-                            </SidebarMenuItem>
-                          );
-                        })}
+                        {/* Import CSV Plan */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            className="pl-8"
+                            onClick={() => {
+                              window.dispatchEvent(new CustomEvent('openImportDialog'));
+                            }}
+                          >
+                            <button className="w-full flex items-center gap-2">
+                              <Upload className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">{t('nav.import_csv_plan')}</span>}
+                            </button>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        {/* View Plan */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            asChild
+                            isActive={location.pathname === "/envios/generated-allocation-plans"}
+                            className="pl-8"
+                          >
+                            <Link to="/envios/generated-allocation-plans">
+                              <Send className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">View Plan</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        {/* Intelligent Plan Generator */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            asChild
+                            isActive={location.pathname === "/envios/intelligent-plan-generator"}
+                            className="pl-8"
+                          >
+                            <Link to="/envios/intelligent-plan-generator">
+                              <Brain className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">{t('nav.intelligent_plan_generator')}</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
                       </SidebarMenu>
                     </SidebarGroupContent>
                   </SidebarGroup>
