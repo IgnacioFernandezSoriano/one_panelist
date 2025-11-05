@@ -62,12 +62,29 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
   }, [clienteId, initialData?.id]);
 
   const loadClientes = async () => {
-    const { data } = await supabase
-      .from("clientes")
-      .select("id, codigo, nombre")
-      .eq("estado", "activo")
-      .order("nombre");
-    setClientes(data || []);
+    console.log("Loading clientes...");
+    try {
+      const { data, error } = await supabase
+        .from("clientes")
+        .select("id, codigo, nombre")
+        .eq("estado", "activo")
+        .order("nombre");
+      
+      if (error) {
+        console.error("Error loading clientes:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load accounts",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log("Clientes loaded:", data);
+      setClientes(data || []);
+    } catch (err) {
+      console.error("Unexpected error loading clientes:", err);
+    }
   };
 
   const loadTiposMaterial = async () => {
