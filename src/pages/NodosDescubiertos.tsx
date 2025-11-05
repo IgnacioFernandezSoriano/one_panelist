@@ -106,7 +106,7 @@ const NodosDescubiertos = () => {
     try {
       setLoading(true);
 
-      // Get all active allocation plan events
+      // Get all active allocation plan events (excluding cancelled events)
       const { data: events, error: eventsError } = await supabase
         .from('generated_allocation_plan_details')
         .select(`
@@ -115,7 +115,8 @@ const NodosDescubiertos = () => {
           producto:productos_cliente(id, nombre_producto),
           carrier:carriers(id, legal_name)
         `)
-        .in('plan.status', ['draft', 'merged']);
+        .in('plan.status', ['draft', 'merged'])
+        .neq('status', 'CANCELLED');
 
       if (eventsError) throw eventsError;
 
@@ -427,6 +428,7 @@ const NodosDescubiertos = () => {
           plan:generated_allocation_plans!inner(plan_name)
         `)
         .or(`nodo_origen.eq.${nodoCodigo},nodo_destino.eq.${nodoCodigo}`)
+        .neq('status', 'CANCELLED')
         .order('fecha_programada');
 
       if (error) throw error;
