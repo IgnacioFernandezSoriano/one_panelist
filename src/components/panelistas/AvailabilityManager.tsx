@@ -191,11 +191,14 @@ export function AvailabilityManager({
           });
       }
 
+      const formattedStartDate = format(new Date(leaveStartDate), 'dd/MM/yyyy');
+      const formattedEndDate = format(new Date(leaveEndDate), 'dd/MM/yyyy');
+      
       toast({
         title: "Éxito",
         description: leaveStatus === 'active' 
-          ? "Baja temporal registrada y panelista de baja" 
-          : "Baja temporal programada correctamente"
+          ? `Baja temporal registrada del ${formattedStartDate} al ${formattedEndDate}. El panelista no estará disponible durante este período.` 
+          : `Baja temporal programada del ${formattedStartDate} al ${formattedEndDate}. Se activará automáticamente en la fecha de inicio.`
       });
 
       // Reset form
