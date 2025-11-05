@@ -158,7 +158,6 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
       cliente_id: finalClienteId,
       nodo_asignado: formData.nodo_asignado || null,
       gestor_asignado_id: formData.gestor_asignado_id ? parseInt(formData.gestor_asignado_id) : null,
-      ciudad_id: null, // No usamos este campo por ahora
     };
 
     let error;

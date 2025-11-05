@@ -32,7 +32,6 @@ interface Panelista {
   gestor_asignado_id: number | null;
   estado: string;
   fecha_alta: string;
-  ciudad_id: number | null;
   availability_status: string | null;
   cliente_id: number;
   scheduled_leaves?: Array<{
