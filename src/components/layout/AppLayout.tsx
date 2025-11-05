@@ -219,6 +219,7 @@ const AppSidebarContent = () => {
   const allocationPlanItems = [
     { icon: Send, label: "View Plan", path: "/envios" },
     { icon: Brain, label: t('nav.intelligent_plan_generator'), path: "/envios/intelligent-plan-generator" },
+    { icon: FileBarChart, label: "Generated Plans", path: "/envios/generated-allocation-plans" },
     { icon: Upload, label: t('nav.import_csv_plan'), path: "/envios", action: "import-csv" },
   ];
 
