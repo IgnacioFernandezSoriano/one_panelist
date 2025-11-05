@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useCliente } from "@/contexts/ClienteContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash2 } from "lucide-react";
@@ -46,7 +47,8 @@ export const ProductoForm = ({ onSuccess, onCancel, initialData }: ProductoFormP
   const [openCliente, setOpenCliente] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
-  const { clienteId, isSuperAdmin } = useUserRole();
+  const { isSuperAdmin } = useUserRole();
+  const { clienteId } = useCliente();
 
   useEffect(() => {
     if (clienteId !== null) {
