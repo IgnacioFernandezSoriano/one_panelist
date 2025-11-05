@@ -1,599 +1,328 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/hooks/useTranslation";
-import { Search, FileDown, Trash2, RefreshCw, Eye } from "lucide-react";
+import { Search, FileDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Papa from "papaparse";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
-interface AllocationPlan {
-  id: number;
-  plan_name: string;
-  generation_date: string;
-  status: string;
-  notes?: string;
-  created_by?: number;
-  cliente_id: number;
-  detail_count?: number;
-}
-
-interface AllocationPlanDetail {
+interface AllocationEvent {
   id: number;
   plan_id: number;
+  plan_name: string;
   nodo_origen: string;
   nodo_destino: string;
-  producto_id: number;
-  carrier_id: number;
-  cantidad: number;
-  productos_cliente?: {
-    nombre_producto: string;
-    codigo_producto: string;
-  };
-  carriers?: {
-    legal_name: string;
-    carrier_code: string;
-  };
+  fecha_programada: string;
+  producto_codigo: string;
+  producto_nombre: string;
+  carrier_name: string;
+  status: string;
+  line_number: number;
 }
 
 export default function GeneratedAllocationPlans() {
-  const navigate = useNavigate();
   const { t } = useTranslation();
-  const [plans, setPlans] = useState<AllocationPlan[]>([]);
+  const [events, setEvents] = useState<AllocationEvent[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const { toast } = useToast();
-  const [changeStatusDialogOpen, setChangeStatusDialogOpen] = useState(false);
-  const [newStatusValue, setNewStatusValue] = useState("");
-  const [viewDetailsDialogOpen, setViewDetailsDialogOpen] = useState(false);
-  const [selectedPlanDetails, setSelectedPlanDetails] = useState<AllocationPlanDetail[]>([]);
-  const [selectedPlanName, setSelectedPlanName] = useState("");
 
   useEffect(() => {
-    loadPlans();
+    loadEvents();
   }, []);
 
-  const loadPlans = async () => {
+  const loadEvents = async () => {
     try {
       setLoading(true);
-      const { data: plansData, error: plansError } = await supabase
-        .from("generated_allocation_plans")
-        .select("*")
-        .order("generation_date", { ascending: false });
+      
+      // Load all events with plan, product, and carrier information
+      const { data, error } = await supabase
+        .from("generated_allocation_plan_details")
+        .select(`
+          id,
+          plan_id,
+          nodo_origen,
+          nodo_destino,
+          fecha_programada,
+          generated_allocation_plans!inner (
+            plan_name,
+            status,
+            carrier_id,
+            producto_id
+          ),
+          productos_cliente!generated_allocation_plan_details_producto_id_fkey (
+            codigo_producto,
+            nombre_producto
+          ),
+          carriers!generated_allocation_plan_details_carrier_id_fkey (
+            commercial_name
+          )
+        `)
+        .order("fecha_programada", { ascending: true });
 
-      if (plansError) throw plansError;
+      if (error) throw error;
 
-      // Load detail counts for each plan
-      const plansWithCounts = await Promise.all(
-        (plansData || []).map(async (plan) => {
-          const { count } = await supabase
-            .from("generated_allocation_plan_details")
-            .select("*", { count: "exact", head: true })
-            .eq("plan_id", plan.id);
+      // Transform data to flat structure with line numbers
+      const transformedEvents: AllocationEvent[] = (data || []).map((item: any, index: number) => ({
+        id: item.id,
+        plan_id: item.plan_id,
+        plan_name: item.generated_allocation_plans?.plan_name || "N/A",
+        nodo_origen: item.nodo_origen,
+        nodo_destino: item.nodo_destino,
+        fecha_programada: item.fecha_programada,
+        producto_codigo: item.productos_cliente?.codigo_producto || "N/A",
+        producto_nombre: item.productos_cliente?.nombre_producto || "N/A",
+        carrier_name: item.carriers?.commercial_name || "N/A",
+        status: item.generated_allocation_plans?.status || "draft",
+        line_number: index + 1,
+      }));
 
-          return {
-            ...plan,
-            detail_count: count || 0,
-          };
-        })
-      );
-
-      setPlans(plansWithCounts);
+      setEvents(transformedEvents);
     } catch (error: any) {
       toast({
         title: "Error",
-        description: "Could not load allocation plans",
+        description: "Could not load allocation events",
         variant: "destructive",
       });
-      console.error("Error loading plans:", error);
+      console.error("Error loading events:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewDetails = async (planId: number, planName: string) => {
-    try {
-      const { data, error } = await supabase
-        .from("generated_allocation_plan_details")
-        .select(`
-          *,
-          productos_cliente:producto_id (
-            nombre_producto,
-            codigo_producto
-          ),
-          carriers:carrier_id (
-            legal_name,
-            carrier_code
-          )
-        `)
-        .eq("plan_id", planId);
+  const handleExportCSV = () => {
+    const csvData = filteredEvents.map(event => ({
+      Line: event.line_number,
+      "Plan Name": event.plan_name,
+      Origin: event.nodo_origen,
+      Destination: event.nodo_destino,
+      Product: `${event.producto_codigo} - ${event.producto_nombre}`,
+      Carrier: event.carrier_name,
+      "Scheduled Date": event.fecha_programada,
+      Status: event.status,
+    }));
 
-      if (error) throw error;
+    const csv = Papa.unparse(csvData);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `allocation-events-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
 
-      setSelectedPlanDetails(data || []);
-      setSelectedPlanName(planName);
-      setViewDetailsDialogOpen(true);
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Could not load plan details",
-        variant: "destructive",
-      });
-      console.error("Error loading details:", error);
-    }
+    toast({
+      title: "Export successful",
+      description: `Exported ${filteredEvents.length} events to CSV`,
+    });
   };
 
-  const exportCSV = () => {
-    try {
-      const csvData = filteredPlans.map(plan => ({
-        id: plan.id,
-        plan_name: plan.plan_name,
-        generation_date: plan.generation_date,
-        status: plan.status,
-        detail_count: plan.detail_count || 0,
-        notes: plan.notes || '',
-      }));
+  // Filter events
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch =
+      searchTerm === "" ||
+      event.plan_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.nodo_origen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.nodo_destino.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.producto_codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.producto_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.carrier_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const csv = Papa.unparse(csvData, {
-        quotes: true,
-        header: true
-      });
+    const matchesStatus = statusFilter === "" || event.status === statusFilter;
 
-      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `Allocation_Plans_${format(new Date(), 'yyyy-MM-dd')}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "Export successful",
-        description: `Exported ${csvData.length} allocation plans`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Export error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const filteredPlans = plans.filter((plan) => {
-    const matchesSearch = !searchTerm || 
-      plan.id.toString().includes(searchTerm.toLowerCase()) ||
-      (plan.plan_name && plan.plan_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (plan.status && plan.status.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesStatus = !statusFilter || plan.status === statusFilter;
-    
     return matchesSearch && matchesStatus;
   });
 
-  const totalPages = Math.ceil(filteredPlans.length / itemsPerPage);
+  // Pagination
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedPlans = filteredPlans.slice(startIndex, endIndex);
-
-  const toggleSelection = (id: number) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedIds.length === paginatedPlans.length && paginatedPlans.length > 0) {
-      setSelectedIds([]);
-    } else {
-      setSelectedIds(paginatedPlans.map(p => p.id));
-    }
-  };
-
-  const handleDeleteSelected = async () => {
-    try {
-      // First delete details
-      const { error: detailsError } = await supabase
-        .from("generated_allocation_plan_details")
-        .delete()
-        .in("plan_id", selectedIds);
-
-      if (detailsError) throw detailsError;
-
-      // Then delete plans
-      const { error: plansError } = await supabase
-        .from("generated_allocation_plans")
-        .delete()
-        .in("id", selectedIds);
-
-      if (plansError) throw plansError;
-
-      toast({
-        title: "Success",
-        description: `Deleted ${selectedIds.length} allocation plan(s)`,
-      });
-
-      setSelectedIds([]);
-      setDeleteDialogOpen(false);
-      loadPlans();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Could not delete allocation plans",
-        variant: "destructive",
-      });
-      console.error("Error deleting plans:", error);
-    }
-  };
-
-  const handleChangeStatus = async () => {
-    if (!newStatusValue) {
-      toast({
-        title: "Error",
-        description: "Please select a status",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("generated_allocation_plans")
-        .update({ status: newStatusValue })
-        .in("id", selectedIds);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Updated status for ${selectedIds.length} plan(s)`,
-      });
-
-      setSelectedIds([]);
-      setChangeStatusDialogOpen(false);
-      setNewStatusValue("");
-      loadPlans();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "Could not update status",
-        variant: "destructive",
-      });
-      console.error("Error updating status:", error);
-    }
-  };
+  const paginatedEvents = filteredEvents.slice(startIndex, endIndex);
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { variant: any; className: string }> = {
-      pending: { variant: "secondary", className: "bg-yellow-100 text-yellow-800" },
-      sent: { variant: "default", className: "bg-blue-100 text-blue-800" },
-      received: { variant: "default", className: "bg-green-100 text-green-800" },
-      notified: { variant: "default", className: "bg-purple-100 text-purple-800" },
-      cancelled: { variant: "destructive", className: "bg-red-100 text-red-800" },
+    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+      draft: "secondary",
+      merged: "default",
+      cancelled: "destructive",
     };
-    return statusMap[status] || { variant: "secondary", className: "" };
+    return <Badge variant={variants[status] || "outline"}>{status}</Badge>;
   };
 
   return (
     <AppLayout>
-      <div className="p-6 max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Generated Allocation Plans</h1>
-            <p className="text-muted-foreground mt-1">
-              View and manage generated allocation plans
-            </p>
-          </div>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Generated Allocation Plans</h1>
+          <p className="text-muted-foreground">
+            View and manage generated allocation events
+          </p>
         </div>
 
-        <Card className="p-4 mb-6">
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search by ID, name, or status..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+        <div className="flex gap-4 items-center">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search by plan, origin, destination, product, carrier..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="merged">Merged</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button onClick={handleExportCSV} variant="outline">
+            <FileDown className="h-4 w-4 mr-2" />
+            Export CSV
+          </Button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1}-{Math.min(endIndex, filteredEvents.length)} of{" "}
+            {filteredEvents.length} event(s)
+          </div>
+
+          <Select
+            value={itemsPerPage.toString()}
+            onValueChange={(value) => {
+              setItemsPerPage(parseInt(value));
+              setCurrentPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10 per page</SelectItem>
+              <SelectItem value="25">25 per page</SelectItem>
+              <SelectItem value="50">50 per page</SelectItem>
+              <SelectItem value="100">100 per page</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Line</TableHead>
+                <TableHead>Plan Name</TableHead>
+                <TableHead>Origin</TableHead>
+                <TableHead>Destination</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Carrier</TableHead>
+                <TableHead>Scheduled Date</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8">
+                    Loading events...
+                  </TableCell>
+                </TableRow>
+              ) : paginatedEvents.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8">
+                    No events found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedEvents.map((event) => (
+                  <TableRow key={event.id}>
+                    <TableCell className="font-medium">#{event.line_number}</TableCell>
+                    <TableCell>{event.plan_name}</TableCell>
+                    <TableCell className="font-mono text-sm">{event.nodo_origen}</TableCell>
+                    <TableCell className="font-mono text-sm">{event.nodo_destino}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-medium">{event.producto_codigo}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {event.producto_nombre}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{event.carrier_name}</TableCell>
+                    <TableCell>{format(new Date(event.fecha_programada), "MMM dd, yyyy")}</TableCell>
+                    <TableCell>{getStatusBadge(event.status)}</TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              Previous
+            </Button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((page) => {
+                  return (
+                    page === 1 ||
+                    page === totalPages ||
+                    (page >= currentPage - 1 && page <= currentPage + 1)
+                  );
+                })
+                .map((page, index, array) => (
+                  <>
+                    {index > 0 && array[index - 1] !== page - 1 && (
+                      <span key={`ellipsis-${page}`}>...</span>
+                    )}
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  </>
+                ))}
             </div>
-            <Select value={statusFilter || "all"} onValueChange={(value) => setStatusFilter(value === "all" ? "" : value)}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="sent">Sent</SelectItem>
-                <SelectItem value="received">Received</SelectItem>
-                <SelectItem value="notified">Notified</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={exportCSV} variant="outline" className="gap-2">
-              <FileDown className="w-4 h-4" />
-              Export CSV
+            <Button
+              variant="outline"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next
             </Button>
           </div>
-        </Card>
-
-        {filteredPlans.length > 0 && (
-          <Card className="p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  checked={selectedIds.length === paginatedPlans.length && paginatedPlans.length > 0}
-                  onCheckedChange={toggleSelectAll}
-                />
-                <span className="text-sm text-muted-foreground">
-                  Showing {startIndex + 1}-{Math.min(endIndex, filteredPlans.length)} of {filteredPlans.length} record(s)
-                  {selectedIds.length > 0 && ` (${selectedIds.length} selected)`}
-                </span>
-                <Select
-                  value={itemsPerPage.toString()}
-                  onValueChange={(value) => {
-                    setItemsPerPage(parseInt(value));
-                    setCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="w-[120px] h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 per page</SelectItem>
-                    <SelectItem value="25">25 per page</SelectItem>
-                    <SelectItem value="50">50 per page</SelectItem>
-                    <SelectItem value="100">100 per page</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {selectedIds.length > 0 && (
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => setChangeStatusDialogOpen(true)}
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Change Status
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => setDeleteDialogOpen(true)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </Button>
-                </div>
-              )}
-            </div>
-          </Card>
-        )}
-
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading allocation plans...</p>
-          </div>
-        ) : filteredPlans.length === 0 ? (
-          <Card className="p-12 text-center">
-            <p className="text-muted-foreground">No allocation plans found</p>
-          </Card>
-        ) : (
-          <>
-            <div className="grid gap-4">
-              {paginatedPlans.map((plan) => (
-                <Card key={plan.id} className="p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start gap-4">
-                    <Checkbox
-                      checked={selectedIds.includes(plan.id)}
-                      onCheckedChange={() => toggleSelection(plan.id)}
-                      className="mt-1"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <h3 className="text-lg font-semibold text-foreground">
-                          #{plan.id} • {plan.plan_name}
-                        </h3>
-                        <Badge 
-                          variant={getStatusBadge(plan.status).variant}
-                          className={getStatusBadge(plan.status).className}
-                        >
-                          {plan.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm mb-3">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-muted-foreground text-xs">Generated:</span>
-                          <p className="font-medium">
-                            {format(new Date(plan.generation_date), "MMM dd, yyyy HH:mm")}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-muted-foreground text-xs">Details:</span>
-                          <p className="font-medium">{plan.detail_count || 0} line items</p>
-                        </div>
-                      </div>
-
-                      {plan.notes && (
-                        <div className="text-sm text-muted-foreground mb-3">
-                          <span className="font-medium">Notes:</span> {plan.notes}
-                        </div>
-                      )}
-
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => handleViewDetails(plan.id, plan.plan_name)}
-                        >
-                          <Eye className="w-4 h-4" />
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
-            {totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                <span className="flex items-center px-4 text-sm text-muted-foreground">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-          </>
         )}
       </div>
-
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm deletion</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {selectedIds.length} allocation plan(s)? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive text-destructive-foreground">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Dialog open={changeStatusDialogOpen} onOpenChange={setChangeStatusDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Change Status</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                New Status for {selectedIds.length} plan(s)
-              </label>
-              <Select value={newStatusValue} onValueChange={setNewStatusValue}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="received">Received</SelectItem>
-                  <SelectItem value="notified">Notified</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setChangeStatusDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleChangeStatus}>
-                Update Status
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={viewDetailsDialogOpen} onOpenChange={setViewDetailsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Plan Details: {selectedPlanName}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {selectedPlanDetails.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">No details found</p>
-            ) : (
-              <div className="space-y-2">
-                {selectedPlanDetails.map((detail, index) => (
-                  <Card key={detail.id} className="p-4">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Line:</span>
-                        <p className="font-medium">#{index + 1}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Origin:</span>
-                        <p className="font-medium font-mono">{detail.nodo_origen}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Destination:</span>
-                        <p className="font-medium font-mono">{detail.nodo_destino}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Product:</span>
-                        <p className="font-medium">
-                          {detail.productos_cliente?.codigo_producto || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Carrier:</span>
-                        <p className="font-medium">
-                          {detail.carriers?.carrier_code || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Quantity:</span>
-                        <p className="font-medium">{detail.cantidad}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </AppLayout>
   );
 }
