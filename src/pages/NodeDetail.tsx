@@ -78,7 +78,6 @@ const NodeDetail = () => {
           ciudad,
           pais,
           panelista_id,
-          panelista:panelistas!fk_nodos_panelista(id, nombre_completo),
           region:regiones(id, nombre),
           ciudad_info:ciudades(id, nombre, clasificacion)
         `)
@@ -93,10 +92,21 @@ const NodeDetail = () => {
         ciudad: string;
         pais: string;
         panelista_id: number | null;
-        panelista: { id: number; nombre_completo: string } | null;
         region: { id: number; nombre: string } | null;
         ciudad_info: { id: number; nombre: string; clasificacion: string } | null;
       };
+
+      // Fetch panelista information separately if exists
+      let panelistaNombre: string | null = null;
+      if (nodoData.panelista_id) {
+        const { data: panelista } = await supabase
+          .from('panelistas')
+          .select('nombre_completo')
+          .eq('id', nodoData.panelista_id)
+          .single();
+        
+        panelistaNombre = panelista?.nombre_completo || null;
+      }
 
       // Load client configuration
       const { data: cliente } = await supabase
@@ -175,7 +185,7 @@ const NodeDetail = () => {
         ciudad: nodoData.ciudad_info?.nombre || nodoData.ciudad,
         region: nodoData.region?.nombre || '',
         pais: nodoData.pais,
-        panelista_nombre: nodoData.panelista?.nombre_completo || null,
+        panelista_nombre: panelistaNombre,
         panelista_id: nodoData.panelista_id,
         risk_type: nodoData.panelista_id ? 'panelista_baja' : 'sin_panelista',
         affected_events_count: formattedEvents.length,
@@ -217,7 +227,7 @@ const NodeDetail = () => {
       .from('nodos')
       .select(`
         codigo,
-        panelista:panelistas!fk_nodos_panelista(nombre_completo),
+        panelista_id,
         ciudad_info:ciudades(clasificacion)
       `)
       .eq('cliente_id', clienteId)
@@ -237,12 +247,21 @@ const NodeDetail = () => {
       nodes = nodes.filter((n: any) => n.ciudad_info?.clasificacion === 'C');
     }
 
+    // Get panelista names for nodes that have panelista_id
+    const panelistaIds = nodes?.filter((n: any) => n.panelista_id).map((n: any) => n.panelista_id) || [];
+    const { data: panelistas } = await supabase
+      .from('panelistas')
+      .select('id, nombre_completo')
+      .in('id', panelistaIds);
+
+    const panelistasMap = new Map(panelistas?.map(p => [p.id, p.nombre_completo]) || []);
+
     setAvailableNodes((nodes || []).map((n: {
       codigo: string;
-      panelista: { nombre_completo: string } | null;
+      panelista_id: number | null;
     }) => ({
       codigo: n.codigo,
-      panelista_nombre: n.panelista?.nombre_completo || null,
+      panelista_nombre: n.panelista_id ? panelistasMap.get(n.panelista_id) || null : null,
     })));
   };
 

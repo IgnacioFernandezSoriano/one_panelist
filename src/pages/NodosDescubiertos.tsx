@@ -426,7 +426,7 @@ const NodosDescubiertos = () => {
                       <TableHead>Panelista</TableHead>
                       <TableHead>Tipo de Riesgo</TableHead>
                       <TableHead className="text-center">Eventos</TableHead>
-                      <TableHead>Fechas</TableHead>
+                      <TableHead>Fechas de Eventos Afectados</TableHead>
                       <TableHead>Productos</TableHead>
                       <TableHead>Carriers</TableHead>
                       <TableHead>Acciones</TableHead>
