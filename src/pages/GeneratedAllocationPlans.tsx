@@ -157,21 +157,35 @@ export default function GeneratedAllocationPlans() {
           ),
           carriers!generated_allocation_plan_details_carrier_id_fkey (
             commercial_name
-          ),
-          nodos!generated_allocation_plan_details_nodo_origen_fkey (
-            ciudades (
-              nombre
-            )
-          ),
-          nodos!generated_allocation_plan_details_nodo_destino_fkey (
-            ciudades (
-              nombre
-            )
           )
         `)
         .order("fecha_programada", { ascending: true });
 
       if (error) throw error;
+
+      // Load all unique node codes
+      const nodeCodes = new Set<string>();
+      (data || []).forEach((item: any) => {
+        if (item.nodo_origen) nodeCodes.add(item.nodo_origen);
+        if (item.nodo_destino) nodeCodes.add(item.nodo_destino);
+      });
+
+      // Load city names for all nodes
+      const { data: nodesData } = await supabase
+        .from("nodos")
+        .select(`
+          codigo,
+          ciudades (
+            nombre
+          )
+        `)
+        .in("codigo", Array.from(nodeCodes));
+
+      // Create a map of node code to city name
+      const nodeToCityMap = new Map<string, string>();
+      (nodesData || []).forEach((node: any) => {
+        nodeToCityMap.set(node.codigo, node.ciudades?.nombre || "Unknown");
+      });
 
       const transformedEvents: AllocationEvent[] = (data || []).map((item: any, index: number) => ({
         id: item.id,
@@ -179,8 +193,8 @@ export default function GeneratedAllocationPlans() {
         plan_name: item.generated_allocation_plans?.plan_name || "N/A",
         nodo_origen: item.nodo_origen,
         nodo_destino: item.nodo_destino,
-        ciudad_origen: item.nodos?.[0]?.ciudades?.nombre || "Unknown",
-        ciudad_destino: item.nodos?.[1]?.ciudades?.nombre || "Unknown",
+        ciudad_origen: nodeToCityMap.get(item.nodo_origen) || "Unknown",
+        ciudad_destino: nodeToCityMap.get(item.nodo_destino) || "Unknown",
         fecha_programada: item.fecha_programada,
         producto_id: item.producto_id,
         producto_codigo: item.productos_cliente?.codigo_producto || "N/A",
