@@ -70,10 +70,10 @@ export default function GeneratedAllocationPlans() {
   const [loading, setLoading] = useState(true);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("");
-  const [planFilter, setPlanFilter] = useState("");
-  const [carrierFilter, setCarrierFilter] = useState("");
-  const [productFilter, setProductFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+  const [planFilter, setPlanFilter] = useState<string | undefined>(undefined);
+  const [carrierFilter, setCarrierFilter] = useState<string | undefined>(undefined);
+  const [productFilter, setProductFilter] = useState<string | undefined>(undefined);
   const [dateFromFilter, setDateFromFilter] = useState("");
   const [dateToFilter, setDateToFilter] = useState("");
   const { toast } = useToast();
@@ -418,10 +418,10 @@ export default function GeneratedAllocationPlans() {
       event.producto_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.carrier_name.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "" || event.status === statusFilter;
-    const matchesPlan = planFilter === "" || event.plan_id.toString() === planFilter;
-    const matchesCarrier = carrierFilter === "" || event.carrier_id.toString() === carrierFilter;
-    const matchesProduct = productFilter === "" || event.producto_id.toString() === productFilter;
+    const matchesStatus = !statusFilter || event.status === statusFilter;
+    const matchesPlan = !planFilter || event.plan_id.toString() === planFilter;
+    const matchesCarrier = !carrierFilter || event.carrier_id.toString() === carrierFilter;
+    const matchesProduct = !productFilter || event.producto_id.toString() === productFilter;
     
     const matchesDateFrom = dateFromFilter === "" || event.fecha_programada >= dateFromFilter;
     const matchesDateTo = dateToFilter === "" || event.fecha_programada <= dateToFilter;
@@ -466,48 +466,48 @@ export default function GeneratedAllocationPlans() {
             />
           </div>
 
-          <Select value={planFilter} onValueChange={setPlanFilter}>
+          <Select value={planFilter} onValueChange={(value) => setPlanFilter(value === "all" ? undefined : value)}>
             <SelectTrigger>
               <SelectValue placeholder="All plans" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All plans</SelectItem>
+              <SelectItem value="all">All plans</SelectItem>
               {filterOptions.plans.map(p => (
                 <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={carrierFilter} onValueChange={setCarrierFilter}>
+          <Select value={carrierFilter} onValueChange={(value) => setCarrierFilter(value === "all" ? undefined : value)}>
             <SelectTrigger>
               <SelectValue placeholder="All carriers" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All carriers</SelectItem>
+              <SelectItem value="all">All carriers</SelectItem>
               {filterOptions.carriers.map(c => (
                 <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={productFilter} onValueChange={setProductFilter}>
+          <Select value={productFilter} onValueChange={(value) => setProductFilter(value === "all" ? undefined : value)}>
             <SelectTrigger>
               <SelectValue placeholder="All products" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All products</SelectItem>
+              <SelectItem value="all">All products</SelectItem>
               {filterOptions.products.map(p => (
                 <SelectItem key={p.id} value={p.id.toString()}>{p.code} - {p.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value === "all" ? undefined : value)}>
             <SelectTrigger>
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All statuses</SelectItem>
+              <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
               <SelectItem value="merged">Merged</SelectItem>
               <SelectItem value="cancelled">Cancelled</SelectItem>
