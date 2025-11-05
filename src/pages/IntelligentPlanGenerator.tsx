@@ -196,24 +196,41 @@ export default function IntelligentPlanGenerator() {
         const result: Record<number, { from_a: number; from_b: number; from_c: number }> = {};
         const citiesByType: Record<string, typeof ciudades> = { A: [], B: [], C: [] };
         
+        console.log('[Distribute] Monthly events:', monthlyEvents);
+        console.log('[Distribute] Cities:', ciudades);
+        console.log('[Distribute] Classification matrix:', classificationMatrix);
+        
         ciudades?.forEach(city => {
           const type = city.clasificacion.toUpperCase();
           if (type === 'A' || type === 'B' || type === 'C') {
             citiesByType[type].push(city);
           }
         });
+        
+        console.log('[Distribute] Cities by type:', citiesByType);
 
         classificationMatrix?.forEach((matrix: any) => {
           const destType = matrix.destination_classification.toUpperCase();
           const citiesOfType = citiesByType[destType];
-          if (!citiesOfType || citiesOfType.length === 0) return;
+          
+          console.log(`[Distribute] Processing matrix for type ${destType}:`, matrix);
+          console.log(`[Distribute] Cities of type ${destType}:`, citiesOfType);
+          
+          if (!citiesOfType || citiesOfType.length === 0) {
+            console.log(`[Distribute] No cities of type ${destType}, skipping`);
+            return;
+          }
 
           const eventsFromA = (monthlyEvents * matrix.percentage_from_a) / 100;
           const eventsFromB = (monthlyEvents * matrix.percentage_from_b) / 100;
           const eventsFromC = (monthlyEvents * matrix.percentage_from_c) / 100;
           
+          console.log(`[Distribute] Events from A/B/C: ${eventsFromA}/${eventsFromB}/${eventsFromC}`);
+          
           const totalEventsForType = eventsFromA + eventsFromB + eventsFromC;
           const eventsPerCity = totalEventsForType / citiesOfType.length;
+          
+          console.log(`[Distribute] Total events for type: ${totalEventsForType}, per city: ${eventsPerCity}`);
 
           citiesOfType.forEach(city => {
             result[city.id] = {
@@ -221,8 +238,11 @@ export default function IntelligentPlanGenerator() {
               from_b: Math.ceil(eventsPerCity * (eventsFromB / totalEventsForType)),
               from_c: Math.ceil(eventsPerCity * (eventsFromC / totalEventsForType)),
             };
+            console.log(`[Distribute] City ${city.nombre} (${city.id}):`, result[city.id]);
           });
         });
+        
+        console.log('[Distribute] Final result:', result);
 
         return result;
       };
