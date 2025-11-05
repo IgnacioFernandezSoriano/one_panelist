@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -37,6 +37,8 @@ export function ClassificationAllocationTable({
     { destination_classification: 'C', percentage_from_a: 11.11, percentage_from_b: 11.11, percentage_from_c: 11.12 },
   ]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -83,6 +85,45 @@ export function ClassificationAllocationTable({
     }
   };
 
+  const saveMatrix = async (matrixToSave: ClassificationMatrix[]) => {
+    if (!clienteId) return;
+    
+    setSaving(true);
+    try {
+      // Delete existing records
+      await supabase
+        .from('classification_allocation_matrix')
+        .delete()
+        .eq('cliente_id', clienteId);
+
+      // Insert new records
+      const records = matrixToSave.map(row => ({
+        cliente_id: clienteId,
+        destination_classification: row.destination_classification,
+        percentage_from_a: row.percentage_from_a,
+        percentage_from_b: row.percentage_from_b,
+        percentage_from_c: row.percentage_from_c,
+      }));
+
+      const { error } = await supabase
+        .from('classification_allocation_matrix')
+        .insert(records);
+
+      if (error) throw error;
+
+      console.log('[Matrix] Saved successfully:', matrixToSave);
+    } catch (error) {
+      console.error('Error saving classification matrix:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save classification allocation matrix",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleValueChange = (
     classification: 'A' | 'B' | 'C',
     field: 'percentage_from_a' | 'percentage_from_b' | 'percentage_from_c',
@@ -99,6 +140,15 @@ export function ClassificationAllocationTable({
 
     setMatrix(updatedMatrix);
     onChange?.(updatedMatrix);
+    console.log('[Matrix] Changed:', updatedMatrix);
+
+    // Auto-save with debounce (2 seconds)
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      saveMatrix(updatedMatrix);
+    }, 2000);
   };
 
   const getMatrixTotalPercentage = (): number => {
@@ -260,7 +310,7 @@ export function ClassificationAllocationTable({
             <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
               <Info className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-600">
-                Matrix is valid and sums to 100%.
+                Matrix is valid and sums to 100%. {saving && '(Saving...)'}
               </AlertDescription>
             </Alert>
           )}
