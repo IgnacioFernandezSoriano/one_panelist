@@ -257,6 +257,9 @@ export default function IntelligentPlanGenerator() {
         const nodeAssignment: Record<string, number> = {};
         cityNodes.forEach(n => { nodeAssignment[n.codigo] = 0; });
         
+        // Calculate total capacity per node based on the number of weeks in the period
+        const maxEventsPerNode = Math.ceil(maxEventsPerWeek * Math.max(totalWeeks, 1));
+        
         const sortedNodes = [...cityNodes].sort((a, b) => a.codigo.localeCompare(b.codigo));
         let remaining = totalNewEvents;
         let nodeIndex = 0;
@@ -267,7 +270,7 @@ export default function IntelligentPlanGenerator() {
           const currentAssigned = nodeAssignment[node.codigo];
           const totalAfterAssignment = existingEvents + currentAssigned + 1;
           
-          if (totalAfterAssignment <= maxEventsPerWeek) {
+          if (totalAfterAssignment <= maxEventsPerNode) {
             nodeAssignment[node.codigo]++;
             remaining--;
           } else {
