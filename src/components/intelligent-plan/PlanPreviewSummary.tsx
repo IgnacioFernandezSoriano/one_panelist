@@ -61,7 +61,7 @@ export function PlanPreviewSummary({
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Total Events (Annual)</p>
+              <p className="text-sm text-muted-foreground">Annual Volume (events/year)</p>
               <p className="text-2xl font-bold">{totalEvents.toLocaleString()}</p>
             </div>
             <div className="space-y-1">
@@ -78,9 +78,9 @@ export function PlanPreviewSummary({
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <TrendingUp className="h-3 w-3" />
-                Max Weekly Capacity
+                Max Capacity per Node
               </p>
-              <p className="text-xl font-semibold">{maxWeeklyCapacity.toLocaleString()} events/week</p>
+              <p className="text-xl font-semibold">{maxWeeklyCapacity.toLocaleString()} events/week/node</p>
             </div>
           </div>
         </div>

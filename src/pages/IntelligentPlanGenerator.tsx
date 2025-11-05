@@ -188,7 +188,22 @@ export default function IntelligentPlanGenerator() {
         const monthKey = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
         const monthName = month.toLocaleString('en', { month: 'long' }).toLowerCase() as keyof typeof seasonality;
         const percentage = seasonality[monthName] || 8.33;
-        monthlyDistribution[monthKey] = Math.round((calculatedEvents * percentage) / 100);
+        
+        // Calculate events for the full month based on annual volume and seasonality
+        const monthEventsTotal = (config.total_events * percentage) / 100;
+        
+        // Calculate days in this month that fall within the period
+        const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+        const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+        const periodStart = startDate > monthStart ? startDate : monthStart;
+        const periodEnd = endDate < monthEnd ? endDate : monthEnd;
+        const daysInPeriod = Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const daysInMonth = monthEnd.getDate();
+        
+        // Prorate by days in period
+        monthlyDistribution[monthKey] = Math.round((monthEventsTotal * daysInPeriod) / daysInMonth);
+        
+        console.log(`[Preview] Month ${monthKey}: ${monthEventsTotal.toFixed(1)} events/month × ${daysInPeriod}/${daysInMonth} days = ${monthlyDistribution[monthKey]} events`);
       });
 
       // 8. Helper to distribute by city and classification (same as generator)
