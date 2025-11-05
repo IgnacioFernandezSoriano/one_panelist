@@ -530,8 +530,6 @@ export default function Topology() {
                                                                 >
                                                                   {panelista.nombre_completo}
                                                                 </button>
-                                                                <Button
-       </Button>
                                                               </div>
                                                             )}
                                                           </div>
