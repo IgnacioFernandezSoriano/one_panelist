@@ -408,12 +408,16 @@ async function saveDraftPlan(
   unassignedEvents: number,
   unassignedBreakdown: UnassignedCity[]
 ) {
+  // Generate plan name
+  const planName = `Plan ${format(config.start_date, 'MMM yyyy')} - ${format(config.end_date, 'MMM yyyy')}`;
+
   const { data: plan, error: planError } = await supabase
     .from('generated_allocation_plans' as any)
     .insert({
       cliente_id: config.cliente_id,
       carrier_id: config.carrier_id,
       producto_id: config.producto_id,
+      plan_name: planName,
       start_date: format(config.start_date, 'yyyy-MM-dd'),
       end_date: format(config.end_date, 'yyyy-MM-dd'),
       total_events: config.total_events,
