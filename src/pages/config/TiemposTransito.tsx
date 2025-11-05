@@ -325,9 +325,37 @@ export default function TiemposTransito() {
               target_percentage: 90,
             };
 
-            // Generate combinations based on available carriers and products
+            // 1. Generic combination (no carrier, no product)
+            combinations.push({
+              ...baseCombo,
+              carrier_id: null,
+              producto_id: null,
+            });
+
+            // 2. Carrier-specific combinations (if carriers exist)
+            if (carriers && carriers.length > 0) {
+              for (const carrier of carriers) {
+                combinations.push({
+                  ...baseCombo,
+                  carrier_id: carrier.id,
+                  producto_id: null,
+                });
+              }
+            }
+
+            // 3. Product-specific combinations (if products exist)
+            if (productos && productos.length > 0) {
+              for (const producto of productos) {
+                combinations.push({
+                  ...baseCombo,
+                  carrier_id: null,
+                  producto_id: producto.id,
+                });
+              }
+            }
+
+            // 4. Carrier+Product combinations (if both exist and relationship is valid)
             if (carriers && productos && carriers.length > 0 && productos.length > 0) {
-              // Generate carrier+product combinations based on valid relations
               for (const carrier of carriers) {
                 for (const producto of productos) {
                   const relationKey = `${carrier.id}-${producto.id}`;
@@ -341,13 +369,6 @@ export default function TiemposTransito() {
                   }
                 }
               }
-            } else {
-              // Create generic combinations (without carrier/product)
-              combinations.push({
-                ...baseCombo,
-                carrier_id: null,
-                producto_id: null,
-              });
             }
           }
         }
