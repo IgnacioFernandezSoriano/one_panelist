@@ -88,7 +88,7 @@ export default function Productos() {
           : "Not assigned";
       }
     },
-    { key: "standard_delivery_hours", label: "Std. Delivery (hrs)" },
+
     { key: "descripcion", label: "Description" },
     { key: "estado", label: "Status" },
     { key: "id", label: "ID", hidden: true },
