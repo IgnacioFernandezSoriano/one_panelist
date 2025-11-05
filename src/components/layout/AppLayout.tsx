@@ -421,15 +421,14 @@ const AppSidebarContent = () => {
                         {/* Import CSV Plan */}
                         <SidebarMenuItem>
                           <SidebarMenuButton 
+                            asChild
+                            isActive={location.pathname === "/envios/import-csv-plan"}
                             className="pl-8"
-                            onClick={() => {
-                              window.dispatchEvent(new CustomEvent('openImportDialog'));
-                            }}
                           >
-                            <button className="w-full flex items-center gap-2">
+                            <Link to="/envios/import-csv-plan">
                               <Upload className="w-4 h-4" />
                               {sidebarOpen && <span className="text-sm">{t('nav.import_csv_plan')}</span>}
-                            </button>
+                            </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                         

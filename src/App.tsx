@@ -46,6 +46,7 @@ import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import IntelligentPlanGenerator from "./pages/IntelligentPlanGenerator";
 import GeneratedAllocationPlans from "./pages/GeneratedAllocationPlans";
+import ImportCSVPlan from "./pages/ImportCSVPlan";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
 import RegistrarEnvioRecepcion from "./pages/RegistrarEnvioRecepcion";
@@ -77,6 +78,7 @@ const App = () => {
             <Route path="/envios/nuevo" element={<NuevoEnvio />} />
             <Route path="/envios/intelligent-plan-generator" element={<IntelligentPlanGenerator />} />
             <Route path="/envios/generated-allocation-plans" element={<GeneratedAllocationPlans />} />
+            <Route path="/envios/import-csv-plan" element={<ImportCSVPlan />} />
             <Route path="/envios/eventos-pendientes-validar" element={<EventosPendientesValidar />} />
             <Route path="/envios/eventos-reales" element={<EventosReales />} />
             <Route path="/envios/registrar-envio-recepcion" element={<RegistrarEnvioRecepcion />} />
