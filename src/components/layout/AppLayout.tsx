@@ -432,20 +432,6 @@ const AppSidebarContent = () => {
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                         
-                        {/* View Plan */}
-                        <SidebarMenuItem>
-                          <SidebarMenuButton 
-                            asChild
-                            isActive={location.pathname === "/envios/generated-allocation-plans"}
-                            className="pl-8"
-                          >
-                            <Link to="/envios/generated-allocation-plans">
-                              <Send className="w-4 h-4" />
-                              {sidebarOpen && <span className="text-sm">View Plan</span>}
-                            </Link>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                        
                         {/* Intelligent Plan Generator */}
                         <SidebarMenuItem>
                           <SidebarMenuButton 
@@ -456,6 +442,20 @@ const AppSidebarContent = () => {
                             <Link to="/envios/intelligent-plan-generator">
                               <Brain className="w-4 h-4" />
                               {sidebarOpen && <span className="text-sm">{t('nav.intelligent_plan_generator')}</span>}
+                            </Link>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        
+                        {/* View Plan */}
+                        <SidebarMenuItem>
+                          <SidebarMenuButton 
+                            asChild
+                            isActive={location.pathname === "/envios/generated-allocation-plans"}
+                            className="pl-8"
+                          >
+                            <Link to="/envios/generated-allocation-plans">
+                              <Send className="w-4 h-4" />
+                              {sidebarOpen && <span className="text-sm">View Plan</span>}
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
