@@ -835,7 +835,7 @@ export default function TiemposTransito() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <span className="font-medium">{tt.carrier?.carrier_code || "-"}</span>
+                          <span className="font-medium">{tt.carrier?.carrier_code || tt.carrier?.legal_name || "-"}</span>
                         </div>
                       </TableCell>
                       <TableCell>
