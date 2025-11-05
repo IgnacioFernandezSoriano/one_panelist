@@ -8,14 +8,29 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AlertCircle, Search, UserX, Calendar } from "lucide-react";
+import { AlertCircle, Search, UserX, Calendar, ChevronDown, ChevronRight, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+
+interface AffectedEvent {
+  id: number;
+  fecha_programada: string;
+  nodo_origen: string;
+  nodo_destino: string;
+  producto_nombre: string;
+  carrier_nombre: string;
+  status: string;
+  plan_id: number;
+  plan_name: string;
+}
 
 interface NodeRisk {
   nodo_codigo: string;
   ciudad: string;
+  ciudad_id: number;
   region_nombre: string | null;
+  region_id: number;
+  clasificacion: string;
   pais: string;
   panelista_id: number | null;
   panelista_nombre: string | null;
@@ -40,6 +55,16 @@ const NodosDescubiertos = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [riskTypeFilter, setRiskTypeFilter] = useState<string>("all");
   const { toast } = useToast();
+  
+  // Expandible rows
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [eventsMap, setEventsMap] = useState<Map<string, AffectedEvent[]>>(new Map());
+  const [loadingEvents, setLoadingEvents] = useState<Set<string>>(new Set());
+  
+  // Inline editing
+  const [editingEvent, setEditingEvent] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState<Partial<AffectedEvent>>({});
+  const [availableNodes, setAvailableNodes] = useState<Array<{codigo: string, panelista_nombre: string | null}>>([]);
 
   // Statistics
   const totalNodesAtRisk = filteredRisks.length;
@@ -114,10 +139,12 @@ const NodosDescubiertos = () => {
         .select(`
           codigo,
           ciudad,
+          ciudad_id,
+          region_id,
           pais,
           panelista_id,
-          region:regiones(nombre),
-          ciudad_info:ciudades(nombre)
+          region:regiones(id, nombre),
+          ciudad_info:ciudades(id, nombre, clasificacion)
         `)
         .in('codigo', nodeCodes);
 
@@ -271,7 +298,10 @@ const NodosDescubiertos = () => {
               risksMap.set(key, {
                 nodo_codigo: nodo.codigo,
                 ciudad: nodo.ciudad_info?.nombre || nodo.ciudad,
+                ciudad_id: nodo.ciudad_info?.id || nodo.ciudad_id || 0,
                 region_nombre: nodo.region?.nombre || null,
+                region_id: nodo.region?.id || nodo.region_id || 0,
+                clasificacion: nodo.ciudad_info?.clasificacion || 'C',
                 pais: nodo.pais,
                 panelista_id: panelistaId,
                 panelista_nombre: panelistaNombre,
@@ -329,7 +359,10 @@ const NodosDescubiertos = () => {
               risksMap.set(key, {
                 nodo_codigo: nodo.codigo,
                 ciudad: nodo.ciudad_info?.nombre || nodo.ciudad,
+                ciudad_id: nodo.ciudad_info?.id || nodo.ciudad_id || 0,
                 region_nombre: nodo.region?.nombre || null,
+                region_id: nodo.region?.id || nodo.region_id || 0,
+                clasificacion: nodo.ciudad_info?.clasificacion || 'C',
                 pais: nodo.pais,
                 panelista_id: panelistaId,
                 panelista_nombre: panelistaNombre,
@@ -356,6 +389,234 @@ const NodosDescubiertos = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleRow = async (nodoCodigo: string, risk: NodeRisk) => {
+    const newExpanded = new Set(expandedRows);
+    
+    if (newExpanded.has(nodoCodigo)) {
+      newExpanded.delete(nodoCodigo);
+      setExpandedRows(newExpanded);
+    } else {
+      newExpanded.add(nodoCodigo);
+      setExpandedRows(newExpanded);
+      
+      // Load events if not already loaded
+      if (!eventsMap.has(nodoCodigo)) {
+        await loadAffectedEvents(nodoCodigo, risk);
+      }
+    }
+  };
+
+  const loadAffectedEvents = async (nodoCodigo: string, risk: NodeRisk) => {
+    try {
+      setLoadingEvents(prev => new Set(prev).add(nodoCodigo));
+      
+      const { data: events, error } = await supabase
+        .from('generated_allocation_plan_details')
+        .select(`
+          id,
+          fecha_programada,
+          nodo_origen,
+          nodo_destino,
+          status,
+          plan_id,
+          producto:productos_cliente(nombre_producto),
+          carrier:carriers(legal_name),
+          plan:generated_allocation_plans!inner(plan_name, status)
+        `)
+        .or(`nodo_origen.eq.${nodoCodigo},nodo_destino.eq.${nodoCodigo}`)
+        .in('plan.status', ['draft', 'merged'])
+        .order('fecha_programada');
+
+      if (error) throw error;
+
+      const formattedEvents: AffectedEvent[] = (events || []).map(e => ({
+        id: e.id,
+        fecha_programada: e.fecha_programada,
+        nodo_origen: e.nodo_origen,
+        nodo_destino: e.nodo_destino,
+        producto_nombre: e.producto?.nombre_producto || '',
+        carrier_nombre: e.carrier?.legal_name || '',
+        status: e.status,
+        plan_id: e.plan_id,
+        plan_name: e.plan?.plan_name || '',
+      }));
+
+      setEventsMap(prev => new Map(prev).set(nodoCodigo, formattedEvents));
+      
+      // Load available nodes for reassignment
+      await loadAvailableNodesForReassignment(risk);
+    } catch (error: any) {
+      console.error('Error loading affected events:', error);
+      toast({
+        title: "Error",
+        description: "No se pudieron cargar los eventos afectados",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingEvents(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(nodoCodigo);
+        return newSet;
+      });
+    }
+  };
+
+  const loadAvailableNodesForReassignment = async (risk: NodeRisk) => {
+    try {
+      const clienteId = 13; // TODO: Get from context
+      const isTypeC = risk.clasificacion === 'C';
+      
+      let query = supabase
+        .from('nodos')
+        .select(`
+          codigo,
+          panelista_id,
+          ciudad_info:ciudades(clasificacion)
+        `)
+        .eq('cliente_id', clienteId)
+        .eq('estado', 'activo')
+        .neq('codigo', risk.nodo_codigo); // Exclude current node
+
+      if (isTypeC) {
+        query = query.eq('region_id', risk.region_id);
+      } else {
+        query = query.eq('ciudad_id', risk.ciudad_id);
+      }
+
+      const { data: nodes } = await query;
+      let filteredNodes = nodes || [];
+
+      // For type C, filter to only include other type C nodes
+      if (isTypeC && filteredNodes.length > 0) {
+        filteredNodes = filteredNodes.filter((n: any) => n.ciudad_info?.clasificacion === 'C');
+      }
+
+      // Get panelista names for nodes that have panelista_id
+      const panelistaIds = filteredNodes.filter((n: any) => n.panelista_id).map((n: any) => n.panelista_id);
+      const { data: panelistas } = await supabase
+        .from('panelistas')
+        .select('id, nombre_completo')
+        .in('id', panelistaIds);
+
+      const panelistasMap = new Map(panelistas?.map(p => [p.id, p.nombre_completo]) || []);
+
+      // Also get panelistas by nodo_asignado
+      const nodeCodes = filteredNodes.map((n: any) => n.codigo);
+      const { data: panelistasByNodo } = await supabase
+        .from('panelistas')
+        .select('id, nombre_completo, nodo_asignado')
+        .in('nodo_asignado', nodeCodes);
+
+      const panelistasByNodoMap = new Map(
+        panelistasByNodo?.map(p => [p.nodo_asignado, p.nombre_completo]) || []
+      );
+
+      setAvailableNodes(filteredNodes.map((n: any) => ({
+        codigo: n.codigo,
+        panelista_nombre: n.panelista_id 
+          ? panelistasMap.get(n.panelista_id) || panelistasByNodoMap.get(n.codigo) || null
+          : panelistasByNodoMap.get(n.codigo) || null,
+      })));
+    } catch (error: any) {
+      console.error('Error loading available nodes:', error);
+    }
+  };
+
+  const startEditingEvent = (event: AffectedEvent) => {
+    setEditingEvent(event.id);
+    setEditValues({
+      fecha_programada: event.fecha_programada,
+      nodo_origen: event.nodo_origen,
+      nodo_destino: event.nodo_destino,
+      status: event.status,
+    });
+  };
+
+  const cancelEditingEvent = () => {
+    setEditingEvent(null);
+    setEditValues({});
+  };
+
+  const saveEventChanges = async (nodoCodigo: string, risk: NodeRisk) => {
+    if (!editingEvent) return;
+
+    try {
+      const updates: any = {};
+      
+      if (editValues.fecha_programada) {
+        updates.fecha_programada = editValues.fecha_programada;
+      }
+      
+      if (editValues.nodo_origen && editValues.nodo_origen !== eventsMap.get(nodoCodigo)?.find(e => e.id === editingEvent)?.nodo_origen) {
+        updates.nodo_origen = editValues.nodo_origen;
+      }
+      
+      if (editValues.nodo_destino && editValues.nodo_destino !== eventsMap.get(nodoCodigo)?.find(e => e.id === editingEvent)?.nodo_destino) {
+        updates.nodo_destino = editValues.nodo_destino;
+      }
+      
+      if (editValues.status) {
+        updates.status = editValues.status;
+      }
+
+      const { error } = await supabase
+        .from('generated_allocation_plan_details')
+        .update(updates)
+        .eq('id', editingEvent);
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Evento actualizado correctamente",
+      });
+
+      // Reload events for this node
+      await loadAffectedEvents(nodoCodigo, risk);
+      
+      // Reload risks to update counts
+      await loadNodeRisks();
+      
+      cancelEditingEvent();
+    } catch (error: any) {
+      console.error('Error saving event changes:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el evento",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const cancelEvent = async (eventId: number, nodoCodigo: string, risk: NodeRisk) => {
+    try {
+      const { error } = await supabase
+        .from('generated_allocation_plan_details')
+        .update({ status: 'CANCELLED' })
+        .eq('id', eventId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Evento cancelado correctamente",
+      });
+
+      // Reload events for this node
+      await loadAffectedEvents(nodoCodigo, risk);
+      
+      // Reload risks to update counts
+      await loadNodeRisks();
+    } catch (error: any) {
+      console.error('Error cancelling event:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar el evento",
+        variant: "destructive",
+      });
     }
   };
 
@@ -481,96 +742,248 @@ const NodosDescubiertos = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-10"></TableHead>
                       <TableHead>Nodo</TableHead>
                       <TableHead>Ubicación</TableHead>
                       <TableHead>Panelista</TableHead>
                       <TableHead>Tipo de Riesgo</TableHead>
                       <TableHead className="text-center">Eventos</TableHead>
-                      <TableHead>Fechas de Eventos Afectados</TableHead>
+                      <TableHead>Fechas</TableHead>
                       <TableHead>Productos</TableHead>
                       <TableHead>Carriers</TableHead>
-                      <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredRisks.map((risk) => (
-                      <TableRow key={risk.nodo_codigo}>
-                        <TableCell className="font-medium">{risk.nodo_codigo}</TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div>{risk.ciudad}</div>
-                            {risk.region_nombre && (
-                              <div className="text-xs text-muted-foreground">{risk.region_nombre}</div>
+                      <React.Fragment key={risk.nodo_codigo}>
+                        {/* Main Row */}
+                        <TableRow 
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => toggleRow(risk.nodo_codigo, risk)}
+                        >
+                          <TableCell>
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                              {expandedRows.has(risk.nodo_codigo) ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TableCell>
+                          <TableCell className="font-medium">{risk.nodo_codigo}</TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div>{risk.ciudad}</div>
+                              {risk.region_nombre && (
+                                <div className="text-xs text-muted-foreground">{risk.region_nombre}</div>
+                              )}
+                              <div className="text-xs text-muted-foreground">{risk.pais}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {risk.panelista_nombre ? (
+                              <div>
+                                <div>{risk.panelista_nombre}</div>
+                                {risk.leave_info && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    Baja: {format(new Date(risk.leave_info.leave_start_date), 'dd/MM/yy')} - {format(new Date(risk.leave_info.leave_end_date), 'dd/MM/yy')}
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
                             )}
-                            <div className="text-xs text-muted-foreground">{risk.pais}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {risk.panelista_nombre ? (
-                            <div>
-                              <div>{risk.panelista_nombre}</div>
-                              {risk.leave_info && (
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  Baja: {format(new Date(risk.leave_info.leave_start_date), 'dd/MM/yy')} - {format(new Date(risk.leave_info.leave_end_date), 'dd/MM/yy')}
+                          </TableCell>
+                          <TableCell>{getRiskBadge(risk.risk_type)}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline">{risk.affected_events_count}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div>{format(new Date(risk.first_event_date), 'dd/MM/yyyy')}</div>
+                              {risk.first_event_date !== risk.last_event_date && (
+                                <div className="text-muted-foreground">
+                                  {format(new Date(risk.last_event_date), 'dd/MM/yyyy')}
                                 </div>
                               )}
                             </div>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>{getRiskBadge(risk.risk_type)}</TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline">{risk.affected_events_count}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>{format(new Date(risk.first_event_date), 'dd/MM/yyyy')}</div>
-                            {risk.first_event_date !== risk.last_event_date && (
-                              <div className="text-muted-foreground">
-                                {format(new Date(risk.last_event_date), 'dd/MM/yyyy')}
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {risk.productos.slice(0, 2).map((p) => (
+                                <Badge key={p.id} variant="secondary" className="text-xs">
+                                  {p.nombre}
+                                </Badge>
+                              ))}
+                              {risk.productos.length > 2 && (
+                                <div className="text-xs text-muted-foreground">
+                                  +{risk.productos.length - 2} más
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {risk.carriers.slice(0, 2).map((c) => (
+                                <Badge key={c.id} variant="outline" className="text-xs">
+                                  {c.nombre}
+                                </Badge>
+                              ))}
+                              {risk.carriers.length > 2 && (
+                                <div className="text-xs text-muted-foreground">
+                                  +{risk.carriers.length - 2} más
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Expanded Row - Events Table */}
+                        {expandedRows.has(risk.nodo_codigo) && (
+                          <TableRow>
+                            <TableCell colSpan={9} className="bg-muted/30 p-0">
+                              <div className="p-4">
+                                {loadingEvents.has(risk.nodo_codigo) ? (
+                                  <div className="flex justify-center items-center py-4">
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm mb-3">Eventos Afectados</h4>
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>Fecha</TableHead>
+                                          <TableHead>Origen</TableHead>
+                                          <TableHead>Destino</TableHead>
+                                          <TableHead>Producto</TableHead>
+                                          <TableHead>Carrier</TableHead>
+                                          <TableHead>Plan</TableHead>
+                                          <TableHead>Estado</TableHead>
+                                          <TableHead className="text-right">Acciones</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {eventsMap.get(risk.nodo_codigo)?.map((event) => (
+                                          <TableRow key={event.id}>
+                                            <TableCell>
+                                              {editingEvent === event.id ? (
+                                                <Input
+                                                  type="date"
+                                                  value={editValues.fecha_programada || event.fecha_programada}
+                                                  onChange={(e) => setEditValues({ ...editValues, fecha_programada: e.target.value })}
+                                                  className="w-36"
+                                                />
+                                              ) : (
+                                                format(new Date(event.fecha_programada), 'dd/MM/yyyy')
+                                              )}
+                                            </TableCell>
+                                            <TableCell>
+                                              {editingEvent === event.id && event.nodo_origen === risk.nodo_codigo ? (
+                                                <Select
+                                                  value={editValues.nodo_origen || event.nodo_origen}
+                                                  onValueChange={(value) => setEditValues({ ...editValues, nodo_origen: value })}
+                                                >
+                                                  <SelectTrigger className="w-40">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value={event.nodo_origen}>{event.nodo_origen} (actual)</SelectItem>
+                                                    {availableNodes.map((node) => (
+                                                      <SelectItem key={node.codigo} value={node.codigo}>
+                                                        {node.codigo} {node.panelista_nombre && `(${node.panelista_nombre})`}
+                                                      </SelectItem>
+                                                    ))}
+                                                  </SelectContent>
+                                                </Select>
+                                              ) : (
+                                                <span className="text-sm">{event.nodo_origen}</span>
+                                              )}
+                                            </TableCell>
+                                            <TableCell>
+                                              {editingEvent === event.id && event.nodo_destino === risk.nodo_codigo ? (
+                                                <Select
+                                                  value={editValues.nodo_destino || event.nodo_destino}
+                                                  onValueChange={(value) => setEditValues({ ...editValues, nodo_destino: value })}
+                                                >
+                                                  <SelectTrigger className="w-40">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value={event.nodo_destino}>{event.nodo_destino} (actual)</SelectItem>
+                                                    {availableNodes.map((node) => (
+                                                      <SelectItem key={node.codigo} value={node.codigo}>
+                                                        {node.codigo} {node.panelista_nombre && `(${node.panelista_nombre})`}
+                                                      </SelectItem>
+                                                    ))}
+                                                  </SelectContent>
+                                                </Select>
+                                              ) : (
+                                                <span className="text-sm">{event.nodo_destino}</span>
+                                              )}
+                                            </TableCell>
+                                            <TableCell className="text-sm">{event.producto_nombre}</TableCell>
+                                            <TableCell className="text-sm">{event.carrier_nombre}</TableCell>
+                                            <TableCell className="text-sm">{event.plan_name}</TableCell>
+                                            <TableCell>
+                                              <Badge variant={event.status === 'CANCELLED' ? 'destructive' : 'outline'}>
+                                                {event.status}
+                                              </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                              <div className="flex justify-end gap-2">
+                                                {editingEvent === event.id ? (
+                                                  <>
+                                                    <Button
+                                                      size="sm"
+                                                      variant="default"
+                                                      onClick={() => saveEventChanges(risk.nodo_codigo, risk)}
+                                                    >
+                                                      <Save className="h-3 w-3 mr-1" />
+                                                      Guardar
+                                                    </Button>
+                                                    <Button
+                                                      size="sm"
+                                                      variant="outline"
+                                                      onClick={cancelEditingEvent}
+                                                    >
+                                                      <X className="h-3 w-3 mr-1" />
+                                                      Cancelar
+                                                    </Button>
+                                                  </>
+                                                ) : (
+                                                  <>
+                                                    <Button
+                                                      size="sm"
+                                                      variant="outline"
+                                                      onClick={() => startEditingEvent(event)}
+                                                      disabled={event.status === 'CANCELLED'}
+                                                    >
+                                                      Editar
+                                                    </Button>
+                                                    <Button
+                                                      size="sm"
+                                                      variant="destructive"
+                                                      onClick={() => cancelEvent(event.id, risk.nodo_codigo, risk)}
+                                                      disabled={event.status === 'CANCELLED'}
+                                                    >
+                                                      Cancelar Evento
+                                                    </Button>
+                                                  </>
+                                                )}
+                                              </div>
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {risk.productos.slice(0, 2).map((p) => (
-                              <Badge key={p.id} variant="secondary" className="text-xs">
-                                {p.nombre}
-                              </Badge>
-                            ))}
-                            {risk.productos.length > 2 && (
-                              <div className="text-xs text-muted-foreground">
-                                +{risk.productos.length - 2} más
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            {risk.carriers.slice(0, 2).map((c) => (
-                              <Badge key={c.id} variant="outline" className="text-xs">
-                                {c.nombre}
-                              </Badge>
-                            ))}
-                            {risk.carriers.length > 2 && (
-                              <div className="text-xs text-muted-foreground">
-                                +{risk.carriers.length - 2} más
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => navigate(`/issues/nodos-descubiertos/${risk.nodo_codigo}`)}
-                    >
-                      Ver Detalle
-                    </Button>
-                        </TableCell>
-                      </TableRow>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
