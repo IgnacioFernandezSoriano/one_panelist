@@ -950,6 +950,9 @@ const NodosDescubiertos = () => {
                                                   </SelectTrigger>
                                                   <SelectContent>
                                                     <SelectItem value="PENDING">PENDING</SelectItem>
+                                                    <SelectItem value="NOTIFIED">NOTIFIED</SelectItem>
+                                                    <SelectItem value="SENT">SENT</SelectItem>
+                                                    <SelectItem value="RECEIVED">RECEIVED</SelectItem>
                                                     <SelectItem value="CONFIRMED">CONFIRMED</SelectItem>
                                                     <SelectItem value="CANCELLED">CANCELLED</SelectItem>
                                                     <SelectItem value="COMPLETED">COMPLETED</SelectItem>

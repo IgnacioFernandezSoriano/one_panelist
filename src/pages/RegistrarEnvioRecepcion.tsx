@@ -22,19 +22,17 @@ interface Envio {
   fecha_programada: string;
   numero_etiqueta: string | null;
   carrier_id: number | null;
-  panelista_origen_id?: number | null;
-  panelista_destino_id?: number | null;
-  productos_cliente?: {
+  status: string;
+  plan_id: number;
+  cliente_id: number;
+  producto?: {
     nombre_producto: string;
   };
-  carriers?: {
+  carrier?: {
     legal_name: string;
   };
-  panelista_origen?: {
-    nombre_completo: string;
-  };
-  panelista_destino?: {
-    nombre_completo: string;
+  plan?: {
+    plan_name: string;
   };
 }
 
@@ -90,7 +88,6 @@ export default function RegistrarEnvioRecepcion() {
         e.id.toString().includes(search) ||
         e.nodo_origen.toLowerCase().includes(search) ||
         e.nodo_destino.toLowerCase().includes(search) ||
-        e.panelista_origen?.nombre_completo.toLowerCase().includes(search) ||
         e.numero_etiqueta?.toLowerCase().includes(search)
       );
     }
@@ -116,7 +113,6 @@ export default function RegistrarEnvioRecepcion() {
         e.id.toString().includes(search) ||
         e.nodo_origen.toLowerCase().includes(search) ||
         e.nodo_destino.toLowerCase().includes(search) ||
-        e.panelista_destino?.nombre_completo.toLowerCase().includes(search) ||
         e.numero_etiqueta?.toLowerCase().includes(search)
       );
     }
@@ -167,7 +163,7 @@ export default function RegistrarEnvioRecepcion() {
     setLoading(true);
 
     const { data, error } = await supabase
-      .from("envios")
+      .from("generated_allocation_plan_details")
       .select(`
         id,
         nodo_origen,
@@ -176,19 +172,16 @@ export default function RegistrarEnvioRecepcion() {
         fecha_programada,
         numero_etiqueta,
         carrier_id,
-        panelista_origen_id,
-        productos_cliente:producto_id (
-          nombre_producto
-        ),
-        carriers:carrier_id (
-          legal_name
-        ),
-        panelista_origen:panelistas!panelista_origen_id (
-          nombre_completo
-        )
+        status,
+        plan_id,
+        cliente_id,
+        producto:productos_cliente(nombre_producto),
+        carrier:carriers(legal_name),
+        plan:generated_allocation_plans!inner(plan_name, status)
       `)
       .eq("cliente_id", clienteId)
-      .eq("estado", "NOTIFIED")
+      .eq("status", "NOTIFIED")
+      .in("plan.status", ["draft", "merged"])
       .order("fecha_programada", { ascending: true });
 
     if (error) {
@@ -209,7 +202,7 @@ export default function RegistrarEnvioRecepcion() {
     setLoading(true);
 
     const { data, error } = await supabase
-      .from("envios")
+      .from("generated_allocation_plan_details")
       .select(`
         id,
         nodo_origen,
@@ -218,20 +211,16 @@ export default function RegistrarEnvioRecepcion() {
         fecha_programada,
         numero_etiqueta,
         carrier_id,
-        panelista_destino_id,
-        fecha_envio_real,
-        productos_cliente:producto_id (
-          nombre_producto
-        ),
-        carriers:carrier_id (
-          legal_name
-        ),
-        panelista_destino:panelistas!panelista_destino_id (
-          nombre_completo
-        )
+        status,
+        plan_id,
+        cliente_id,
+        producto:productos_cliente(nombre_producto),
+        carrier:carriers(legal_name),
+        plan:generated_allocation_plans!inner(plan_name, status)
       `)
       .eq("cliente_id", clienteId)
-      .eq("estado", "SENT")
+      .eq("status", "SENT")
+      .in("plan.status", ["draft", "merged"])
       .order("fecha_programada", { ascending: true });
 
     if (error) {
@@ -321,7 +310,7 @@ export default function RegistrarEnvioRecepcion() {
 
       // Get eventos to verify numero_etiqueta
       const { data: eventosData } = await supabase
-        .from("envios")
+        .from("generated_allocation_plan_details")
         .select("id, numero_etiqueta")
         .in("id", eventosIds);
 
@@ -336,11 +325,9 @@ export default function RegistrarEnvioRecepcion() {
       }
 
       const { error } = await supabase
-        .from("envios")
+        .from("generated_allocation_plan_details")
         .update({
-          estado: "SENT",
-          fecha_envio_real: new Date(fechaEnvio).toISOString(),
-          observaciones: notasEnvio || null,
+          status: "SENT",
         })
         .in("id", eventosIds);
 
@@ -392,15 +379,13 @@ export default function RegistrarEnvioRecepcion() {
     try {
       const eventosIds = Array.from(selectedRecepciones);
 
-      // Get eventos to calculate transit time and verify data
+      // Get eventos to verify data
       const { data: eventosData } = await supabase
-        .from("envios")
-        .select("id, fecha_envio_real, numero_etiqueta")
+        .from("generated_allocation_plan_details")
+        .select("id, numero_etiqueta")
         .in("id", eventosIds);
 
       if (!eventosData) throw new Error("No se pudieron cargar los eventos");
-
-      const fechaRecepcionDate = new Date(fechaRecepcion);
 
       // Check for missing tracking numbers
       const missingEtiqueta = eventosData.filter(e => !e.numero_etiqueta);
@@ -412,34 +397,15 @@ export default function RegistrarEnvioRecepcion() {
         });
       }
 
-      // Update each event with calculated transit time
-      for (const evento of eventosData) {
-        const fechaEnvioDate = new Date(evento.fecha_envio_real);
-        
-        // Validate date order
-        if (fechaRecepcionDate <= fechaEnvioDate) {
-          toast({
-            title: "Error",
-            description: `Evento #${evento.id}: La fecha de recepción debe ser posterior a la fecha de envío`,
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
+      // Update all events to RECEIVED status
+      const { error: updateError } = await supabase
+        .from("generated_allocation_plan_details")
+        .update({
+          status: "RECEIVED",
+        })
+        .in("id", eventosIds);
 
-        const diffTime = Math.abs(fechaRecepcionDate.getTime() - fechaEnvioDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        await supabase
-          .from("envios")
-          .update({
-            estado: "RECEIVED",
-            fecha_recepcion_real: fechaRecepcionDate.toISOString(),
-            tiempo_transito_dias: diffDays,
-            observaciones: notasRecepcion || null,
-          })
-          .eq("id", evento.id);
-      }
+      if (updateError) throw updateError;
 
       // Automatic validation after registration
       const { data: validationResult, error: validationError } = await supabase.functions.invoke(
@@ -632,12 +598,12 @@ export default function RegistrarEnvioRecepcion() {
                                     />
                                   </TableCell>
                                   <TableCell>{evento.id}</TableCell>
-                                  <TableCell>{evento.panelista_origen?.nombre_completo || "-"}</TableCell>
+                                  <TableCell>-</TableCell>
                                   <TableCell>{evento.nodo_origen}</TableCell>
                                   <TableCell>{evento.nodo_destino}</TableCell>
                                   <TableCell>{format(new Date(evento.fecha_programada), "dd/MM/yyyy")}</TableCell>
-                                  <TableCell>{evento.productos_cliente?.nombre_producto || "-"}</TableCell>
-                                  <TableCell>{evento.carriers?.legal_name || "-"}</TableCell>
+                                  <TableCell>{evento.producto?.nombre_producto || "-"}</TableCell>
+                                  <TableCell>{evento.carrier?.legal_name || "-"}</TableCell>
                                   <TableCell>{evento.numero_etiqueta || "-"}</TableCell>
                                 </TableRow>
                               ))}
@@ -806,12 +772,12 @@ export default function RegistrarEnvioRecepcion() {
                                     />
                                   </TableCell>
                                   <TableCell>{evento.id}</TableCell>
-                                  <TableCell>{evento.panelista_destino?.nombre_completo || "-"}</TableCell>
+                                  <TableCell>-</TableCell>
                                   <TableCell>{evento.nodo_origen}</TableCell>
                                   <TableCell>{evento.nodo_destino}</TableCell>
                                   <TableCell>{format(new Date(evento.fecha_programada), "dd/MM/yyyy")}</TableCell>
-                                  <TableCell>{evento.productos_cliente?.nombre_producto || "-"}</TableCell>
-                                  <TableCell>{evento.carriers?.legal_name || "-"}</TableCell>
+                                  <TableCell>{evento.producto?.nombre_producto || "-"}</TableCell>
+                                  <TableCell>{evento.carrier?.legal_name || "-"}</TableCell>
                                   <TableCell>{evento.numero_etiqueta || "-"}</TableCell>
                                 </TableRow>
                               ))}
