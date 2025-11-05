@@ -177,11 +177,10 @@ export default function RegistrarEnvioRecepcion() {
         cliente_id,
         producto:productos_cliente(nombre_producto),
         carrier:carriers(legal_name),
-        plan:generated_allocation_plans!inner(plan_name, status)
+        plan:generated_allocation_plans(plan_name)
       `)
       .eq("cliente_id", clienteId)
       .eq("status", "NOTIFIED")
-      .in("plan.status", ["draft", "merged"])
       .order("fecha_programada", { ascending: true });
 
     if (error) {
@@ -216,11 +215,10 @@ export default function RegistrarEnvioRecepcion() {
         cliente_id,
         producto:productos_cliente(nombre_producto),
         carrier:carriers(legal_name),
-        plan:generated_allocation_plans!inner(plan_name, status)
+        plan:generated_allocation_plans(plan_name)
       `)
       .eq("cliente_id", clienteId)
       .eq("status", "SENT")
-      .in("plan.status", ["draft", "merged"])
       .order("fecha_programada", { ascending: true });
 
     if (error) {
