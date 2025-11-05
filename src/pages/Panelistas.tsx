@@ -210,9 +210,9 @@ export default function Panelistas() {
       <div className="p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">{t('panelistas.title')}</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Panelist Management</h1>
             <p className="text-muted-foreground">
-              {t('panelistas.subtitle')}
+              Manage panelist information, availability, and node assignments
             </p>
           </div>
           <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
