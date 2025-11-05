@@ -339,6 +339,7 @@ function balanceBySourceClassification(
     let fullLoopAttempts = 0;
     const maxFullLoops = 3;
 
+    // First pass: try to respect capacity limits
     while (assignedCount < count && fullLoopAttempts < maxFullLoops) {
       let progressMade = false;
 
@@ -386,6 +387,48 @@ function balanceBySourceClassification(
       if (!progressMade) {
         fullLoopAttempts++;
       }
+    }
+
+    // Second pass: assign remaining events even if exceeding capacity
+    // This ensures ALL events are assigned, user can adjust manually later
+    while (assignedCount < count) {
+      const currentIndex = nodeIndex % sortedNodes.length;
+      const node = sortedNodes[currentIndex];
+
+      // Find origin from specified classification
+      const randomOrigin = selectRandomOriginByClassification(
+        allTopology,
+        sourceClassification,
+        node.codigo
+      );
+      
+      if (!randomOrigin) {
+        // If no origin available, try next node
+        nodeIndex++;
+        if (nodeIndex >= sortedNodes.length * 2) {
+          // Prevent infinite loop if no origins available at all
+          console.warn(`Cannot find origin nodes of type ${sourceClassification}, ${count - assignedCount} events unassigned`);
+          break;
+        }
+        continue;
+      }
+
+      // Generate random date for this event
+      const eventDate = getRandomDateInMonth(monthKey);
+      const weekKey = getWeekKey(monthKey, eventDate);
+      const nodeWeekKey = `${weekKey}_${node.codigo}`;
+      const currentWeekCount = weeklyEventCount[nodeWeekKey] || 0;
+
+      // Assign event regardless of capacity (will be marked as exceeding)
+      assigned.push({
+        nodo_origen: randomOrigin,
+        nodo_destino: node.codigo,
+        fecha_programada: eventDate,
+      });
+
+      weeklyEventCount[nodeWeekKey] = currentWeekCount + 1;
+      assignedCount++;
+      nodeIndex++;
     }
 
     return assignedCount;
