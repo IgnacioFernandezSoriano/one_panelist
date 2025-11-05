@@ -48,7 +48,7 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
     direccion_codigo_postal: initialData?.direccion_codigo_postal || "",
     direccion_pais: initialData?.direccion_pais || "",
     nodo_asignado: initialData?.nodo_asignado || null,
-    idioma: initialData?.idioma || "es",
+    idioma: initialData?.idioma || "SP",
     zona_horaria: initialData?.zona_horaria || "Europe/Madrid",
     horario_inicio: initialData?.horario_inicio || "09:00:00",
     horario_fin: initialData?.horario_fin || "18:00:00",
@@ -473,11 +473,10 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="es">Spanish (es)</SelectItem>
-              <SelectItem value="en">English (en)</SelectItem>
-              <SelectItem value="pt">Portuguese (pt)</SelectItem>
-              <SelectItem value="fr">French (fr)</SelectItem>
-              <SelectItem value="ar">Arabic (ar)</SelectItem>
+              <SelectItem value="SP">Spanish (es)</SelectItem>
+              <SelectItem value="EN">English (en)</SelectItem>
+              <SelectItem value="FR">French (fr)</SelectItem>
+              <SelectItem value="AR">Arabic (ar)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -523,7 +522,6 @@ export function PanelistaForm({ onSuccess, onCancel, initialData }: PanelistaFor
             <SelectContent>
               <SelectItem value="whatsapp">WhatsApp</SelectItem>
               <SelectItem value="telegram">Telegram</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
             </SelectContent>
           </Select>
         </div>
