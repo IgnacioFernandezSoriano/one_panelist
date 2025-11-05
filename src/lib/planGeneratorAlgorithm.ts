@@ -213,23 +213,36 @@ function getSeasonalityPercentage(seasonality: SeasonalityData, month: number): 
 }
 
 function distributeByMonth(
-  totalEvents: number,
+  annualVolume: number,
   seasonality: SeasonalityData,
   startDate: Date,
   endDate: Date
 ): Record<string, number> {
   const result: Record<string, number> = {};
   const monthsInPeriod = getMonthsInRange(startDate, endDate);
-  
-  const totalWeight = monthsInPeriod.reduce((sum, month) => {
-    const percentage = getSeasonalityPercentage(seasonality, getMonth(month));
-    return sum + percentage;
-  }, 0);
 
   monthsInPeriod.forEach(month => {
     const monthKey = format(month, 'yyyy-MM');
     const percentage = getSeasonalityPercentage(seasonality, getMonth(month));
-    result[monthKey] = Math.ceil((totalEvents * percentage) / totalWeight);
+    
+    // Calculate events for the full month based on annual volume and seasonality
+    const monthEventsTotal = (annualVolume * percentage) / 100;
+    
+    // Calculate days in this month that fall within the period
+    const monthStart = startOfMonth(month);
+    const monthEnd = endOfMonth(month);
+    const periodStart = startDate > monthStart ? startDate : monthStart;
+    const periodEnd = endDate < monthEnd ? endDate : monthEnd;
+    const daysInPeriod = differenceInDays(periodEnd, periodStart) + 1;
+    const daysInMonth = differenceInDays(monthEnd, monthStart) + 1;
+    
+    // Prorate by days in period
+    result[monthKey] = Math.round((monthEventsTotal * daysInPeriod) / daysInMonth);
+    
+    console.log(
+      `📅 ${monthKey}: ${monthEventsTotal.toFixed(1)} events/month (${percentage.toFixed(1)}%) × ` +
+      `${daysInPeriod}/${daysInMonth} days = ${result[monthKey]} events`
+    );
   });
 
   return result;
@@ -538,9 +551,11 @@ export async function generateIntelligentPlan(config: PlanConfig) {
     );
   }
 
-  // 3. Calculate events based on date range
-  const totalDays = differenceInDays(config.end_date, config.start_date) + 1;
-  const calculatedEvents = Math.ceil((config.total_events * totalDays) / 365);
+  // 3. Distribute events by month according to seasonality (applied to annual volume, then prorated by period)
+  const monthlyDistribution = distributeByMonth(config.total_events, seasonality, config.start_date, config.end_date);
+  
+  // Calculate total events for the period (sum of all monthly distributions)
+  const calculatedEvents = Object.values(monthlyDistribution).reduce((sum, events) => sum + events, 0);
 
   // Calculate theoretical capacity
   const totalWeeks = Math.ceil(differenceInDays(config.end_date, config.start_date) / 7);
@@ -549,9 +564,6 @@ export async function generateIntelligentPlan(config: PlanConfig) {
     `📊 Plan capacity: ${topology.length} nodes × ${config.max_events_per_week} events/week × ${totalWeeks} weeks = ` +
     `${theoreticalCapacity} max events (requested: ${calculatedEvents})`
   );
-
-  // 4. Distribute events by month according to seasonality
-  const monthlyDistribution = distributeByMonth(calculatedEvents, seasonality, config.start_date, config.end_date);
 
   // 5. Balance events across nodes (distribution by city is calculated per month)
   const generatedEvents: GeneratedEvent[] = [];
