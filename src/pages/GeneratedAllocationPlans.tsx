@@ -90,6 +90,9 @@ export default function GeneratedAllocationPlans() {
   const [bulkUpdateDialogOpen, setBulkUpdateDialogOpen] = useState(false);
   const [bulkUpdateField, setBulkUpdateField] = useState<string>("");
   const [bulkUpdateValue, setBulkUpdateValue] = useState<string>("");
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvPreviewData, setCsvPreviewData] = useState<any[]>([]);
   
   // Filter options
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -101,6 +104,17 @@ export default function GeneratedAllocationPlans() {
   useEffect(() => {
     loadEvents();
     loadFilterOptions();
+    
+    // Listen for import dialog event from menu
+    const handleOpenImportDialog = () => {
+      setImportDialogOpen(true);
+    };
+    
+    window.addEventListener('openImportDialog', handleOpenImportDialog);
+    
+    return () => {
+      window.removeEventListener('openImportDialog', handleOpenImportDialog);
+    };
   }, []);
 
   const loadFilterOptions = async () => {
@@ -398,6 +412,203 @@ export default function GeneratedAllocationPlans() {
       setBulkUpdateField("");
       setBulkUpdateValue("");
       await loadEvents();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  // CSV Import functions
+  const downloadTemplate = () => {
+    const template = [
+      {
+        plan_name: "Example Plan 2025",
+        nodo_origen: "MAD001",
+        nodo_destino: "BCN001",
+        fecha_programada: "2025-01-15",
+        producto_codigo: "PROD001",
+        carrier_name: "DHL",
+        status: "PENDING"
+      }
+    ];
+    
+    const csv = Papa.unparse(template);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'allocation_plan_import_template.csv';
+    link.click();
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setCsvFile(file);
+      
+      // Parse and preview CSV
+      Papa.parse(file, {
+        header: true,
+        complete: (results) => {
+          setCsvPreviewData(results.data.slice(0, 5)); // Show first 5 rows
+        },
+        error: (error) => {
+          toast({
+            title: "Error",
+            description: `Failed to parse CSV: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+      });
+    }
+  };
+
+  const handleImportCSV = async () => {
+    if (!csvFile) return;
+    
+    try {
+      Papa.parse(csvFile, {
+        header: true,
+        complete: async (results) => {
+          const rows = results.data.filter((row: any) => row.plan_name); // Filter empty rows
+          
+          if (rows.length === 0) {
+            toast({
+              title: "Error",
+              description: "No valid data found in CSV",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Validate and prepare data
+          const errors: string[] = [];
+          const validRows: any[] = [];
+
+          for (let i = 0; i < rows.length; i++) {
+            const row: any = rows[i];
+            const rowNum = i + 2; // +2 because of header and 0-index
+
+            // Required fields validation
+            if (!row.plan_name) errors.push(`Row ${rowNum}: plan_name is required`);
+            if (!row.nodo_origen) errors.push(`Row ${rowNum}: nodo_origen is required`);
+            if (!row.nodo_destino) errors.push(`Row ${rowNum}: nodo_destino is required`);
+            if (!row.fecha_programada) errors.push(`Row ${rowNum}: fecha_programada is required`);
+            if (!row.producto_codigo) errors.push(`Row ${rowNum}: producto_codigo is required`);
+            if (!row.carrier_name) errors.push(`Row ${rowNum}: carrier_name is required`);
+
+            if (errors.length === 0) {
+              validRows.push(row);
+            }
+          }
+
+          if (errors.length > 0) {
+            toast({
+              title: "Validation Errors",
+              description: errors.slice(0, 5).join("; ") + (errors.length > 5 ? "..." : ""),
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Get or create plan
+          const planName = validRows[0].plan_name;
+          let planId: number;
+
+          const { data: existingPlan } = await supabase
+            .from("generated_allocation_plans")
+            .select("id")
+            .eq("plan_name", planName)
+            .single();
+
+          if (existingPlan) {
+            planId = existingPlan.id;
+          } else {
+            const { data: newPlan, error: planError } = await supabase
+              .from("generated_allocation_plans")
+              .insert({ plan_name: planName, status: "draft" })
+              .select("id")
+              .single();
+
+            if (planError) throw planError;
+            planId = newPlan.id;
+          }
+
+          // Prepare events for insertion
+          const eventsToInsert = [];
+
+          for (const row of validRows) {
+            // Get producto_id from codigo
+            const { data: producto } = await supabase
+              .from("productos_cliente")
+              .select("id")
+              .eq("codigo_producto", row.producto_codigo)
+              .single();
+
+            if (!producto) {
+              errors.push(`Product code ${row.producto_codigo} not found`);
+              continue;
+            }
+
+            // Get carrier_id from name
+            const { data: carrier } = await supabase
+              .from("carriers")
+              .select("id")
+              .eq("commercial_name", row.carrier_name)
+              .single();
+
+            if (!carrier) {
+              errors.push(`Carrier ${row.carrier_name} not found`);
+              continue;
+            }
+
+            eventsToInsert.push({
+              plan_id: planId,
+              nodo_origen: row.nodo_origen,
+              nodo_destino: row.nodo_destino,
+              fecha_programada: row.fecha_programada,
+              producto_id: producto.id,
+              carrier_id: carrier.id,
+              status: row.status || "PENDING",
+            });
+          }
+
+          if (errors.length > 0) {
+            toast({
+              title: "Import Errors",
+              description: errors.slice(0, 5).join("; ") + (errors.length > 5 ? "..." : ""),
+              variant: "destructive",
+            });
+            return;
+          }
+
+          // Insert events
+          const { error: insertError } = await supabase
+            .from("generated_allocation_plan_details")
+            .insert(eventsToInsert);
+
+          if (insertError) throw insertError;
+
+          toast({
+            title: "Success",
+            description: `Imported ${eventsToInsert.length} events successfully`,
+          });
+
+          setImportDialogOpen(false);
+          setCsvFile(null);
+          setCsvPreviewData([]);
+          await loadEvents();
+        },
+        error: (error) => {
+          toast({
+            title: "Error",
+            description: `Failed to parse CSV: ${error.message}`,
+            variant: "destructive",
+          });
+        }
+      });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -938,6 +1149,101 @@ export default function GeneratedAllocationPlans() {
                 Cancel
               </Button>
               <Button onClick={handleBulkUpdate}>Update</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Import CSV Dialog */}
+        <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Import Allocation Plan from CSV</DialogTitle>
+              <DialogDescription>
+                Upload a CSV file to import allocation events into the system
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Instructions */}
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <h4 className="font-semibold">Instructions:</h4>
+                <ol className="list-decimal list-inside space-y-1 text-sm">
+                  <li>Download the CSV template using the button below</li>
+                  <li>Fill in your allocation events data following the template format</li>
+                  <li>Required fields: plan_name, nodo_origen, nodo_destino, fecha_programada, producto_codigo, carrier_name</li>
+                  <li>Optional fields: status (defaults to PENDING)</li>
+                  <li>Upload the completed CSV file</li>
+                  <li>Review the preview and click Import to complete</li>
+                </ol>
+              </div>
+
+              {/* Template Download */}
+              <div>
+                <Button onClick={downloadTemplate} variant="outline" className="w-full">
+                  <FileDown className="mr-2 h-4 w-4" />
+                  Download CSV Template
+                </Button>
+              </div>
+
+              {/* File Upload */}
+              <div>
+                <Label htmlFor="csv-file">Select CSV File</Label>
+                <Input
+                  id="csv-file"
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileSelect}
+                  className="mt-2"
+                />
+              </div>
+
+              {/* Preview */}
+              {csvPreviewData.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Preview (first 5 rows):</h4>
+                  <div className="border rounded-lg overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Plan Name</TableHead>
+                          <TableHead>Origin</TableHead>
+                          <TableHead>Destination</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Product</TableHead>
+                          <TableHead>Carrier</TableHead>
+                          <TableHead>Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {csvPreviewData.map((row: any, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{row.plan_name}</TableCell>
+                            <TableCell>{row.nodo_origen}</TableCell>
+                            <TableCell>{row.nodo_destino}</TableCell>
+                            <TableCell>{row.fecha_programada}</TableCell>
+                            <TableCell>{row.producto_codigo}</TableCell>
+                            <TableCell>{row.carrier_name}</TableCell>
+                            <TableCell>{row.status || "PENDING"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setImportDialogOpen(false);
+                setCsvFile(null);
+                setCsvPreviewData([]);
+              }}>
+                Cancel
+              </Button>
+              <Button onClick={handleImportCSV} disabled={!csvFile}>
+                Import
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
