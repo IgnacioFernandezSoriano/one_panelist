@@ -938,9 +938,26 @@ const NodosDescubiertos = () => {
                                             <TableCell className="text-sm">{event.carrier_nombre}</TableCell>
                                             <TableCell className="text-sm">{event.plan_name}</TableCell>
                                             <TableCell>
-                                              <Badge variant={event.status === 'CANCELLED' ? 'destructive' : 'outline'}>
-                                                {event.status}
-                                              </Badge>
+                                              {editingEvent === event.id ? (
+                                                <Select
+                                                  value={editValues.status || event.status}
+                                                  onValueChange={(value) => setEditValues({ ...editValues, status: value })}
+                                                >
+                                                  <SelectTrigger className="w-32">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    <SelectItem value="PENDING">PENDING</SelectItem>
+                                                    <SelectItem value="CONFIRMED">CONFIRMED</SelectItem>
+                                                    <SelectItem value="CANCELLED">CANCELLED</SelectItem>
+                                                    <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                                                  </SelectContent>
+                                                </Select>
+                                              ) : (
+                                                <Badge variant={event.status === 'CANCELLED' ? 'destructive' : 'outline'}>
+                                                  {event.status}
+                                                </Badge>
+                                              )}
                                             </TableCell>
                                             <TableCell className="text-right">
                                               <div className="flex justify-end gap-2">
