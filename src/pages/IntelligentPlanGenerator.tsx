@@ -110,23 +110,23 @@ export default function IntelligentPlanGenerator() {
         .eq('cliente_id', config.cliente_id)
         .eq('producto_id', config.producto_id)
         .eq('year', startYear)
-        .single();
+        .maybeSingle();
 
-      if (seasonalityError) throw seasonalityError;
-
+      // Use default values if no seasonality data found
+      const defaultPercentage = 8.33;
       const seasonality = {
-        january: seasonalityData.january_percentage,
-        february: seasonalityData.february_percentage,
-        march: seasonalityData.march_percentage,
-        april: seasonalityData.april_percentage,
-        may: seasonalityData.may_percentage,
-        june: seasonalityData.june_percentage,
-        july: seasonalityData.july_percentage,
-        august: seasonalityData.august_percentage,
-        september: seasonalityData.september_percentage,
-        october: seasonalityData.october_percentage,
-        november: seasonalityData.november_percentage,
-        december: seasonalityData.december_percentage,
+        january: seasonalityData?.january_percentage || defaultPercentage,
+        february: seasonalityData?.february_percentage || defaultPercentage,
+        march: seasonalityData?.march_percentage || defaultPercentage,
+        april: seasonalityData?.april_percentage || defaultPercentage,
+        may: seasonalityData?.may_percentage || defaultPercentage,
+        june: seasonalityData?.june_percentage || defaultPercentage,
+        july: seasonalityData?.july_percentage || defaultPercentage,
+        august: seasonalityData?.august_percentage || defaultPercentage,
+        september: seasonalityData?.september_percentage || defaultPercentage,
+        october: seasonalityData?.october_percentage || defaultPercentage,
+        november: seasonalityData?.november_percentage || defaultPercentage,
+        december: seasonalityData?.december_percentage || defaultPercentage,
       };
 
       // 4. Load active nodes
