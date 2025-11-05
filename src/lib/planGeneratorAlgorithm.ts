@@ -304,13 +304,25 @@ function getRandomDateInMonth(monthKey: string): string {
 function selectRandomOriginByClassification(
   topology: Node[],
   classification: 'A' | 'B' | 'C',
-  excludeNode: string
+  excludeNode: string,
+  destinationCityId?: number,
+  destinationRegionId?: number
 ): string | null {
-  const availableNodes = topology.filter(n =>
+  let availableNodes = topology.filter(n =>
     n.clasificacion === classification &&
     n.codigo !== excludeNode &&
     n.estado === 'activo'
   );
+
+  // For A and B cities: origin must be from a DIFFERENT city
+  if ((classification === 'A' || classification === 'B') && destinationCityId) {
+    availableNodes = availableNodes.filter(n => n.ciudad_id !== destinationCityId);
+  }
+
+  // For C cities: origin must be from the SAME region
+  if (classification === 'C' && destinationRegionId) {
+    availableNodes = availableNodes.filter(n => n.region_id === destinationRegionId);
+  }
 
   if (availableNodes.length === 0) return null;
 
@@ -365,7 +377,9 @@ function balanceBySourceClassification(
         const randomOrigin = selectRandomOriginByClassification(
           allTopology,
           sourceClassification,
-          node.codigo
+          node.codigo,
+          node.ciudad_id,
+          node.region_id
         );
         
         if (!randomOrigin) continue;
@@ -412,7 +426,9 @@ function balanceBySourceClassification(
       const randomOrigin = selectRandomOriginByClassification(
         allTopology,
         sourceClassification,
-        node.codigo
+        node.codigo,
+        node.ciudad_id,
+        node.region_id
       );
       
       if (!randomOrigin) {
