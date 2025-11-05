@@ -209,11 +209,11 @@ export function AvailabilityManager({
       await loadScheduledLeaves();
       await loadLogs();
       onUpdate();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding leave:', error);
       toast({
         title: "Error",
-        description: "No se pudo registrar la baja temporal",
+        description: error.message || "No se pudo registrar la baja temporal",
         variant: "destructive"
       });
     } finally {
