@@ -424,10 +424,9 @@ const NodosDescubiertos = () => {
           status,
           producto:productos_cliente(nombre_producto),
           carrier:carriers(legal_name),
-          plan:generated_allocation_plans!inner(plan_name, plan_status:status)
+          plan:generated_allocation_plans!inner(plan_name)
         `)
         .or(`nodo_origen.eq.${nodoCodigo},nodo_destino.eq.${nodoCodigo}`)
-        .in('plan.plan_status', ['draft', 'merged'])
         .order('fecha_programada');
 
       if (error) throw error;
