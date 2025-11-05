@@ -373,9 +373,7 @@ export default function Topology() {
                       <Button variant="ghost" size="sm" onClick={() => handleViewCliente(cliente)}>
                         View
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleEditCliente(cliente)}>
-                        <Pencil className="w-4 h-4" />
-                      </Button>
+
                     </div>
                   </div>
                 </CardHeader>
@@ -428,9 +426,7 @@ export default function Topology() {
                                   <Button variant="ghost" size="sm" onClick={() => handleViewRegion(region)}>
                                     View
                                   </Button>
-                                  <Button variant="ghost" size="sm" onClick={() => handleEditRegion(region)}>
-                                    <Pencil className="w-4 h-4" />
-                                  </Button>
+
                                 </div>
                               </div>
                             </CardHeader>
@@ -483,9 +479,7 @@ export default function Topology() {
                                               <Button variant="ghost" size="sm" onClick={() => handleViewCiudad(ciudad)}>
                                                 View
                                               </Button>
-                                              <Button variant="ghost" size="sm" onClick={() => handleEditCiudad(ciudad)}>
-                                                <Pencil className="w-4 h-4" />
-                                              </Button>
+
                                             </div>
                                           </div>
                                         </CardHeader>
@@ -537,13 +531,7 @@ export default function Topology() {
                                                                   {panelista.nombre_completo}
                                                                 </button>
                                                                 <Button
-                                                                  variant="ghost"
-                                                                  size="icon"
-                                                                  className="h-5 w-5"
-                                                                  onClick={() => handleEditPanelista(panelista)}
-                                                                >
-                                                                  <Pencil className="w-3 h-3" />
-                                                                </Button>
+       </Button>
                                                               </div>
                                                             )}
                                                           </div>
@@ -552,9 +540,7 @@ export default function Topology() {
                                                           <Button variant="ghost" size="sm" onClick={() => handleViewNodo(nodo)}>
                                                             View
                                                           </Button>
-                                                          <Button variant="ghost" size="sm" onClick={() => handleEditNodo(nodo)}>
-                                                            <Pencil className="w-4 h-4" />
-                                                          </Button>
+
                                                         </div>
                                                       </div>
                                                     </CardContent>
