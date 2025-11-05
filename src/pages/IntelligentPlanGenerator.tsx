@@ -567,9 +567,9 @@ export default function IntelligentPlanGenerator() {
           <div className="flex items-center gap-3">
             <Brain className="h-8 w-8 text-primary" />
             <div>
-              <h1 className="text-3xl font-bold">{t('intelligent_plan.title')}</h1>
+              <h1 className="text-3xl font-bold">Intelligent Allocation Plan Generator</h1>
               <p className="text-muted-foreground">
-                {t('intelligent_plan.description')}
+                Create optimized allocation plans based on city distribution, product seasonality, and network topology
               </p>
             </div>
           </div>
