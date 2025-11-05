@@ -116,7 +116,6 @@ const NodosDescubiertos = () => {
           ciudad,
           pais,
           panelista_id,
-          panelista:panelistas!fk_nodos_panelista(id, nombre_completo),
           region:regiones(nombre),
           ciudad_info:ciudades(nombre)
         `)
@@ -124,10 +123,24 @@ const NodosDescubiertos = () => {
 
       if (nodosError) throw nodosError;
 
-      // Fetch all scheduled leaves
+      // Fetch panelistas information
       const panelistaIds = nodos
         ?.filter(n => n.panelista_id)
         .map(n => n.panelista_id) || [];
+
+      const { data: panelistas, error: panelistasError } = await supabase
+        .from('panelistas')
+        .select('id, nombre_completo')
+        .in('id', panelistaIds);
+
+      if (panelistasError) throw panelistasError;
+
+      // Create a map for quick panelista lookup
+      const panelistasMap = new Map(
+        panelistas?.map(p => [p.id, p.nombre_completo]) || []
+      );
+
+      // Fetch all scheduled leaves
 
       const { data: leaves, error: leavesError } = await supabase
         .from('scheduled_leaves')
@@ -215,7 +228,7 @@ const NodosDescubiertos = () => {
               region_nombre: nodo.region?.nombre || null,
               pais: nodo.pais,
               panelista_id: nodo.panelista_id,
-              panelista_nombre: nodo.panelista?.nombre_completo || null,
+              panelista_nombre: nodo.panelista_id ? panelistasMap.get(nodo.panelista_id) || null : null,
               risk_type: riskType,
               affected_events_count: affectedEvents.length,
               first_event_date: sortedEvents[0].fecha_programada,
