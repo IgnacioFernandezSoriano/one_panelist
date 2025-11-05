@@ -72,6 +72,7 @@ export default function TiemposTransito() {
   const [availableProductos, setAvailableProductos] = useState<{id: number, codigo_producto: string, nombre_producto: string}[]>([]);
   const [massEditDialogOpen, setMassEditDialogOpen] = useState(false);
   const [massEditDays, setMassEditDays] = useState<number>(0);
+  const [massEditTargetPercentage, setMassEditTargetPercentage] = useState<number>(90);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | undefined>();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -426,14 +427,17 @@ export default function TiemposTransito() {
     try {
       const { error } = await supabase
         .from("ciudad_transit_times")
-        .update({ dias_transito: massEditDays })
+        .update({ 
+          dias_transito: massEditDays,
+          target_percentage: massEditTargetPercentage
+        })
         .in("id", Array.from(selectedIds));
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: `Updated ${selectedIds.size} transit times`,
+        description: `Updated ${selectedIds.size} transit time configurations`,
       });
 
       setMassEditDialogOpen(false);
@@ -596,9 +600,9 @@ export default function TiemposTransito() {
         </Breadcrumb>
 
         <div>
-          <h1 className="text-3xl font-bold">Standard Transit Times Between Cities</h1>
+          <h1 className="text-3xl font-bold">Transit Time Standards by Route</h1>
           <p className="text-muted-foreground mt-2">
-            Configure expected transit days between city pairs. {configuredCount} of {transitTimes.length} combinations configured.
+            Define expected delivery times and performance targets for each carrier-product-route combination. {configuredCount} of {transitTimes.length} routes configured.
           </p>
         </div>
 
@@ -754,7 +758,7 @@ export default function TiemposTransito() {
           <div className="flex gap-4 items-center bg-muted p-4 rounded-md">
             <span className="font-medium">{selectedIds.size} selected</span>
             <Button onClick={() => setMassEditDialogOpen(true)}>
-              Set Transit Days
+              Configure Standards
             </Button>
             <Button 
               variant="destructive" 
@@ -888,15 +892,15 @@ export default function TiemposTransito() {
       <Dialog open={massEditDialogOpen} onOpenChange={setMassEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Set Transit Days</DialogTitle>
+            <DialogTitle>Configure Transit Time Standards</DialogTitle>
             <DialogDescription>
-              Set the number of transit days for {selectedIds.size} selected city pairs
+              Set delivery time expectations and performance targets for {selectedIds.size} selected routes
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="mass-days" className="text-sm font-medium">
-                Transit Days
+                Expected Transit Days
               </label>
               <Input
                 id="mass-days"
@@ -904,7 +908,28 @@ export default function TiemposTransito() {
                 min="0"
                 value={massEditDays}
                 onChange={(e) => setMassEditDays(parseInt(e.target.value) || 0)}
+                placeholder="e.g., 2"
               />
+              <p className="text-xs text-muted-foreground">
+                Number of days expected for delivery from origin to destination
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="mass-target" className="text-sm font-medium">
+                Target Performance (%)
+              </label>
+              <Input
+                id="mass-target"
+                type="number"
+                min="0"
+                max="100"
+                value={massEditTargetPercentage}
+                onChange={(e) => setMassEditTargetPercentage(parseInt(e.target.value) || 90)}
+                placeholder="e.g., 90"
+              />
+              <p className="text-xs text-muted-foreground">
+                Percentage of shipments that should meet the expected transit time
+              </p>
             </div>
           </div>
           <DialogFooter>
@@ -912,7 +937,7 @@ export default function TiemposTransito() {
               Cancel
             </Button>
             <Button onClick={handleMassUpdate}>
-              Apply to {selectedIds.size} items
+              Apply to {selectedIds.size} routes
             </Button>
           </DialogFooter>
         </DialogContent>
