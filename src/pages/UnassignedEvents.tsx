@@ -519,51 +519,6 @@ export default function UnassignedEvents() {
           </p>
         </div>
 
-        {/* Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Total Events</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{events.length}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">No Panelist</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-red-600">
-                {events.filter(e => e.issue_type.includes('sin_panelista')).length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">On Leave</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-orange-600">
-                {events.filter(e => e.issue_type.includes('baja')).length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Active Plans</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">
-                {new Set(events.map(e => e.plan_id)).size}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Events Table */}
         <Card>
           <CardHeader>
