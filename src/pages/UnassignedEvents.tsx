@@ -91,7 +91,26 @@ export default function UnassignedEvents() {
 
       if (bajasError) throw bajasError;
 
-      // PASO 3: Obtener eventos del allocation plan
+      // PASO 3: Obtener información de nodos con ciudades y regiones
+      const { data: nodosData, error: nodosError } = await supabase
+        .from('nodos')
+        .select('id, ciudad_id, ciudades!inner(id, clasificacion, region_id)')
+        .eq('cliente_id', clienteId);
+
+      if (nodosError) throw nodosError;
+
+      const nodosCiudadMap = new Map(
+        nodosData?.map(n => [
+          n.id,
+          {
+            ciudad_id: n.ciudad_id,
+            clasificacion: n.ciudades.clasificacion,
+            region_id: n.ciudades.region_id
+          }
+        ]) || []
+      );
+
+      // PASO 4: Obtener eventos del allocation plan
       const { data: planEvents, error: eventsError } = await supabase
         .from('generated_allocation_plan_details')
         .select('id, nodo_origen, nodo_destino, fecha_programada, status, cliente_id')
@@ -159,6 +178,9 @@ export default function UnassignedEvents() {
             ? `Origen: ${problemaOrigen}${problemaDestino ? ` | Destino: ${problemaDestino}` : ''}`
             : `Destino: ${problemaDestino}`;
 
+          const nodoOrigenInfo = nodosCiudadMap.get(event.nodo_origen);
+          const nodoDestinoInfo = nodosCiudadMap.get(event.nodo_destino);
+
           problematicEvents.push({
             id: event.id,
             plan_id: 0,
@@ -168,10 +190,12 @@ export default function UnassignedEvents() {
             nodo_destino: event.nodo_destino,
             ciudad_origen: event.nodo_origen,
             ciudad_destino: event.nodo_destino,
-            ciudad_origen_clasificacion: 'urbano',
-            ciudad_destino_clasificacion: 'urbano',
-            region_origen_id: null,
-            region_destino_id: null,
+            ciudad_origen_clasificacion: nodoOrigenInfo?.clasificacion || null,
+            ciudad_destino_clasificacion: nodoDestinoInfo?.clasificacion || null,
+            region_origen_id: nodoOrigenInfo?.region_id || null,
+            region_destino_id: nodoDestinoInfo?.region_id || null,
+            nodo_origen_data: nodoOrigenInfo ? { ciudad_id: nodoOrigenInfo.ciudad_id } : null,
+            nodo_destino_data: nodoDestinoInfo ? { ciudad_id: nodoDestinoInfo.ciudad_id } : null,
             panelista_origen_id: panelistaOrigen?.id || null,
             panelista_destino_id: panelistaDestino?.id || null,
             panelista_origen_nombre: panelistaOrigen?.nombre_completo || null,
@@ -296,9 +320,34 @@ export default function UnassignedEvents() {
 
       if (error) throw error;
 
+      // Obtener vacaciones activas
+      const { data: vacaciones } = await supabase
+        .from('panelist_vacations')
+        .select('panelista_id, fecha_inicio, fecha_fin')
+        .eq('cliente_id', clienteId);
+
+      const fechaEvento = parseISO(event.fecha_programada);
+      const panelistaActualId = nodeType === 'origen' ? event.panelista_origen_id : event.panelista_destino_id;
+
+      // Filtrar panelistas
+      const panelistasFiltrados = (panelistas || []).filter(p => {
+        // Excluir el panelista actual
+        if (p.id === panelistaActualId) return false;
+
+        // Excluir si está de vacaciones en la fecha del evento
+        const tieneVacaciones = vacaciones?.some(v => {
+          if (v.panelista_id !== p.id) return false;
+          const inicio = parseISO(v.fecha_inicio);
+          const fin = parseISO(v.fecha_fin);
+          return fechaEvento >= inicio && fechaEvento <= fin;
+        });
+
+        return !tieneVacaciones;
+      });
+
       // Calcular carga semanal para cada panelista
       const panelistasConCarga: PanelistaDisponible[] = await Promise.all(
-        (panelistas || []).map(async (p) => {
+        panelistasFiltrados.map(async (p) => {
           const cargaSemanal = await calculateWeeklyLoad(p.id, event.fecha_programada);
           return {
             id: p.id,
