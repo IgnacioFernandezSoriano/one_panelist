@@ -16,6 +16,7 @@ import Incidencias from "./pages/Incidencias";
 import EventosPendientesValidar from "./pages/EventosPendientesValidar";
 import EventosReales from "./pages/EventosReales";
 import NodosDescubiertos from "./pages/NodosDescubiertos";
+import UnassignedEvents from "./pages/UnassignedEvents";
 import NodeDetail from "./pages/NodeDetail";
 import Nodos from "./pages/Nodos";
 import Topology from "./pages/Topology";
@@ -91,6 +92,7 @@ const App = () => {
             <Route path="/incidencias" element={<Incidencias />} />
             <Route path="/issues/nodos-descubiertos" element={<NodosDescubiertos />} />
             <Route path="/issues/nodos-descubiertos/:nodoCodigo" element={<NodeDetail />} />
+            <Route path="/issues/unassigned-events" element={<UnassignedEvents />} />
             <Route path="/nodos" element={<Nodos />} />
             <Route path="/topology" element={<Topology />} />
             <Route path="/topology/unassigned-nodes" element={<UnassignedNodes />} />
