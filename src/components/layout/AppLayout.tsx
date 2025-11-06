@@ -218,6 +218,7 @@ const AppSidebarContent = () => {
 
   const issuesItems = [
     { icon: UserX, label: "Unassigned Nodes", path: "/issues/nodos-descubiertos" },
+    { icon: Package, label: "Events Without Panelist", path: "/eventos-reales?without_panelist=true" },
     { icon: AlertCircle, label: "Pending Validation Events", path: "/envios/eventos-pendientes-validar" },
   ];
 
