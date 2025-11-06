@@ -32,9 +32,9 @@ CREATE TABLE public.eventos_reales (
   carrier_id INTEGER NOT NULL REFERENCES public.carriers(id) ON DELETE RESTRICT,
   producto_id INTEGER NOT NULL REFERENCES public.productos_cliente(id) ON DELETE RESTRICT,
   
-  -- Nodes as VARCHAR references to codigo (NOT NULL)
-  nodo_origen VARCHAR NOT NULL REFERENCES public.nodos(codigo) ON DELETE RESTRICT,
-  nodo_destino VARCHAR NOT NULL REFERENCES public.nodos(codigo) ON DELETE RESTRICT,
+  -- Nodes as VARCHAR(50) references to codigo (NOT NULL)
+  nodo_origen VARCHAR(50) NOT NULL REFERENCES public.nodos(codigo) ON DELETE RESTRICT,
+  nodo_destino VARCHAR(50) NOT NULL REFERENCES public.nodos(codigo) ON DELETE RESTRICT,
   
   -- Cities (NOT NULL)
   ciudad_origen VARCHAR NOT NULL,
