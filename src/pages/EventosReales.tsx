@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCliente } from "@/contexts/ClienteContext";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,7 +95,8 @@ interface EventoReal {
 }
 
 export default function EventosReales() {
-  const { clienteId, loading: roleLoading } = useUserRole();
+  const { clienteId } = useCliente();
+  const [roleLoading, setRoleLoading] = useState(false);
   const [eventos, setEventos] = useState<EventoReal[]>([]);
   const [filteredEventos, setFilteredEventos] = useState<EventoReal[]>([]);
   const [loading, setLoading] = useState(true);
