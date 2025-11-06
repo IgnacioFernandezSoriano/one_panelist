@@ -110,23 +110,7 @@ const NodosDescubiertos = () => {
     try {
       setLoading(true);
 
-      // PASO 1: Obtener TODOS los panelistas del cliente con nodo asignado
-      const { data: panelistasConNodo, error: panelistasError } = await supabase
-        .from('panelistas')
-        .select('nodo_asignado, id, nombre_completo, estado')
-        .eq('cliente_id', clienteId)
-        .not('nodo_asignado', 'is', null);
-
-      if (panelistasError) throw panelistasError;
-
-      // Crear Set de nodos que SÍ tienen panelista asignado
-      const nodosConPanelista = new Set(
-        panelistasConNodo?.map(p => p.nodo_asignado) || []
-      );
-
-      console.log('Nodos con panelista asignado:', Array.from(nodosConPanelista));
-
-      // PASO 2: Obtener eventos activos del cliente
+      // Get all active allocation plan events (excluding cancelled events)
       const { data: events, error: eventsError } = await supabase
         .from('generated_allocation_plan_details')
         .select(`
@@ -143,11 +127,10 @@ const NodosDescubiertos = () => {
 
       if (!events || events.length === 0) {
         setRisks([]);
-        setLoading(false);
         return;
       }
 
-      // PASO 3: Obtener nodos únicos de los eventos
+      // Get all unique node codes from events
       const nodeCodesSet = new Set<string>();
       events.forEach(event => {
         nodeCodesSet.add(event.nodo_origen);
@@ -156,18 +139,7 @@ const NodosDescubiertos = () => {
 
       const nodeCodes = Array.from(nodeCodesSet);
 
-      // PASO 4: Filtrar solo los nodos SIN panelista asignado
-      const nodosSinPanelista = nodeCodes.filter(codigo => !nodosConPanelista.has(codigo));
-
-      console.log('Nodos sin panelista:', nodosSinPanelista);
-
-      if (nodosSinPanelista.length === 0) {
-        setRisks([]);
-        setLoading(false);
-        return;
-      }
-
-      // PASO 5: Obtener información de los nodos sin panelista
+      // Fetch node information
       const { data: nodos, error: nodosError } = await supabase
         .from('nodos')
         .select(`
@@ -180,22 +152,91 @@ const NodosDescubiertos = () => {
           ciudad_info:ciudades(id, nombre, clasificacion)
         `)
         .eq('cliente_id', clienteId)
-        .in('codigo', nodosSinPanelista);
+        .in('codigo', nodeCodes);
 
       if (nodosError) throw nodosError;
 
-      // PASO 6: Crear mapa de nodos
+      // Fetch panelistas information by nodo_asignado
+      const { data: panelistasByNodo, error: panelistasByNodoError } = await supabase
+        .from('panelistas')
+        .select('id, nombre_completo, nodo_asignado')
+        .eq('cliente_id', clienteId)
+        .in('nodo_asignado', nodeCodes);
+
+      if (panelistasByNodoError) throw panelistasByNodoError;
+      
+      // Map by nodo codigo for quick lookup
+      const panelistasByNodoMap = new Map(
+        panelistasByNodo?.map(p => [p.nodo_asignado, { id: p.id, nombre_completo: p.nombre_completo }]) || []
+      );
+      
+      // Collect all panelista IDs for leaves query
+      const allPanelistaIds = new Set<number>();
+      panelistasByNodo?.forEach(p => allPanelistaIds.add(p.id));
+
+      // Fetch all scheduled leaves for all panelistas found
+      const { data: leaves, error: leavesError } = await supabase
+        .from('scheduled_leaves')
+        .select('*')
+        .in('panelista_id', Array.from(allPanelistaIds))
+        .in('status', ['scheduled', 'active']);
+
+      if (leavesError) throw leavesError;
+
+      // Create a map of nodos for quick lookup
       const nodosMap = new Map(nodos?.map(n => [n.codigo, n]) || []);
 
-      // PASO 7: Procesar eventos y agrupar por nodo sin panelista
+      // Helper function to check if a node has available panelist on a specific date
+      const hasAvailablePanelist = (nodoCodigo: string, eventDate: Date): { available: boolean; reason?: string; leaveInfo?: any; panelistaId?: number } => {
+        const nodo = nodosMap.get(nodoCodigo);
+        if (!nodo) return { available: false, reason: 'sin_panelista' };
+        
+        // Find panelista from panelistas.nodo_asignado
+        const panelistaInfo = panelistasByNodoMap.get(nodoCodigo);
+        
+        // If no panelista found, node has no panelista
+        if (!panelistaInfo) return { available: false, reason: 'sin_panelista' };
+        
+        const panelistaId = panelistaInfo.id;
+
+        // Check if panelist is on leave on this date
+        const panelistLeaves = leaves?.filter(l => l.panelista_id === panelistaId) || [];
+        for (const leave of panelistLeaves) {
+          const leaveStart = new Date(leave.leave_start_date);
+          const leaveEnd = new Date(leave.leave_end_date);
+          if (eventDate >= leaveStart && eventDate <= leaveEnd) {
+            return {
+              available: false,
+              reason: 'panelista_de_baja',
+              panelistaId: panelistaId,
+              leaveInfo: {
+                leave_start_date: leave.leave_start_date,
+                leave_end_date: leave.leave_end_date,
+                reason: leave.reason,
+              }
+            };
+          }
+        }
+
+        return { available: true, panelistaId: panelistaId };
+      };
+
+      // Process risks by checking both origin and destination nodes for each event
       const risksMap = new Map<string, NodeRisk>();
 
       events?.forEach(event => {
-        // Verificar nodo origen
-        if (nodosSinPanelista.includes(event.nodo_origen)) {
+        const eventDate = new Date(event.fecha_programada);
+        
+        // Check origin node
+        const origenCheck = hasAvailablePanelist(event.nodo_origen, eventDate);
+        // Check destination node
+        const destinoCheck = hasAvailablePanelist(event.nodo_destino, eventDate);
+
+        // Process origin node if it has issues
+        if (!origenCheck.available) {
           const nodo = nodosMap.get(event.nodo_origen);
           if (nodo) {
-            const key = nodo.codigo;
+            const key = `${nodo.codigo}-${origenCheck.reason}`;
             const existing = risksMap.get(key);
 
             if (existing) {
@@ -203,61 +244,60 @@ const NodosDescubiertos = () => {
               if (event.producto) {
                 const productoExists = existing.productos.find(p => p.id === event.producto.id);
                 if (!productoExists) {
-                  existing.productos.push({ 
-                    id: event.producto.id, 
-                    nombre: event.producto.nombre_producto 
-                  });
+                  existing.productos.push({ id: event.producto.id, nombre: event.producto.nombre_producto });
                 }
               }
               if (event.carrier) {
                 const carrierExists = existing.carriers.find(c => c.id === event.carrier.id);
                 if (!carrierExists) {
-                  existing.carriers.push({ 
-                    id: event.carrier.id, 
-                    nombre: event.carrier.legal_name 
-                  });
+                  existing.carriers.push({ id: event.carrier.id, nombre: event.carrier.legal_name });
                 }
               }
-              const currentEventDate = event.fecha_programada;
-              if (currentEventDate < existing.first_event_date) {
-                existing.first_event_date = currentEventDate;
+              if (new Date(event.fecha_programada) < new Date(existing.first_event_date)) {
+                existing.first_event_date = event.fecha_programada;
               }
-              if (currentEventDate > existing.last_event_date) {
-                existing.last_event_date = currentEventDate;
+              if (new Date(event.fecha_programada) > new Date(existing.last_event_date)) {
+                existing.last_event_date = event.fecha_programada;
               }
             } else {
+              // Get panelista info from either source
+              const panelistaId = origenCheck.panelistaId || nodo.panelista_id;
+              let panelistaNombre = null;
+              if (panelistaId) {
+                panelistaNombre = panelistasMap.get(panelistaId);
+                if (!panelistaNombre) {
+                  const panelistaInfo = panelistasByNodoMap.get(nodo.codigo);
+                  panelistaNombre = panelistaInfo?.nombre_completo || null;
+                }
+              }
+              
               risksMap.set(key, {
                 nodo_codigo: nodo.codigo,
                 ciudad: nodo.ciudad_info?.nombre || nodo.ciudad,
-                ciudad_id: nodo.ciudad_id,
+                ciudad_id: nodo.ciudad_info?.id || nodo.ciudad_id || 0,
                 region_nombre: nodo.region?.nombre || null,
-                region_id: nodo.region_id,
-                clasificacion: nodo.ciudad_info?.clasificacion || 'urbano',
+                region_id: nodo.region?.id || nodo.region_id || 0,
+                clasificacion: nodo.ciudad_info?.clasificacion || 'C',
                 pais: nodo.pais,
-                panelista_id: null,
-                panelista_nombre: null,
-                risk_type: 'sin_panelista',
+                panelista_id: panelistaId,
+                panelista_nombre: panelistaNombre,
+                risk_type: origenCheck.reason as 'sin_panelista' | 'panelista_de_baja',
                 affected_events_count: 1,
                 first_event_date: event.fecha_programada,
                 last_event_date: event.fecha_programada,
-                productos: event.producto ? [{ 
-                  id: event.producto.id, 
-                  nombre: event.producto.nombre_producto 
-                }] : [],
-                carriers: event.carrier ? [{ 
-                  id: event.carrier.id, 
-                  nombre: event.carrier.legal_name 
-                }] : [],
+                productos: event.producto ? [{ id: event.producto.id, nombre: event.producto.nombre_producto }] : [],
+                carriers: event.carrier ? [{ id: event.carrier.id, nombre: event.carrier.legal_name }] : [],
+                leave_info: origenCheck.leaveInfo,
               });
             }
           }
         }
 
-        // Verificar nodo destino
-        if (nodosSinPanelista.includes(event.nodo_destino)) {
+        // Process destination node if it has issues
+        if (!destinoCheck.available) {
           const nodo = nodosMap.get(event.nodo_destino);
           if (nodo) {
-            const key = nodo.codigo;
+            const key = `${nodo.codigo}-${destinoCheck.reason}`;
             const existing = risksMap.get(key);
 
             if (existing) {
@@ -265,69 +305,64 @@ const NodosDescubiertos = () => {
               if (event.producto) {
                 const productoExists = existing.productos.find(p => p.id === event.producto.id);
                 if (!productoExists) {
-                  existing.productos.push({ 
-                    id: event.producto.id, 
-                    nombre: event.producto.nombre_producto 
-                  });
+                  existing.productos.push({ id: event.producto.id, nombre: event.producto.nombre_producto });
                 }
               }
               if (event.carrier) {
                 const carrierExists = existing.carriers.find(c => c.id === event.carrier.id);
                 if (!carrierExists) {
-                  existing.carriers.push({ 
-                    id: event.carrier.id, 
-                    nombre: event.carrier.legal_name 
-                  });
+                  existing.carriers.push({ id: event.carrier.id, nombre: event.carrier.legal_name });
                 }
               }
-              const currentEventDate = event.fecha_programada;
-              if (currentEventDate < existing.first_event_date) {
-                existing.first_event_date = currentEventDate;
+              if (new Date(event.fecha_programada) < new Date(existing.first_event_date)) {
+                existing.first_event_date = event.fecha_programada;
               }
-              if (currentEventDate > existing.last_event_date) {
-                existing.last_event_date = currentEventDate;
+              if (new Date(event.fecha_programada) > new Date(existing.last_event_date)) {
+                existing.last_event_date = event.fecha_programada;
               }
             } else {
+              // Get panelista info from either source
+              const panelistaId = destinoCheck.panelistaId || nodo.panelista_id;
+              let panelistaNombre = null;
+              if (panelistaId) {
+                panelistaNombre = panelistasMap.get(panelistaId);
+                if (!panelistaNombre) {
+                  const panelistaInfo = panelistasByNodoMap.get(nodo.codigo);
+                  panelistaNombre = panelistaInfo?.nombre_completo || null;
+                }
+              }
+              
               risksMap.set(key, {
                 nodo_codigo: nodo.codigo,
                 ciudad: nodo.ciudad_info?.nombre || nodo.ciudad,
-                ciudad_id: nodo.ciudad_id,
+                ciudad_id: nodo.ciudad_info?.id || nodo.ciudad_id || 0,
                 region_nombre: nodo.region?.nombre || null,
-                region_id: nodo.region_id,
-                clasificacion: nodo.ciudad_info?.clasificacion || 'urbano',
+                region_id: nodo.region?.id || nodo.region_id || 0,
+                clasificacion: nodo.ciudad_info?.clasificacion || 'C',
                 pais: nodo.pais,
-                panelista_id: null,
-                panelista_nombre: null,
-                risk_type: 'sin_panelista',
+                panelista_id: panelistaId,
+                panelista_nombre: panelistaNombre,
+                risk_type: destinoCheck.reason as 'sin_panelista' | 'panelista_de_baja',
                 affected_events_count: 1,
                 first_event_date: event.fecha_programada,
                 last_event_date: event.fecha_programada,
-                productos: event.producto ? [{ 
-                  id: event.producto.id, 
-                  nombre: event.producto.nombre_producto 
-                }] : [],
-                carriers: event.carrier ? [{ 
-                  id: event.carrier.id, 
-                  nombre: event.carrier.legal_name 
-                }] : [],
+                productos: event.producto ? [{ id: event.producto.id, nombre: event.producto.nombre_producto }] : [],
+                carriers: event.carrier ? [{ id: event.carrier.id, nombre: event.carrier.legal_name }] : [],
+                leave_info: destinoCheck.leaveInfo,
               });
             }
           }
         }
       });
 
-      const risksArray = Array.from(risksMap.values());
-      console.log('Risks encontrados:', risksArray.length);
-      
-      setRisks(risksArray);
+      setRisks(Array.from(risksMap.values()));
     } catch (error: any) {
       console.error('Error loading node risks:', error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar los nodos en riesgo: " + error.message,
+        description: "No se pudieron cargar los nodos en riesgo",
         variant: "destructive",
       });
-      setRisks([]);
     } finally {
       setLoading(false);
     }
