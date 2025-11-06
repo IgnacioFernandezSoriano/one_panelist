@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +96,7 @@ interface Envio {
 export default function Envios() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -135,6 +136,36 @@ export default function Envios() {
   const [changeStatusDialogOpen, setChangeStatusDialogOpen] = useState(false);
   const [newStatusValue, setNewStatusValue] = useState("");
   const [statusChangeNotes, setStatusChangeNotes] = useState("");
+
+  // Read query params on mount
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const delayed = searchParams.get('delayed');
+    const upcoming = searchParams.get('upcoming');
+
+    if (status) {
+      setAdvancedFilters(prev => ({ ...prev, status }));
+    }
+
+    if (delayed === 'true') {
+      // Filter for delayed shipments (SENT and past scheduled date + 2 days)
+      setAdvancedFilters(prev => ({ ...prev, status: 'SENT' }));
+      setSearchTerm('delayed'); // Trigger special delayed filter
+    }
+
+    if (upcoming) {
+      // Filter for upcoming deliveries
+      setAdvancedFilters(prev => ({ ...prev, status: 'SENT' }));
+      const now = new Date();
+      const hours = upcoming === '24h' ? 24 : 48;
+      const futureDate = new Date(now.getTime() + hours * 60 * 60 * 1000);
+      setAdvancedFilters(prev => ({
+        ...prev,
+        fechaProgramadaDesde: now,
+        fechaProgramadaHasta: futureDate
+      }));
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     loadEnvios();

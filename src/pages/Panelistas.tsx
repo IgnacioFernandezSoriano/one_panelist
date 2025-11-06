@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,14 +40,41 @@ interface Panelista {
 export default function Panelistas() {
   const { t } = useTranslation();
   const { clienteId } = useCliente();
+  const [searchParams] = useSearchParams();
   const [panelistas, setPanelistas] = useState<Panelista[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedPanelista, setSelectedPanelista] = useState<Panelista | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<number>>(new Set());
   const { toast } = useToast();
+
+  // Read query params on mount
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const id = searchParams.get('id');
+    const hasIssues = searchParams.get('has_issues');
+
+    if (status) {
+      setStatusFilter(status);
+    }
+
+    if (id) {
+      // Auto-expand and scroll to specific panelist
+      const panelistId = parseInt(id);
+      setExpandedItems(new Set([panelistId]));
+      setTimeout(() => {
+        const element = document.getElementById(`panelist-${panelistId}`);
+        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
+    }
+
+    if (hasIssues === 'true') {
+      setSearchTerm('issue'); // Trigger filter for panelists with issues
+    }
+  }, [searchParams]);
 
   const toggleExpand = (id: number) => {
     setExpandedItems(prev => {
@@ -92,6 +120,12 @@ export default function Panelistas() {
   };
 
   const filteredPanelistas = panelistas.filter((p) => {
+    // Apply status filter from query params
+    if (statusFilter) {
+      if (statusFilter === 'activo' && p.estado !== 'activo') return false;
+      if (statusFilter === 'inactivo' && p.estado !== 'inactivo') return false;
+    }
+
     const search = searchTerm.toLowerCase();
     
     // Map availability_status to readable Spanish text
@@ -205,7 +239,7 @@ export default function Panelistas() {
         ) : (
           <div className="grid gap-4">
             {filteredPanelistas.map((panelista) => (
-              <Card key={panelista.id} className="hover:shadow-lg transition-shadow">
+              <Card key={panelista.id} id={`panelist-${panelista.id}`} className="hover:shadow-lg transition-shadow">
                 <Collapsible open={expandedItems.has(panelista.id)} onOpenChange={() => toggleExpand(panelista.id)}>
                   <div className="p-6">
                     <div className="flex items-start justify-between">

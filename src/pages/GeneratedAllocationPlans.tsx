@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,12 +66,21 @@ interface FilterOptions {
 
 export default function GeneratedAllocationPlans() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [events, setEvents] = useState<AllocationEvent[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
+
+  // Read query params on mount
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (status) {
+      setStatusFilter(status);
+    }
+  }, [searchParams]);
   const [planFilter, setPlanFilter] = useState<string | undefined>(undefined);
   const [carrierFilter, setCarrierFilter] = useState<string | undefined>(undefined);
   const [productFilter, setProductFilter] = useState<string | undefined>(undefined);

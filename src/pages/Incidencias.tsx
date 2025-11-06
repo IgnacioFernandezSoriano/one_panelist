@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,10 +24,27 @@ interface Incidencia {
 
 export default function Incidencias() {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
   const [incidencias, setIncidencias] = useState<Incidencia[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // Read query params on mount
+  useEffect(() => {
+    const status = searchParams.get('status');
+    const priority = searchParams.get('priority');
+
+    if (status) {
+      setStatusFilter(status);
+    }
+
+    if (priority) {
+      setPriorityFilter(priority);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     loadIncidencias();
@@ -52,10 +70,19 @@ export default function Incidencias() {
     }
   };
 
-  const filteredIncidencias = incidencias.filter((i) =>
-    i.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    i.tipo.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredIncidencias = incidencias.filter((i) => {
+    // Apply status filter from query params
+    if (statusFilter && i.estado !== statusFilter) return false;
+
+    // Apply priority filter from query params
+    if (priorityFilter && i.prioridad !== priorityFilter) return false;
+
+    // Apply search term filter
+    return (
+      i.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      i.tipo.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  });
 
   const getPrioridadBadge = (prioridad: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; className?: string }> = {
