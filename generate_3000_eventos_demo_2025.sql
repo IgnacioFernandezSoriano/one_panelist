@@ -37,13 +37,13 @@ DECLARE
   random_numero_etiqueta VARCHAR;
   tiempo_transito_horas NUMERIC;
   
-  nodos_array INTEGER[];
+  nodos_array VARCHAR[];
   panelistas_array INTEGER[];
   productos_array INTEGER[];
   carriers_array INTEGER[];
 BEGIN
-  -- Get arrays of available data IDs
-  SELECT ARRAY_AGG(id) INTO nodos_array FROM nodos WHERE codigo LIKE '0001-%';
+  -- Get arrays of available data (nodos use codigo, others use id)
+  SELECT ARRAY_AGG(codigo) INTO nodos_array FROM nodos WHERE codigo LIKE '0001-%';
   SELECT ARRAY_AGG(id) INTO panelistas_array FROM panelistas WHERE cliente_id = 13;
   SELECT ARRAY_AGG(id) INTO productos_array FROM productos_cliente WHERE cliente_id = 13;
   SELECT ARRAY_AGG(id) INTO carriers_array FROM carriers WHERE cliente_id = 13;
@@ -74,19 +74,19 @@ BEGIN
   -- Generate 3000 events
   FOR i IN 1..3000 LOOP
     -- Random nodos (different origin and destination)
-    SELECT id, codigo, ciudad INTO random_nodo_origen
+    SELECT codigo, ciudad INTO random_nodo_origen
     FROM nodos
-    WHERE id = nodos_array[1 + floor(random() * array_length(nodos_array, 1))::int];
+    WHERE codigo = nodos_array[1 + floor(random() * array_length(nodos_array, 1))::int];
     
-    SELECT id, codigo, ciudad INTO random_nodo_destino
+    SELECT codigo, ciudad INTO random_nodo_destino
     FROM nodos
-    WHERE id = nodos_array[1 + floor(random() * array_length(nodos_array, 1))::int];
+    WHERE codigo = nodos_array[1 + floor(random() * array_length(nodos_array, 1))::int];
     
     -- Ensure origin and destination are different
-    WHILE random_nodo_origen.id = random_nodo_destino.id LOOP
-      SELECT id, codigo, ciudad INTO random_nodo_destino
+    WHILE random_nodo_origen.codigo = random_nodo_destino.codigo LOOP
+      SELECT codigo, ciudad INTO random_nodo_destino
       FROM nodos
-      WHERE id = nodos_array[1 + floor(random() * array_length(nodos_array, 1))::int];
+      WHERE codigo = nodos_array[1 + floor(random() * array_length(nodos_array, 1))::int];
     END LOOP;
     
     -- Random panelistas
@@ -116,8 +116,8 @@ BEGIN
       cliente_id,
       carrier_id,
       producto_id,
-      nodo_origen_id,
-      nodo_destino_id,
+      nodo_origen,
+      nodo_destino,
       ciudad_origen,
       ciudad_destino,
       panelista_origen_id,
@@ -135,8 +135,8 @@ BEGIN
       13, -- cliente_id (DEMO)
       random_carrier,
       random_producto,
-      random_nodo_origen.id,
-      random_nodo_destino.id,
+      random_nodo_origen.codigo,
+      random_nodo_destino.codigo,
       random_nodo_origen.ciudad,
       random_nodo_destino.ciudad,
       random_panelista_origen,
@@ -230,9 +230,9 @@ LIMIT 10;
 SELECT 
   er.id,
   er.numero_etiqueta,
-  no.codigo as nodo_origen_codigo,
+  er.nodo_origen,
   er.ciudad_origen,
-  nd.codigo as nodo_destino_codigo,
+  er.nodo_destino,
   er.ciudad_destino,
   er.fecha_programada,
   er.fecha_envio_real,
@@ -242,8 +242,6 @@ SELECT
   c.legal_name as carrier,
   p.nombre_producto as producto
 FROM eventos_reales er
-JOIN nodos no ON er.nodo_origen_id = no.id
-JOIN nodos nd ON er.nodo_destino_id = nd.id
 JOIN carriers c ON er.carrier_id = c.id
 JOIN productos_cliente p ON er.producto_id = p.id
 WHERE er.cliente_id = 13

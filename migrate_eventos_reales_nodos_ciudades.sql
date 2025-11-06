@@ -32,9 +32,9 @@ CREATE TABLE public.eventos_reales (
   carrier_id INTEGER NOT NULL REFERENCES public.carriers(id) ON DELETE RESTRICT,
   producto_id INTEGER NOT NULL REFERENCES public.productos_cliente(id) ON DELETE RESTRICT,
   
-  -- Nodes as INTEGER references (NOT NULL)
-  nodo_origen_id INTEGER NOT NULL REFERENCES public.nodos(id) ON DELETE RESTRICT,
-  nodo_destino_id INTEGER NOT NULL REFERENCES public.nodos(id) ON DELETE RESTRICT,
+  -- Nodes as VARCHAR references to codigo (NOT NULL)
+  nodo_origen VARCHAR NOT NULL REFERENCES public.nodos(codigo) ON DELETE RESTRICT,
+  nodo_destino VARCHAR NOT NULL REFERENCES public.nodos(codigo) ON DELETE RESTRICT,
   
   -- Cities (NOT NULL)
   ciudad_origen VARCHAR NOT NULL,
@@ -73,8 +73,8 @@ CREATE INDEX idx_eventos_reales_allocation_detail ON public.eventos_reales(alloc
 CREATE INDEX idx_eventos_reales_carrier ON public.eventos_reales(carrier_id);
 CREATE INDEX idx_eventos_reales_producto ON public.eventos_reales(producto_id);
 CREATE INDEX idx_eventos_reales_fecha_validacion ON public.eventos_reales(fecha_validacion);
-CREATE INDEX idx_eventos_reales_nodo_origen ON public.eventos_reales(nodo_origen_id);
-CREATE INDEX idx_eventos_reales_nodo_destino ON public.eventos_reales(nodo_destino_id);
+CREATE INDEX idx_eventos_reales_nodo_origen ON public.eventos_reales(nodo_origen);
+CREATE INDEX idx_eventos_reales_nodo_destino ON public.eventos_reales(nodo_destino);
 CREATE INDEX idx_eventos_reales_ciudad_origen ON public.eventos_reales(ciudad_origen);
 CREATE INDEX idx_eventos_reales_ciudad_destino ON public.eventos_reales(ciudad_destino);
 CREATE INDEX idx_eventos_reales_panelista_origen ON public.eventos_reales(panelista_origen_id);
@@ -221,11 +221,11 @@ BEGIN
   END IF;
   
   -- Get nodo information with cities
-  SELECT id, codigo, ciudad INTO v_nodo_origen
+  SELECT codigo, ciudad INTO v_nodo_origen
   FROM nodos
   WHERE codigo = v_detail.nodo_origen;
   
-  SELECT id, codigo, ciudad INTO v_nodo_destino
+  SELECT codigo, ciudad INTO v_nodo_destino
   FROM nodos
   WHERE codigo = v_detail.nodo_destino;
   
@@ -235,8 +235,8 @@ BEGIN
     cliente_id,
     carrier_id,
     producto_id,
-    nodo_origen_id,
-    nodo_destino_id,
+    nodo_origen,
+    nodo_destino,
     ciudad_origen,
     ciudad_destino,
     panelista_origen_id,
@@ -253,8 +253,8 @@ BEGIN
     v_detail.cliente_id,
     v_detail.carrier_id,
     v_detail.producto_id,
-    v_nodo_origen.id,
-    v_nodo_destino.id,
+    v_nodo_origen.codigo,
+    v_nodo_destino.codigo,
     v_nodo_origen.ciudad,
     v_nodo_destino.ciudad,
     v_detail.panelista_origen_id,
@@ -282,8 +282,8 @@ $$ LANGUAGE plpgsql;
 -- =====================================================
 COMMENT ON TABLE public.eventos_reales IS 'Validated events that have completed the full cycle and passed all validations. Now includes node IDs and cities.';
 COMMENT ON COLUMN public.eventos_reales.allocation_plan_detail_id IS 'Reference to allocation plan detail. Nullable to allow synthetic test events.';
-COMMENT ON COLUMN public.eventos_reales.nodo_origen_id IS 'Origin node ID reference';
-COMMENT ON COLUMN public.eventos_reales.nodo_destino_id IS 'Destination node ID reference';
+COMMENT ON COLUMN public.eventos_reales.nodo_origen IS 'Origin node codigo reference';
+COMMENT ON COLUMN public.eventos_reales.nodo_destino IS 'Destination node codigo reference';
 COMMENT ON COLUMN public.eventos_reales.ciudad_origen IS 'Origin city from node';
 COMMENT ON COLUMN public.eventos_reales.ciudad_destino IS 'Destination city from node';
 

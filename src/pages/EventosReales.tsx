@@ -34,8 +34,8 @@ interface EventoReal {
   cliente_id: number;
   carrier_id: number | null;
   producto_id: number | null;
-  nodo_origen_id: number;
-  nodo_destino_id: number;
+  nodo_origen: string;
+  nodo_destino: string;
   ciudad_origen: string;
   ciudad_destino: string;
   panelista_origen_id: number | null;
@@ -241,7 +241,7 @@ export default function EventosReales() {
           validado_por_usuario:usuarios!validado_por (
             nombre_completo
           ),
-          nodo_origen_data:nodos!nodo_origen_id (
+          nodo_origen_data:nodos!nodo_origen (
             id,
             codigo,
             ciudad_id,
@@ -255,7 +255,7 @@ export default function EventosReales() {
               )
             )
           ),
-          nodo_destino_data:nodos!nodo_destino_id (
+          nodo_destino_data:nodos!nodo_destino (
             id,
             codigo,
             ciudad_id,

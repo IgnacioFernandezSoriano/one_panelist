@@ -14,8 +14,8 @@ interface EventoReal {
   allocation_plan_detail_id: number | null;
   carrier_id: number | null;
   producto_id: number | null;
-  nodo_origen_id: number;
-  nodo_destino_id: number;
+  nodo_origen: string;
+  nodo_destino: string;
   ciudad_origen: string;
   ciudad_destino: string;
   panelista_origen_id: number | null;
