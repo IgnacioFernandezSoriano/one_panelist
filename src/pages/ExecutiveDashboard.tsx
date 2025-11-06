@@ -118,7 +118,37 @@ export default function ExecutiveDashboard() {
     utilizationTrend: [],
   });
 
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("month");
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("today");
+
+  const getDateRange = () => {
+    const now = new Date();
+    let from: Date;
+    let to: Date = now;
+
+    switch (selectedPeriod) {
+      case "today":
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        break;
+      case "week":
+        from = subDays(now, 7);
+        break;
+      case "month":
+        from = startOfMonth(now);
+        break;
+      case "quarter":
+        from = subDays(now, 90);
+        break;
+      case "year":
+        from = startOfYear(now);
+        break;
+      default:
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        to = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    }
+
+    return { from, to };
+  };
 
   useEffect(() => {
     if (clienteId) {
@@ -356,12 +386,13 @@ export default function ExecutiveDashboard() {
   };
 
   const fetchShipmentsData = async () => {
-    const monthStart = startOfMonth(new Date());
+    const { from, to } = getDateRange();
     const { data: shipments } = await supabase
       .from("envios")
       .select("id, estado, fecha_programada, fecha_recepcion_real, carrier_id, carriers(legal_name)")
       .eq("cliente_id", clienteId)
-      .gte("fecha_programada", monthStart.toISOString());
+      .gte("fecha_programada", from.toISOString())
+      .lte("fecha_programada", to.toISOString());
 
     const shipmentsThisMonth = shipments?.length || 0;
     const completedShipments = shipments?.filter(s => s.estado === 'RECEIVED').length || 0;
@@ -546,6 +577,7 @@ export default function ExecutiveDashboard() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
                     <SelectItem value="week">Last Week</SelectItem>
                     <SelectItem value="month">This Month</SelectItem>
                     <SelectItem value="quarter">This Quarter</SelectItem>
