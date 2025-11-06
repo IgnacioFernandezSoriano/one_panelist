@@ -94,7 +94,7 @@ export default function UnassignedEvents() {
       // PASO 3: Obtener eventos del allocation plan
       const { data: planEvents, error: eventsError } = await supabase
         .from('generated_allocation_plan_details')
-        .select('id, generated_allocation_plan_id, nodo_origen, nodo_destino, fecha_programada, status, cliente_id')
+        .select('id, plan_id, nodo_origen, nodo_destino, fecha_programada, status, cliente_id')
         .eq('cliente_id', clienteId)
         .in('status', ['NOTIFIED', 'PENDING']);
 
@@ -161,8 +161,8 @@ export default function UnassignedEvents() {
 
           problematicEvents.push({
             id: event.id,
-            plan_id: event.generated_allocation_plan_id,
-            plan_name: `Plan ${event.generated_allocation_plan_id}`,
+            plan_id: event.plan_id,
+            plan_name: `Plan ${event.plan_id}`,
             fecha_programada: event.fecha_programada,
             nodo_origen: event.nodo_origen,
             nodo_destino: event.nodo_destino,
