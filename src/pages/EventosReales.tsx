@@ -30,12 +30,14 @@ import { EventoRealDetailsDialog } from "@/components/eventos-reales/EventoRealD
 
 interface EventoReal {
   id: number;
-  allocation_plan_detail_id: number;
+  allocation_plan_detail_id: number | null;
   cliente_id: number;
   carrier_id: number | null;
   producto_id: number | null;
-  nodo_origen: string;
-  nodo_destino: string;
+  nodo_origen_id: number;
+  nodo_destino_id: number;
+  ciudad_origen: string;
+  ciudad_destino: string;
   panelista_origen_id: number | null;
   panelista_destino_id: number | null;
   fecha_programada: string;
@@ -214,7 +216,7 @@ export default function EventosReales() {
       setCiudades(ciudadesRes.data || []);
       setRegiones(regionesRes.data || []);
 
-      // Fetch eventos reales with joins
+      // Fetch eventos reales with joins (including nodos)
       const { data, error } = await supabase
         .from("eventos_reales")
         .select(`
@@ -238,6 +240,34 @@ export default function EventosReales() {
           ),
           validado_por_usuario:usuarios!validado_por (
             nombre_completo
+          ),
+          nodo_origen_data:nodos!nodo_origen_id (
+            id,
+            codigo,
+            ciudad_id,
+            region_id,
+            ciudad,
+            ciudades (
+              nombre,
+              region_id,
+              regiones (
+                nombre
+              )
+            )
+          ),
+          nodo_destino_data:nodos!nodo_destino_id (
+            id,
+            codigo,
+            ciudad_id,
+            region_id,
+            ciudad,
+            ciudades (
+              nombre,
+              region_id,
+              regiones (
+                nombre
+              )
+            )
           )
         `)
         .eq("cliente_id", clienteId)
@@ -245,45 +275,7 @@ export default function EventosReales() {
 
       if (error) throw error;
 
-      // Fetch nodo data separately since nodo_origen/nodo_destino are strings, not FK
-      const nodoCodigos = new Set<string>();
-      data?.forEach(evento => {
-        nodoCodigos.add(evento.nodo_origen);
-        nodoCodigos.add(evento.nodo_destino);
-      });
-
-      const { data: nodosData } = await supabase
-        .from("nodos")
-        .select(`
-          codigo,
-          ciudad_id,
-          region_id,
-          ciudad,
-          ciudades (
-            nombre,
-            region_id,
-            regiones (
-              nombre
-            )
-          )
-        `)
-        .eq("cliente_id", clienteId)
-        .in("codigo", Array.from(nodoCodigos));
-
-      // Create a map of nodos by codigo
-      const nodosMap = new Map();
-      nodosData?.forEach(nodo => {
-        nodosMap.set(nodo.codigo, nodo);
-      });
-
-      // Enhance eventos with nodo data
-      const eventosWithNodos = data?.map(evento => ({
-        ...evento,
-        nodo_origen_data: nodosMap.get(evento.nodo_origen),
-        nodo_destino_data: nodosMap.get(evento.nodo_destino),
-      })) || [];
-
-      setEventos(eventosWithNodos);
+      setEventos(data || []);
     } catch (error: any) {
       console.error("Error fetching eventos reales:", error);
       toast.error("Error loading real events");
@@ -301,9 +293,11 @@ export default function EventosReales() {
       filtered = filtered.filter(
         (e) =>
           e.id.toString().includes(search) ||
-          e.envio_id.toString().includes(search) ||
-          e.nodo_origen.toLowerCase().includes(search) ||
-          e.nodo_destino.toLowerCase().includes(search) ||
+          e.allocation_plan_detail_id?.toString().includes(search) ||
+          e.nodo_origen_data?.codigo?.toLowerCase().includes(search) ||
+          e.nodo_destino_data?.codigo?.toLowerCase().includes(search) ||
+          e.ciudad_origen?.toLowerCase().includes(search) ||
+          e.ciudad_destino?.toLowerCase().includes(search) ||
           e.numero_etiqueta?.toLowerCase().includes(search) ||
           e.carriers?.legal_name?.toLowerCase().includes(search) ||
           e.productos_cliente?.nombre_producto?.toLowerCase().includes(search)
@@ -375,21 +369,23 @@ export default function EventosReales() {
   const handleExport = () => {
     const exportData = filteredEventos.map((e) => ({
       ID: e.id,
-      "Envio ID": e.envio_id,
-      Carrier: e.carriers?.legal_name || e.carrier_name || "N/A",
+      "Allocation Plan Detail ID": e.allocation_plan_detail_id || "N/A",
+      Carrier: e.carriers?.legal_name || "N/A",
       "Carrier Code": e.carriers?.carrier_code || "N/A",
       Product: e.productos_cliente?.nombre_producto || "N/A",
       "Product Code": e.productos_cliente?.codigo_producto || "N/A",
-      "Origin Node": e.nodo_origen,
-      "Destination Node": e.nodo_destino,
+      "Origin Node": e.nodo_origen_data?.codigo || "N/A",
+      "Origin City": e.ciudad_origen || "N/A",
+      "Destination Node": e.nodo_destino_data?.codigo || "N/A",
+      "Destination City": e.ciudad_destino || "N/A",
       "Origin Panelist": e.panelista_origen?.nombre_completo || "N/A",
       "Destination Panelist": e.panelista_destino?.nombre_completo || "N/A",
-      "Scheduled Date": e.fecha_programada,
+      "Scheduled Date": e.fecha_programada || "N/A",
       "Sent Date": e.fecha_envio_real || "N/A",
       "Received Date": e.fecha_recepcion_real || "N/A",
       "Transit Days": e.tiempo_transito_dias || "N/A",
+      "Transit Hours": e.tiempo_transito_horas || "N/A",
       "Tracking Number": e.numero_etiqueta || "N/A",
-      "Product Type": e.tipo_producto || "N/A",
       "Validation Date": e.fecha_validacion,
       "Validated By": e.validado_por_usuario?.nombre_completo || "N/A",
     }));

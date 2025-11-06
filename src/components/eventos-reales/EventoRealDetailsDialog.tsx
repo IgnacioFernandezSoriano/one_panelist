@@ -11,11 +11,13 @@ import { Calendar, MapPin, Package, Clock, User, CheckCircle, Truck } from "luci
 
 interface EventoReal {
   id: number;
-  envio_id: number;
+  allocation_plan_detail_id: number | null;
   carrier_id: number | null;
   producto_id: number | null;
-  nodo_origen: string;
-  nodo_destino: string;
+  nodo_origen_id: number;
+  nodo_destino_id: number;
+  ciudad_origen: string;
+  ciudad_destino: string;
   panelista_origen_id: number | null;
   panelista_destino_id: number | null;
   fecha_programada: string;
@@ -45,6 +47,26 @@ interface EventoReal {
   };
   validado_por_usuario?: {
     nombre_completo: string;
+  };
+  nodo_origen_data?: {
+    codigo: string;
+    ciudad: string;
+    ciudades?: {
+      nombre: string;
+      regiones?: {
+        nombre: string;
+      };
+    };
+  };
+  nodo_destino_data?: {
+    codigo: string;
+    ciudad: string;
+    ciudades?: {
+      nombre: string;
+      regiones?: {
+        nombre: string;
+      };
+    };
   };
 }
 
@@ -99,8 +121,8 @@ export function EventoRealDetailsDialog({
                   <span className="font-mono">{evento.id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Original Shipment ID:</span>
-                  <span className="font-mono">{evento.envio_id}</span>
+                  <span className="text-muted-foreground">Allocation Plan Detail ID:</span>
+                  <span className="font-mono">{evento.allocation_plan_detail_id || "N/A"}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Tracking Number:</span>
@@ -179,9 +201,9 @@ export function EventoRealDetailsDialog({
               <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div>
                   <p className="text-sm font-medium">Origin Node</p>
-                  <p className="text-lg font-semibold">{evento.nodo_origen}</p>
+                  <p className="text-lg font-semibold">{evento.nodo_origen_data?.codigo || "N/A"}</p>
                   <p className="text-sm text-muted-foreground">
-                    {evento.panelista_origen?.nombre_completo || "N/A"}
+                    {evento.ciudad_origen || "N/A"}
                   </p>
                 </div>
               </div>
@@ -196,9 +218,9 @@ export function EventoRealDetailsDialog({
               <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div>
                   <p className="text-sm font-medium">Destination Node</p>
-                  <p className="text-lg font-semibold">{evento.nodo_destino}</p>
+                  <p className="text-lg font-semibold">{evento.nodo_destino_data?.codigo || "N/A"}</p>
                   <p className="text-sm text-muted-foreground">
-                    {evento.panelista_destino?.nombre_completo || "N/A"}
+                    {evento.ciudad_destino || "N/A"}
                   </p>
                 </div>
               </div>
