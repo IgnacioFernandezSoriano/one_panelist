@@ -21,6 +21,7 @@ interface AlertsCenterProps {
   criticalIssues: number;
   inactivePanelists: number;
   pendingConfirmations: number;
+  eventsWithoutPanelist: number;
 }
 
 export function AlertsCenter({
@@ -28,6 +29,7 @@ export function AlertsCenter({
   criticalIssues,
   inactivePanelists,
   pendingConfirmations,
+  eventsWithoutPanelist,
 }: AlertsCenterProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -76,6 +78,17 @@ export function AlertsCenter({
       bgColor: "bg-blue-50",
       action: "Seguimiento",
       actionPath: "/envios",
+    },
+    {
+      id: "unassigned",
+      title: "Events w/o Panelist",
+      count: eventsWithoutPanelist,
+      subtitle: "Eventos sin panelista asignado",
+      icon: UserX,
+      color: "text-red-600",
+      bgColor: "bg-red-50",
+      action: "Asignar",
+      actionPath: "/issues/unassigned-events",
     },
   ];
 

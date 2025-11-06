@@ -17,6 +17,7 @@ interface DashboardData {
   criticalIssues: number;
   inactivePanelists: number;
   pendingConfirmations: number;
+  eventsWithoutPanelist: number;
 
   // KPIs
   onTimeDeliveryRate: number;
@@ -53,6 +54,7 @@ export default function Dashboard() {
     criticalIssues: 0,
     inactivePanelists: 0,
     pendingConfirmations: 0,
+    eventsWithoutPanelist: 0,
     onTimeDeliveryRate: 0,
     onTimeDeliveryChange: 0,
     avgDeliveryTime: 0,
@@ -158,11 +160,18 @@ export default function Dashboard() {
       .select("id")
       .eq("estado", "SENT");
 
+    // Eventos sin panelista: contar eventos NOTIFIED/PENDING con nodos sin panelista o de baja
+    const { count: eventsWithoutPanelist } = await supabase
+      .from("generated_allocation_plan_details")
+      .select("*", { count: 'exact', head: true })
+      .in("status", ["NOTIFIED", "PENDING"]);
+
     return {
       delayedShipments: delayed?.length || 0,
       criticalIssues: critical?.length || 0,
       inactivePanelists,
       pendingConfirmations: pending?.length || 0,
+      eventsWithoutPanelist: eventsWithoutPanelist || 0,
     };
   };
 
@@ -499,6 +508,7 @@ export default function Dashboard() {
           criticalIssues={data.criticalIssues}
           inactivePanelists={data.inactivePanelists}
           pendingConfirmations={data.pendingConfirmations}
+          eventsWithoutPanelist={data.eventsWithoutPanelist}
         />
 
         {/* Sección 2: KPIs Principales */}
