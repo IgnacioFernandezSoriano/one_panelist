@@ -94,7 +94,7 @@ export default function UnassignedEvents() {
       // PASO 3: Obtener eventos del allocation plan
       const { data: planEvents, error: eventsError } = await supabase
         .from('generated_allocation_plan_details')
-        .select('id, plan_id, nodo_origen, nodo_destino, fecha_programada, status, cliente_id')
+        .select('id, nodo_origen, nodo_destino, fecha_programada, status, cliente_id')
         .eq('cliente_id', clienteId)
         .in('status', ['NOTIFIED', 'PENDING']);
 
@@ -161,8 +161,8 @@ export default function UnassignedEvents() {
 
           problematicEvents.push({
             id: event.id,
-            plan_id: event.plan_id,
-            plan_name: `Plan ${event.plan_id}`,
+            plan_id: 0,
+            plan_name: '-',
             fecha_programada: event.fecha_programada,
             nodo_origen: event.nodo_origen,
             nodo_destino: event.nodo_destino,
@@ -524,7 +524,6 @@ export default function UnassignedEvents() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]"></TableHead>
-                  <TableHead>Plan</TableHead>
                   <TableHead>Scheduled Date</TableHead>
                   <TableHead>Origin</TableHead>
                   <TableHead>Destination</TableHead>
@@ -537,7 +536,7 @@ export default function UnassignedEvents() {
               <TableBody>
                 {events.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       No unassigned events found
                     </TableCell>
                   </TableRow>
@@ -558,7 +557,6 @@ export default function UnassignedEvents() {
                             )}
                           </Button>
                         </TableCell>
-                        <TableCell className="font-medium">{event.plan_name}</TableCell>
                         <TableCell>
                           {editingEvent === event.id ? (
                             <div className="flex items-center gap-2">
