@@ -101,7 +101,7 @@ export default function UnassignedEvents() {
           nodo_destino,
           fecha_programada,
           status,
-          generated_allocation_plans!inner(nombre, cliente_id),
+          plan:generated_allocation_plans!inner(plan_name, cliente_id),
           nodo_origen_data:nodos!generated_allocation_plan_details_nodo_origen_fkey(
             codigo,
             ciudad,
@@ -115,7 +115,7 @@ export default function UnassignedEvents() {
             ciudades(clasificacion, region_id)
           )
         `)
-        .eq('generated_allocation_plans.cliente_id', clienteId)
+        .eq('plan.cliente_id', clienteId)
         .in('status', ['NOTIFIED', 'PENDING']);
 
       if (eventsError) throw eventsError;
@@ -182,7 +182,7 @@ export default function UnassignedEvents() {
           problematicEvents.push({
             id: event.id,
             plan_id: event.generated_allocation_plan_id,
-            plan_name: event.generated_allocation_plans.nombre,
+            plan_name: event.plan.plan_name,
             fecha_programada: event.fecha_programada,
             nodo_origen: event.nodo_origen,
             nodo_destino: event.nodo_destino,
