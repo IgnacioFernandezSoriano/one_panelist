@@ -745,6 +745,110 @@ export default function E2EMeasurement() {
           </Card>
         </div>
 
+        {/* J+n Cumulative Performance Table - MOVED TO TOP */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>J+n Cumulative Performance</CardTitle>
+                <CardDescription>Cumulative delivery percentage by day after shipment</CardDescription>
+              </div>
+              <Select value={selectedOriginCity} onValueChange={setSelectedOriginCity}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Origin City" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Origin Cities</SelectItem>
+                  {originCities.map((city) => (
+                    <SelectItem key={city} value={city}>
+                      {city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b-2">
+                    <th className="text-left py-3 px-4 bg-muted font-semibold">Region</th>
+                    <th className="text-left py-3 px-4 bg-muted font-semibold">Destination City</th>
+                    <th className="text-center py-3 px-4 bg-muted font-semibold">Standard<br/>(days)</th>
+                    <th className="text-center py-3 px-4 bg-muted font-semibold">Target<br/>(%)</th>
+                    <th className="text-center py-3 px-4 bg-muted font-semibold">On-Time<br/>(%)</th>
+                    {Array.from({ length: maxJPlusN + 1 }, (_, i) => (
+                      <th 
+                        key={i} 
+                        className="text-center py-3 px-4 bg-muted font-semibold min-w-[80px]"
+                      >
+                        J+{i}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {jPlusNData.map((row, idx) => (
+                    <tr key={idx} className="border-b hover:bg-muted/30">
+                      <td className="py-2 px-4">{row.region}</td>
+                      <td className="py-2 px-4 font-medium">{row.city}</td>
+                      <td className="text-center py-2 px-4">
+                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold">
+                          {row.standardDay}
+                        </span>
+                      </td>
+                      <td className="text-center py-2 px-4 text-muted-foreground">
+                        {row.targetPercentage}%
+                      </td>
+                      <td className="text-center py-2 px-4">
+                        <span className={`font-semibold ${
+                          row.onTimePercentage >= row.targetPercentage ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {row.onTimePercentage}%
+                        </span>
+                      </td>
+                      {Array.from({ length: maxJPlusN + 1 }, (_, day) => {
+                        const value = row[`j${day}` as keyof typeof row] as number;
+                        const isStandardDay = day === row.standardDay;
+                        const isStandardCell = isStandardDay;
+                        
+                        return (
+                          <td 
+                            key={day} 
+                            className={`text-center py-2 px-4 ${
+                              isStandardDay ? 'border-l-4 border-r-4 border-blue-500 bg-blue-50' : ''
+                            }`}
+                          >
+                            <span className={`font-semibold ${
+                              isStandardCell && value >= row.targetPercentage
+                                ? 'text-green-600 bg-green-100 px-2 py-1 rounded'
+                                : isStandardCell && value < row.targetPercentage
+                                ? 'text-red-600 bg-red-100 px-2 py-1 rounded'
+                                : value >= 95
+                                ? 'text-green-600'
+                                : value >= 85
+                                ? 'text-yellow-600'
+                                : 'text-gray-600'
+                            }`}>
+                              {value !== undefined ? `${value}%` : '-'}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {jPlusNData.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No data available for the selected origin city
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Carrier Performance Chart */}
@@ -878,151 +982,7 @@ export default function E2EMeasurement() {
           </CardContent>
         </Card>
 
-        {/* Top Routes Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Routes Performance</CardTitle>
-            <CardDescription>Most frequent routes and their performance metrics</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-4">Route</th>
-                    <th className="text-right py-2 px-4">Total Events</th>
-                    <th className="text-right py-2 px-4">On-Time</th>
-                    <th className="text-right py-2 px-4">On-Time %</th>
-                    <th className="text-right py-2 px-4">Avg Transit</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {routePerformanceData.map((route, idx) => (
-                    <tr key={idx} className="border-b hover:bg-muted/50">
-                      <td className="py-2 px-4 font-medium">{route.route}</td>
-                      <td className="text-right py-2 px-4">{route.total.toLocaleString()}</td>
-                      <td className="text-right py-2 px-4 text-green-600">{route.onTime.toLocaleString()}</td>
-                      <td className="text-right py-2 px-4">
-                        <span className={`font-semibold ${
-                          route.onTimePercentage >= 95 ? 'text-green-600' :
-                          route.onTimePercentage >= 85 ? 'text-yellow-600' :
-                          'text-red-600'
-                        }`}>
-                          {route.onTimePercentage}%
-                        </span>
-                      </td>
-                      <td className="text-right py-2 px-4">{route.avgTransit} days</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* J+n Cumulative Performance Table */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>J+n Cumulative Performance</CardTitle>
-                <CardDescription>Cumulative delivery percentage by day after shipment</CardDescription>
-              </div>
-              <Select value={selectedOriginCity} onValueChange={setSelectedOriginCity}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Origin City" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Origin Cities</SelectItem>
-                  {originCities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b-2">
-                    <th className="text-left py-3 px-4 bg-muted font-semibold">Region</th>
-                    <th className="text-left py-3 px-4 bg-muted font-semibold">Destination City</th>
-                    <th className="text-center py-3 px-4 bg-muted font-semibold">Standard<br/>(days)</th>
-                    <th className="text-center py-3 px-4 bg-muted font-semibold">Target<br/>(%)</th>
-                    <th className="text-center py-3 px-4 bg-muted font-semibold">On-Time<br/>(%)</th>
-                    {Array.from({ length: maxJPlusN + 1 }, (_, i) => (
-                      <th 
-                        key={i} 
-                        className="text-center py-3 px-4 bg-muted font-semibold min-w-[80px]"
-                      >
-                        J+{i}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {jPlusNData.map((row, idx) => (
-                    <tr key={idx} className="border-b hover:bg-muted/30">
-                      <td className="py-2 px-4">{row.region}</td>
-                      <td className="py-2 px-4 font-medium">{row.city}</td>
-                      <td className="text-center py-2 px-4">
-                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-700 font-semibold">
-                          {row.standardDay}
-                        </span>
-                      </td>
-                      <td className="text-center py-2 px-4 text-muted-foreground">
-                        {row.targetPercentage}%
-                      </td>
-                      <td className="text-center py-2 px-4">
-                        <span className={`font-semibold ${
-                          row.onTimePercentage >= row.targetPercentage ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {row.onTimePercentage}%
-                        </span>
-                      </td>
-                      {Array.from({ length: maxJPlusN + 1 }, (_, day) => {
-                        const value = row[`j${day}` as keyof typeof row] as number;
-                        const isStandardDay = day === row.standardDay;
-                        const isStandardCell = isStandardDay;
-                        
-                        return (
-                          <td 
-                            key={day} 
-                            className={`text-center py-2 px-4 ${
-                              isStandardDay ? 'border-l-4 border-r-4 border-blue-500 bg-blue-50' : ''
-                            }`}
-                          >
-                            <span className={`font-semibold ${
-                              isStandardCell && value >= row.targetPercentage
-                                ? 'text-green-600 bg-green-100 px-2 py-1 rounded'
-                                : isStandardCell && value < row.targetPercentage
-                                ? 'text-red-600 bg-red-100 px-2 py-1 rounded'
-                                : value >= 95
-                                ? 'text-green-600'
-                                : value >= 85
-                                ? 'text-yellow-600'
-                                : 'text-gray-600'
-                            }`}>
-                              {value !== undefined ? `${value}%` : '-'}
-                            </span>
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {jPlusNData.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                No data available for the selected origin city
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </AppLayout>
   );
