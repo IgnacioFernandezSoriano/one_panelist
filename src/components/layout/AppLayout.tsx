@@ -554,17 +554,6 @@ const AppSidebarContent = () => {
                   {sidebarOpen && (
                     <CollapsibleContent className="pl-4">
                       <Link
-                        to="/reporting/regulator"
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                          location.pathname === "/reporting/regulator"
-                            ? "bg-accent text-accent-foreground"
-                            : "hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                      >
-                        <FileBarChart className="w-4 h-4" />
-                        <span>Regulator Dashboard</span>
-                      </Link>
-                      <Link
                         to="/reporting/e2e-measurement"
                         className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                           location.pathname === "/reporting/e2e-measurement"
