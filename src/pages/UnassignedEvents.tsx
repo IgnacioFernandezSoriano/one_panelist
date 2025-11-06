@@ -396,18 +396,29 @@ export default function UnassignedEvents() {
 
   const handleReassignPanelist = async (eventId: number, nodeType: 'origen' | 'destino', panelistaId: number) => {
     try {
-      const field = nodeType === 'origen' ? 'panelista_origen_id' : 'panelista_destino_id';
+      // Obtener el nodo del panelista seleccionado
+      const { data: panelistaData, error: panelistaError } = await supabase
+        .from('panelistas')
+        .select('nodo_asignado')
+        .eq('id', panelistaId)
+        .single();
+
+      if (panelistaError) throw panelistaError;
+      if (!panelistaData?.nodo_asignado) throw new Error('El panelista no tiene un nodo asignado');
+
+      // Actualizar el nodo en el evento
+      const field = nodeType === 'origen' ? 'nodo_origen' : 'nodo_destino';
       
       const { error } = await supabase
         .from('generated_allocation_plan_details')
-        .update({ [field]: panelistaId })
+        .update({ [field]: panelistaData.nodo_asignado })
         .eq('id', eventId);
 
       if (error) throw error;
 
       toast({
-        title: "Panelist reassigned",
-        description: `The panelist has been successfully reassigned to the ${nodeType} node`,
+        title: "Node reassigned",
+        description: `The ${nodeType} node has been successfully updated`,
       });
 
       setExpandedRow(null);
