@@ -282,10 +282,14 @@ export default function UnassignedEvents() {
       // Filtrar según clasificación de ciudad
       if (clasificacion === 'A' || clasificacion === 'B') {
         // Ciudad tipo A o B: panelistas de la misma ciudad
-        query = query.eq('nodos.ciudad_id', ciudadId);
+        if (ciudadId) {
+          query = query.eq('nodos.ciudad_id', ciudadId);
+        }
       } else {
         // Ciudad tipo C: panelistas de la misma región
-        query = query.eq('nodos.ciudades.region_id', regionId);
+        if (regionId) {
+          query = query.eq('nodos.ciudades.region_id', regionId);
+        }
       }
 
       const { data: panelistas, error } = await query;
