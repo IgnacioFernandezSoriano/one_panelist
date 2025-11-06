@@ -50,6 +50,9 @@ interface DashboardStats {
   // Incidencias
   openIncidents: number;
   criticalIncidents: number;
+  unassignedNodesCount: number;
+  eventsWithoutPanelistCount: number;
+  pendingValidationCount: number;
   avgResolutionTime: number;
   incidentsByType: { type: string; count: number }[];
   incidentsBySeverity: { severity: string; count: number; color: string }[];
@@ -104,6 +107,9 @@ export default function ExecutiveDashboard() {
     panelistsByRegion: [],
     openIncidents: 0,
     criticalIncidents: 0,
+    unassignedNodesCount: 0,
+    eventsWithoutPanelistCount: 0,
+    pendingValidationCount: 0,
     avgResolutionTime: 0,
     incidentsByType: [],
     incidentsBySeverity: [],
@@ -118,7 +124,7 @@ export default function ExecutiveDashboard() {
     utilizationTrend: [],
   });
 
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("today");
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("year");
 
   const getDateRange = () => {
     const now = new Date();
@@ -321,6 +327,33 @@ export default function ExecutiveDashboard() {
       .select("id, tipo, prioridad, estado, fecha_creacion, fecha_resolucion")
       .eq("cliente_id", clienteId);
 
+    // Check for unassigned nodes
+    const { data: unassignedNodes } = await supabase
+      .from("nodos")
+      .select("id, codigo")
+      .eq("cliente_id", clienteId)
+      .is("panelista_id", null);
+
+    const unassignedNodesCount = unassignedNodes?.length || 0;
+
+    // Check for events without panelist
+    const { data: eventsWithoutPanelist } = await supabase
+      .from("eventos_reales")
+      .select("id")
+      .eq("cliente_id", clienteId)
+      .or("panelista_origen_id.is.null,panelista_destino_id.is.null");
+
+    const eventsWithoutPanelistCount = eventsWithoutPanelist?.length || 0;
+
+    // Check for pending validation events
+    const { data: pendingValidationEvents } = await supabase
+      .from("eventos_reales")
+      .select("id")
+      .eq("cliente_id", clienteId)
+      .eq("estado", "NOTIFIED");
+
+    const pendingValidationCount = pendingValidationEvents?.length || 0;
+
     const openIncidents = incidents?.filter(i => i.estado === 'abierta').length || 0;
     const criticalIncidents = incidents?.filter(i => i.prioridad === 'alta' && i.estado === 'abierta').length || 0;
 
@@ -378,6 +411,9 @@ export default function ExecutiveDashboard() {
     return {
       openIncidents,
       criticalIncidents,
+      unassignedNodesCount,
+      eventsWithoutPanelistCount,
+      pendingValidationCount,
       avgResolutionTime: Math.round(avgResolutionTime),
       incidentsByType,
       incidentsBySeverity,
@@ -552,24 +588,6 @@ export default function ExecutiveDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex gap-4 items-end">
-              {isSuperAdmin && (
-                <div className="space-y-2">
-                  <Label>Client Account</Label>
-                  <Select value={clienteId?.toString()} onValueChange={(value) => setSelectedClienteId(parseInt(value))}>
-                    <SelectTrigger className="w-[250px]">
-                      <SelectValue placeholder="Select client" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableClientes.map((cliente) => (
-                        <SelectItem key={cliente.id} value={cliente.id.toString()}>
-                          {cliente.nombre}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
               <div className="space-y-2">
                 <Label>Period</Label>
                 <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
@@ -866,6 +884,30 @@ export default function ExecutiveDashboard() {
                         <span className="font-semibold">{item.count}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div 
+                    className="p-3 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
+                    onClick={() => navigate('/nodos?unassigned=true')}
+                  >
+                    <p className="text-xs text-muted-foreground">Unassigned Nodes</p>
+                    <p className="text-lg font-bold text-orange-600">{stats.unassignedNodesCount}</p>
+                  </div>
+                  <div 
+                    className="p-3 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
+                    onClick={() => navigate('/eventos-reales?without_panelist=true')}
+                  >
+                    <p className="text-xs text-muted-foreground">Events w/o Panelist</p>
+                    <p className="text-lg font-bold text-red-600">{stats.eventsWithoutPanelistCount}</p>
+                  </div>
+                  <div 
+                    className="p-3 bg-yellow-50 rounded-lg cursor-pointer hover:bg-yellow-100 transition-colors"
+                    onClick={() => navigate('/eventos-reales?status=NOTIFIED')}
+                  >
+                    <p className="text-xs text-muted-foreground">Pending Validation</p>
+                    <p className="text-lg font-bold text-yellow-600">{stats.pendingValidationCount}</p>
                   </div>
                 </div>
 
