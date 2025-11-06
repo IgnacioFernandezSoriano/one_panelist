@@ -217,14 +217,14 @@ export function EventoRealDetailsDialog({
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Scheduled Date:</span>
                 <span className="font-medium">
-                  {format(new Date(evento.fecha_programada), "PPP")}
+                  {format(new Date(evento.fecha_programada), "dd/MM/yyyy")}
                 </span>
               </div>
               {evento.fecha_envio_real && (
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Actual Send Date:</span>
                   <span className="font-medium">
-                    {format(new Date(evento.fecha_envio_real), "PPP p")}
+                    {format(new Date(evento.fecha_envio_real), "dd/MM/yyyy HH:mm")}
                   </span>
                 </div>
               )}
@@ -232,7 +232,7 @@ export function EventoRealDetailsDialog({
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Actual Receive Date:</span>
                   <span className="font-medium">
-                    {format(new Date(evento.fecha_recepcion_real), "PPP p")}
+                    {format(new Date(evento.fecha_recepcion_real), "dd/MM/yyyy HH:mm")}
                   </span>
                 </div>
               )}
@@ -273,7 +273,7 @@ export function EventoRealDetailsDialog({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Validated On:</span>
                 <span className="font-medium">
-                  {format(new Date(evento.fecha_validacion), "PPP p")}
+                  {format(new Date(evento.fecha_validacion), "dd/MM/yyyy HH:mm")}
                 </span>
               </div>
               {evento.validado_por_usuario && (

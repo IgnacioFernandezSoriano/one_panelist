@@ -53,7 +53,7 @@ export function GeneratedPlansList({ plans, onMerge, onDelete, onExport, onViewD
               </div>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>
-                  Period: {format(new Date(plan.start_date), 'MMM dd, yyyy')} - {format(new Date(plan.end_date), 'MMM dd, yyyy')}
+                  Period: {format(new Date(plan.start_date), 'dd/MM/yyyy')} - {format(new Date(plan.end_date), 'dd/MM/yyyy')}
                 </span>
                 <span>Events: {plan.calculated_events.toLocaleString()}</span>
                 {plan.unassigned_events > 0 && (

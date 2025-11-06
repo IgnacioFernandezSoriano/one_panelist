@@ -247,7 +247,7 @@ export function StatusHistorySection({ envioId, currentStatus, onStatusChange }:
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span>{format(new Date(entry.fecha_cambio), "MMM dd, yyyy HH:mm")}</span>
+                    <span>{format(new Date(entry.fecha_cambio), "dd/MM/yyyy HH:mm")}</span>
                     {entry.usuarios && (
                       <>
                         <span>•</span>

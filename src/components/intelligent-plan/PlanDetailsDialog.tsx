@@ -228,8 +228,8 @@ export function PlanDetailsDialog({ planId, open, onClose }: PlanDetailsDialogPr
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {format(new Date(planInfo.start_date), "MMM dd, yyyy")} -{" "}
-                    {format(new Date(planInfo.end_date), "MMM dd, yyyy")}
+                    {format(new Date(planInfo.start_date), "dd/MM/yyyy")} -{" "}
+                    {format(new Date(planInfo.end_date), "dd/MM/yyyy")}
                   </span>
                 </div>
 
@@ -281,7 +281,7 @@ export function PlanDetailsDialog({ planId, open, onClose }: PlanDetailsDialogPr
                         <TableBody>
                           {details.map((detail) => (
                             <TableRow key={detail.id}>
-                              <TableCell>{format(new Date(detail.fecha_programada), "MMM dd")}</TableCell>
+                              <TableCell>{format(new Date(detail.fecha_programada), "dd/MM")}</TableCell>
                               <TableCell className="font-mono text-xs">{detail.nodo_origen}</TableCell>
                               <TableCell>{detail.ciudad_origen}</TableCell>
                               <TableCell className="font-mono text-xs">{detail.nodo_destino}</TableCell>
@@ -302,7 +302,7 @@ export function PlanDetailsDialog({ planId, open, onClose }: PlanDetailsDialogPr
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold">{format(new Date(date), "MMMM dd, yyyy")}</span>
+                            <span className="font-semibold">{format(new Date(date), "dd/MM/yyyy")}</span>
                           </div>
                           <Badge variant="secondary">{dateDetails.length} events</Badge>
                         </div>
