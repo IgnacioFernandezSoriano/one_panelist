@@ -94,28 +94,8 @@ export default function UnassignedEvents() {
       // PASO 3: Obtener eventos del allocation plan
       const { data: planEvents, error: eventsError } = await supabase
         .from('generated_allocation_plan_details')
-        .select(`
-          id,
-          generated_allocation_plan_id,
-          nodo_origen,
-          nodo_destino,
-          fecha_programada,
-          status,
-          plan:generated_allocation_plans!inner(plan_name, cliente_id),
-          nodo_origen_data:nodos!generated_allocation_plan_details_nodo_origen_fkey(
-            codigo,
-            ciudad,
-            ciudad_id,
-            ciudades(clasificacion, region_id)
-          ),
-          nodo_destino_data:nodos!generated_allocation_plan_details_nodo_destino_fkey(
-            codigo,
-            ciudad,
-            ciudad_id,
-            ciudades(clasificacion, region_id)
-          )
-        `)
-        .eq('plan.cliente_id', clienteId)
+        .select('id, generated_allocation_plan_id, nodo_origen, nodo_destino, fecha_programada, status, cliente_id')
+        .eq('cliente_id', clienteId)
         .in('status', ['NOTIFIED', 'PENDING']);
 
       if (eventsError) throw eventsError;
@@ -182,16 +162,16 @@ export default function UnassignedEvents() {
           problematicEvents.push({
             id: event.id,
             plan_id: event.generated_allocation_plan_id,
-            plan_name: event.plan.plan_name,
+            plan_name: `Plan ${event.generated_allocation_plan_id}`,
             fecha_programada: event.fecha_programada,
             nodo_origen: event.nodo_origen,
             nodo_destino: event.nodo_destino,
-            ciudad_origen: event.nodo_origen_data?.ciudad || '',
-            ciudad_destino: event.nodo_destino_data?.ciudad || '',
-            ciudad_origen_clasificacion: event.nodo_origen_data?.ciudades?.clasificacion || 'urbano',
-            ciudad_destino_clasificacion: event.nodo_destino_data?.ciudades?.clasificacion || 'urbano',
-            region_origen_id: event.nodo_origen_data?.ciudades?.region_id || null,
-            region_destino_id: event.nodo_destino_data?.ciudades?.region_id || null,
+            ciudad_origen: event.nodo_origen,
+            ciudad_destino: event.nodo_destino,
+            ciudad_origen_clasificacion: 'urbano',
+            ciudad_destino_clasificacion: 'urbano',
+            region_origen_id: null,
+            region_destino_id: null,
             panelista_origen_id: panelistaOrigen?.id || null,
             panelista_destino_id: panelistaDestino?.id || null,
             panelista_origen_nombre: panelistaOrigen?.nombre_completo || null,
@@ -201,8 +181,8 @@ export default function UnassignedEvents() {
             status: event.status,
             issue_type: issueType,
             issue_description: issueDescription,
-            nodo_origen_data: event.nodo_origen_data,
-            nodo_destino_data: event.nodo_destino_data,
+            nodo_origen_data: null,
+            nodo_destino_data: null,
           });
         }
       });
