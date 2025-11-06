@@ -26,24 +26,23 @@ interface ValidationError {
 
 interface PendingValidation {
   id: number;
-  envio_id: number;
+  allocation_plan_detail_id: number;
+  cliente_id: number;
   validaciones_fallidas: Json;
   estado: string;
   created_at: string;
-  envios: {
+  generated_allocation_plan_details: {
     id: number;
     cliente_id: number;
     nodo_origen: string;
     nodo_destino: string;
     fecha_programada: string;
-    numero_etiqueta: string;
-    carrier_name: string;
+    numero_etiqueta: string | null;
     carrier_id: number | null;
-    producto_id: number;
+    producto_id: number | null;
     fecha_envio_real: string | null;
     fecha_recepcion_real: string | null;
-    panelista_origen_id: number | null;
-    panelista_destino_id: number | null;
+    status: string;
   };
 }
 
@@ -88,23 +87,21 @@ export default function EventosPendientesValidar() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('envios_validacion_pendiente')
+        .from('allocation_plan_validacion_pendiente')
         .select(`
           *,
-          envios (
+          generated_allocation_plan_details (
             id,
             cliente_id,
             nodo_origen,
             nodo_destino,
             fecha_programada,
             numero_etiqueta,
-            carrier_name,
             carrier_id,
             producto_id,
             fecha_envio_real,
             fecha_recepcion_real,
-            panelista_origen_id,
-            panelista_destino_id
+            status
           )
         `)
         .eq('estado', 'pending_review')
@@ -173,45 +170,53 @@ export default function EventosPendientesValidar() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      const detail = validation.generated_allocation_plan_details;
+      
+      // Calculate transit time
+      const transitDays = detail.fecha_envio_real && detail.fecha_recepcion_real
+        ? Math.floor((new Date(detail.fecha_recepcion_real).getTime() - new Date(detail.fecha_envio_real).getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+      
+      const transitHours = detail.fecha_envio_real && detail.fecha_recepcion_real
+        ? (new Date(detail.fecha_recepcion_real).getTime() - new Date(detail.fecha_envio_real).getTime()) / (1000 * 60 * 60)
+        : null;
+      
       // Insert into eventos_reales
       const { error: insertError } = await supabase
         .from('eventos_reales')
         .insert({
-          envio_id: validation.envios.id,
-          cliente_id: (await supabase.from('envios').select('cliente_id').eq('id', validation.envios.id).single()).data?.cliente_id,
-          carrier_id: (await supabase.from('envios').select('carrier_id').eq('id', validation.envios.id).single()).data?.carrier_id,
-          producto_id: validation.envios.producto_id,
-          nodo_origen: validation.envios.nodo_origen,
-          nodo_destino: validation.envios.nodo_destino,
-          panelista_origen_id: (await supabase.from('envios').select('panelista_origen_id').eq('id', validation.envios.id).single()).data?.panelista_origen_id,
-          panelista_destino_id: (await supabase.from('envios').select('panelista_destino_id').eq('id', validation.envios.id).single()).data?.panelista_destino_id,
-          fecha_programada: validation.envios.fecha_programada,
-          fecha_envio_real: (await supabase.from('envios').select('fecha_envio_real').eq('id', validation.envios.id).single()).data?.fecha_envio_real,
-          fecha_recepcion_real: (await supabase.from('envios').select('fecha_recepcion_real').eq('id', validation.envios.id).single()).data?.fecha_recepcion_real,
-          tiempo_transito_dias: (await supabase.from('envios').select('tiempo_transito_dias').eq('id', validation.envios.id).single()).data?.tiempo_transito_dias,
-          numero_etiqueta: validation.envios.numero_etiqueta,
-          tipo_producto: (await supabase.from('envios').select('tipo_producto').eq('id', validation.envios.id).single()).data?.tipo_producto,
-          carrier_name: validation.envios.carrier_name,
+          allocation_plan_detail_id: detail.id,
+          cliente_id: detail.cliente_id,
+          carrier_id: detail.carrier_id,
+          producto_id: detail.producto_id,
+          nodo_origen: detail.nodo_origen,
+          nodo_destino: detail.nodo_destino,
+          fecha_programada: detail.fecha_programada,
+          fecha_envio_real: detail.fecha_envio_real,
+          fecha_recepcion_real: detail.fecha_recepcion_real,
+          tiempo_transito_dias: transitDays,
+          tiempo_transito_horas: transitHours,
+          numero_etiqueta: detail.numero_etiqueta,
           validado_por: user?.id ? parseInt(user.id) : null
         });
 
       if (insertError) throw insertError;
 
-      // Update envio validation_status
+      // Update allocation plan detail status to VALIDATED
       const { error: updateError } = await supabase
-        .from('envios')
-        .update({ validation_status: 'validated' })
-        .eq('id', validation.envios.id);
+        .from('generated_allocation_plan_details')
+        .update({ status: 'VALIDATED' })
+        .eq('id', detail.id);
 
       if (updateError) throw updateError;
 
       // Update validation record
       const { error: validationError } = await supabase
-        .from('envios_validacion_pendiente')
+        .from('allocation_plan_validacion_pendiente')
         .update({ 
           estado: 'approved',
-          revisado_por: user?.id ? parseInt(user.id) : null,
-          fecha_revision: new Date().toISOString()
+          resuelto_por: user?.id ? parseInt(user.id) : null,
+          fecha_resolucion: new Date().toISOString()
         })
         .eq('id', validation.id);
 
@@ -236,24 +241,23 @@ export default function EventosPendientesValidar() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Update envio to CANCELLED
+      // Update allocation plan detail to CANCELLED
       const { error: updateError } = await supabase
-        .from('envios')
+        .from('generated_allocation_plan_details')
         .update({ 
-          estado: 'CANCELLED',
-          validation_status: 'rejected'
+          status: 'CANCELLED'
         })
-        .eq('id', validation.envios.id);
+        .eq('id', validation.generated_allocation_plan_details.id);
 
       if (updateError) throw updateError;
 
       // Update validation record
       const { error: validationError } = await supabase
-        .from('envios_validacion_pendiente')
+        .from('allocation_plan_validacion_pendiente')
         .update({ 
-          estado: 'rejected',
-          revisado_por: user?.id ? parseInt(user.id) : null,
-          fecha_revision: new Date().toISOString()
+          estado: 'cancelled',
+          resuelto_por: user?.id ? parseInt(user.id) : null,
+          fecha_resolucion: new Date().toISOString()
         })
         .eq('id', validation.id);
 
@@ -424,20 +428,20 @@ export default function EventosPendientesValidar() {
                           )}
                         </Button>
                       </TableCell>
-                      <TableCell className="font-medium">#{validation.envio_id}</TableCell>
+                      <TableCell className="font-medium">#{validation.allocation_plan_detail_id}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <span className="font-mono text-xs">{validation.envios.nodo_origen}</span>
+                          <span className="font-mono text-xs">{validation.generated_allocation_plan_details.nodo_origen}</span>
                           <span>→</span>
-                          <span className="font-mono text-xs">{validation.envios.nodo_destino}</span>
+                          <span className="font-mono text-xs">{validation.generated_allocation_plan_details.nodo_destino}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        {format(new Date(validation.envios.fecha_programada), 'PP')}
+                        {format(new Date(validation.generated_allocation_plan_details.fecha_programada), 'dd/MM/yyyy')}
                       </TableCell>
-                      <TableCell>{validation.envios.carrier_name || '-'}</TableCell>
+                      <TableCell>-</TableCell>
                       <TableCell className="font-mono text-xs">
-                        {validation.envios.numero_etiqueta || '-'}
+                        {validation.generated_allocation_plan_details.numero_etiqueta || '-'}
                       </TableCell>
                       <TableCell>{getSeverityBadge(validation.validaciones_fallidas)}</TableCell>
                       <TableCell>
