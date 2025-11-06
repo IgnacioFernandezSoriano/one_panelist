@@ -94,14 +94,14 @@ export default function UnassignedEvents() {
       // PASO 3: Obtener información de nodos con ciudades y regiones
       const { data: nodosData, error: nodosError } = await supabase
         .from('nodos')
-        .select('id, ciudad_id, ciudades!inner(id, clasificacion, region_id)')
+        .select('codigo, ciudad_id, ciudades!inner(id, clasificacion, region_id)')
         .eq('cliente_id', clienteId);
 
       if (nodosError) throw nodosError;
 
       const nodosCiudadMap = new Map(
         nodosData?.map(n => [
-          n.id,
+          n.codigo,
           {
             ciudad_id: n.ciudad_id,
             clasificacion: n.ciudades.clasificacion,
