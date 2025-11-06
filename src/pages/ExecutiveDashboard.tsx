@@ -914,7 +914,7 @@ export default function ExecutiveDashboard() {
                   </div>
                   <div 
                     className="p-3 bg-red-50 rounded-lg cursor-pointer hover:bg-red-100 transition-colors"
-                    onClick={() => navigate('/eventos-reales?without_panelist=true')}
+                    onClick={() => navigate('/envios/eventos-reales?without_panelist=true')}
                   >
                     <p className="text-xs text-muted-foreground">Events w/o Panelist</p>
                     <p className="text-lg font-bold text-red-600">{stats.eventsWithoutPanelistCount}</p>
