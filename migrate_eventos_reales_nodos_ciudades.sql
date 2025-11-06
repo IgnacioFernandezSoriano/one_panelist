@@ -3,7 +3,7 @@
 -- =====================================================
 -- This migration modifies eventos_reales to:
 -- 1. Make allocation_plan_detail_id nullable
--- 2. Replace nodo_origen/nodo_destino (VARCHAR) with nodo_origen_id/nodo_destino_id (INTEGER)
+-- 2. Use nodo_origen/nodo_destino as VARCHAR(50) FK to nodos(codigo)
 -- 3. Add ciudad_origen and ciudad_destino fields
 -- 4. Make panelista_origen_id and panelista_destino_id NOT NULL
 -- 5. Make required fields NOT NULL according to specification
@@ -22,29 +22,29 @@ DROP TABLE IF EXISTS public.eventos_reales CASCADE;
 CREATE TABLE public.eventos_reales (
   id SERIAL PRIMARY KEY,
   
-  -- Reference to the allocation plan detail (NOW NULLABLE for synthetic events)
-  allocation_plan_detail_id INTEGER REFERENCES public.generated_allocation_plan_details(id) ON DELETE CASCADE,
+  -- Reference to the allocation plan detail (NULLABLE for synthetic events)
+  allocation_plan_detail_id INTEGER,
   
   -- Cliente reference (NOT NULL)
-  cliente_id INTEGER NOT NULL REFERENCES public.clientes(id) ON DELETE CASCADE,
+  cliente_id INTEGER NOT NULL,
   
   -- Carrier and Product (NOT NULL)
-  carrier_id INTEGER NOT NULL REFERENCES public.carriers(id) ON DELETE RESTRICT,
-  producto_id INTEGER NOT NULL REFERENCES public.productos_cliente(id) ON DELETE RESTRICT,
+  carrier_id INTEGER NOT NULL,
+  producto_id INTEGER NOT NULL,
   
-  -- Nodes as VARCHAR(50) references to codigo (NOT NULL)
-  nodo_origen VARCHAR(50) NOT NULL REFERENCES public.nodos(codigo) ON DELETE RESTRICT,
-  nodo_destino VARCHAR(50) NOT NULL REFERENCES public.nodos(codigo) ON DELETE RESTRICT,
+  -- Nodes as VARCHAR(50) (NOT NULL)
+  nodo_origen VARCHAR(50) NOT NULL,
+  nodo_destino VARCHAR(50) NOT NULL,
   
   -- Cities (NOT NULL)
   ciudad_origen VARCHAR NOT NULL,
   ciudad_destino VARCHAR NOT NULL,
   
   -- Panelistas (NOT NULL)
-  panelista_origen_id INTEGER NOT NULL REFERENCES public.panelistas(id) ON DELETE RESTRICT,
-  panelista_destino_id INTEGER NOT NULL REFERENCES public.panelistas(id) ON DELETE RESTRICT,
+  panelista_origen_id INTEGER NOT NULL,
+  panelista_destino_id INTEGER NOT NULL,
   
-  -- Dates (fecha_programada is now nullable, real dates are NOT NULL)
+  -- Dates (fecha_programada is nullable, real dates are NOT NULL)
   fecha_programada DATE,
   fecha_envio_real TIMESTAMPTZ NOT NULL,
   fecha_recepcion_real TIMESTAMPTZ NOT NULL,
@@ -58,7 +58,7 @@ CREATE TABLE public.eventos_reales (
   
   -- Validation info (NOT NULL)
   fecha_validacion TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  validado_por INTEGER REFERENCES public.usuarios(id) ON DELETE SET NULL,
+  validado_por INTEGER,
   
   -- Audit (NOT NULL, auto-generated)
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -66,7 +66,55 @@ CREATE TABLE public.eventos_reales (
 );
 
 -- =====================================================
--- Step 3: Create indexes for eventos_reales
+-- Step 3: Add foreign key constraints
+-- =====================================================
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_allocation_plan 
+  FOREIGN KEY (allocation_plan_detail_id) 
+  REFERENCES public.generated_allocation_plan_details(id) ON DELETE CASCADE;
+
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_cliente 
+  FOREIGN KEY (cliente_id) 
+  REFERENCES public.clientes(id) ON DELETE CASCADE;
+
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_carrier 
+  FOREIGN KEY (carrier_id) 
+  REFERENCES public.carriers(id) ON DELETE RESTRICT;
+
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_producto 
+  FOREIGN KEY (producto_id) 
+  REFERENCES public.productos_cliente(id) ON DELETE RESTRICT;
+
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_nodo_origen 
+  FOREIGN KEY (nodo_origen) 
+  REFERENCES public.nodos(codigo) ON DELETE RESTRICT;
+
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_nodo_destino 
+  FOREIGN KEY (nodo_destino) 
+  REFERENCES public.nodos(codigo) ON DELETE RESTRICT;
+
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_panelista_origen 
+  FOREIGN KEY (panelista_origen_id) 
+  REFERENCES public.panelistas(id) ON DELETE RESTRICT;
+
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_panelista_destino 
+  FOREIGN KEY (panelista_destino_id) 
+  REFERENCES public.panelistas(id) ON DELETE RESTRICT;
+
+ALTER TABLE public.eventos_reales 
+  ADD CONSTRAINT fk_eventos_reales_validado_por 
+  FOREIGN KEY (validado_por) 
+  REFERENCES public.usuarios(id) ON DELETE SET NULL;
+
+-- =====================================================
+-- Step 4: Create indexes for eventos_reales
 -- =====================================================
 CREATE INDEX idx_eventos_reales_cliente ON public.eventos_reales(cliente_id);
 CREATE INDEX idx_eventos_reales_allocation_detail ON public.eventos_reales(allocation_plan_detail_id);
@@ -84,12 +132,12 @@ CREATE INDEX idx_eventos_reales_fecha_envio ON public.eventos_reales(fecha_envio
 CREATE INDEX idx_eventos_reales_fecha_recepcion ON public.eventos_reales(fecha_recepcion_real);
 
 -- =====================================================
--- Step 4: Enable RLS on eventos_reales
+-- Step 5: Enable RLS on eventos_reales
 -- =====================================================
 ALTER TABLE public.eventos_reales ENABLE ROW LEVEL SECURITY;
 
 -- =====================================================
--- Step 5: Create RLS Policies for eventos_reales
+-- Step 6: Create RLS Policies for eventos_reales
 -- =====================================================
 CREATE POLICY "Superadmins can manage all eventos_reales"
   ON public.eventos_reales FOR ALL
@@ -108,13 +156,21 @@ CREATE POLICY "Users can insert eventos_reales in their cliente"
   WITH CHECK (cliente_id = get_user_cliente_id());
 
 -- =====================================================
--- Step 6: Create trigger for updated_at
+-- Step 7: Create trigger for updated_at
 -- =====================================================
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
 CREATE TRIGGER update_eventos_reales_updated_at BEFORE UPDATE ON public.eventos_reales
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =====================================================
--- Step 7: Update validate_and_move_to_eventos_reales function
+-- Step 8: Update validate_and_move_to_eventos_reales function
 -- =====================================================
 CREATE OR REPLACE FUNCTION validate_and_move_to_eventos_reales(
   p_allocation_plan_detail_id INTEGER,
@@ -278,12 +334,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- =====================================================
--- Step 8: Add comments
+-- Step 9: Add comments
 -- =====================================================
-COMMENT ON TABLE public.eventos_reales IS 'Validated events that have completed the full cycle and passed all validations. Now includes node IDs and cities.';
+COMMENT ON TABLE public.eventos_reales IS 'Validated events that have completed the full cycle and passed all validations. Uses nodo codigo and cities.';
 COMMENT ON COLUMN public.eventos_reales.allocation_plan_detail_id IS 'Reference to allocation plan detail. Nullable to allow synthetic test events.';
-COMMENT ON COLUMN public.eventos_reales.nodo_origen IS 'Origin node codigo reference';
-COMMENT ON COLUMN public.eventos_reales.nodo_destino IS 'Destination node codigo reference';
+COMMENT ON COLUMN public.eventos_reales.nodo_origen IS 'Origin node codigo reference (FK to nodos.codigo)';
+COMMENT ON COLUMN public.eventos_reales.nodo_destino IS 'Destination node codigo reference (FK to nodos.codigo)';
 COMMENT ON COLUMN public.eventos_reales.ciudad_origen IS 'Origin city from node';
 COMMENT ON COLUMN public.eventos_reales.ciudad_destino IS 'Destination city from node';
 
