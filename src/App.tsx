@@ -17,6 +17,7 @@ import EventosPendientesValidar from "./pages/EventosPendientesValidar";
 import EventosReales from "./pages/EventosReales";
 import NodosDescubiertos from "./pages/NodosDescubiertos";
 import UnassignedEvents from "./pages/UnassignedEvents";
+import PanelistVacations from "./pages/PanelistVacations";
 import NodeDetail from "./pages/NodeDetail";
 import Nodos from "./pages/Nodos";
 import Topology from "./pages/Topology";
@@ -78,6 +79,7 @@ const App = () => {
             <Route path="/dashboard" element={<ExecutiveDashboard />} />
             <Route path="/dashboard-old" element={<Dashboard />} />
             <Route path="/panelistas" element={<Panelistas />} />
+            <Route path="/panelistas/vacations" element={<PanelistVacations />} />
             <Route path="/envios" element={<Envios />} />
             <Route path="/envios/nuevo" element={<NuevoEnvio />} />
             <Route path="/envios/intelligent-plan-generator" element={<IntelligentPlanGenerator />} />

@@ -210,6 +210,7 @@ const AppSidebarContent = () => {
   // Topology is now a direct link, no submenu items
 
   const panelistItems = [
+    { icon: Calendar, label: "Vacations", path: "/panelistas/vacations" },
     { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
     { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
   ];

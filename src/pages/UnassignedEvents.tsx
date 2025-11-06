@@ -85,10 +85,9 @@ export default function UnassignedEvents() {
 
       // PASO 2: Obtener bajas de panelistas
       const { data: bajas, error: bajasError } = await supabase
-        .from('scheduled_leaves')
-        .select('panelista_id, leave_start_date, leave_end_date')
-        .eq('cliente_id', clienteId)
-        .in('status', ['scheduled', 'active']);
+        .from('panelist_vacations')
+        .select('panelista_id, fecha_inicio, fecha_fin')
+        .eq('cliente_id', clienteId);
 
       if (bajasError) throw bajasError;
 
@@ -141,8 +140,8 @@ export default function UnassignedEvents() {
           // Verificar si está de baja en la fecha del evento
           const bajasDelPanelista = bajas?.filter(b => b.panelista_id === panelistaOrigen.id);
           const estaDeBaja = bajasDelPanelista?.some(baja => {
-            const inicio = parseISO(baja.leave_start_date);
-            const fin = parseISO(baja.leave_end_date);
+            const inicio = parseISO(baja.fecha_inicio);
+            const fin = parseISO(baja.fecha_fin);
             return fechaEvento >= inicio && fechaEvento <= fin;
           });
 
@@ -164,8 +163,8 @@ export default function UnassignedEvents() {
           // Verificar si está de baja en la fecha del evento
           const bajasDelPanelista = bajas?.filter(b => b.panelista_id === panelistaDestino.id);
           const estaDeBaja = bajasDelPanelista?.some(baja => {
-            const inicio = parseISO(baja.leave_start_date);
-            const fin = parseISO(baja.leave_end_date);
+            const inicio = parseISO(baja.fecha_inicio);
+            const fin = parseISO(baja.fecha_fin);
             return fechaEvento >= inicio && fechaEvento <= fin;
           });
 
