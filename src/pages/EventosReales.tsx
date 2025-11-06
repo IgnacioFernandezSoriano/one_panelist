@@ -220,62 +220,44 @@ export default function EventosReales() {
       setCiudades(ciudadesRes.data || []);
       setRegiones(regionesRes.data || []);
 
-      // Fetch eventos reales with joins (using view with standards)
-      const { data, error } = await supabase
-        .from("eventos_reales_with_standards")
-        .select(`
-          *,
-          carriers:carrier_id (
-            legal_name,
-            carrier_code,
-            commercial_name,
-            status
-          ),
-          productos_cliente:producto_id (
-            nombre_producto,
-            codigo_producto,
-            standard_delivery_hours
-          ),
-          panelista_origen:panelistas!panelista_origen_id (
-            nombre_completo
-          ),
-          panelista_destino:panelistas!panelista_destino_id (
-            nombre_completo
-          ),
-          validado_por_usuario:usuarios!validado_por (
-            nombre_completo
-          ),
-          nodo_origen_data:nodos!nodo_origen (
-            id,
-            codigo,
-            ciudad_id,
-            region_id,
-            ciudad,
-            ciudades (
-              nombre,
-              region_id,
-              regiones (
-                nombre
-              )
-            )
-          ),
-          nodo_destino_data:nodos!nodo_destino (
-            id,
-            codigo,
-            ciudad_id,
-            region_id,
-            ciudad,
-            ciudades (
-              nombre,
-              region_id,
-              regiones (
-                nombre
-              )
-            )
-          )
-        `)
-        .eq("cliente_id", clienteId)
-        .order("fecha_validacion", { ascending: false});
+      // Fetch eventos reales with standards using RPC function
+      const { data: eventosData, error: eventosError } = await supabase
+        .rpc('get_eventos_reales_with_standards', { p_cliente_id: clienteId });
+
+      if (eventosError) throw eventosError;
+
+      // Fetch related data for each evento
+      const eventosWithRelations = await Promise.all(
+        (eventosData || []).map(async (evento: any) => {
+          const [carrierRes, productoRes, panelistaOrigenRes, panelistaDestinoRes, validadorRes, nodoOrigenRes, nodoDestinoRes] = await Promise.all([
+            evento.carrier_id ? supabase.from('carriers').select('legal_name, carrier_code, commercial_name, status').eq('id', evento.carrier_id).single() : Promise.resolve({ data: null }),
+            evento.producto_id ? supabase.from('productos_cliente').select('nombre_producto, codigo_producto, standard_delivery_hours').eq('id', evento.producto_id).single() : Promise.resolve({ data: null }),
+            evento.panelista_origen_id ? supabase.from('panelistas').select('nombre_completo').eq('id', evento.panelista_origen_id).single() : Promise.resolve({ data: null }),
+            evento.panelista_destino_id ? supabase.from('panelistas').select('nombre_completo').eq('id', evento.panelista_destino_id).single() : Promise.resolve({ data: null }),
+            evento.validado_por ? supabase.from('usuarios').select('nombre_completo').eq('id', evento.validado_por).single() : Promise.resolve({ data: null }),
+            evento.nodo_origen ? supabase.from('nodos').select('id, codigo, ciudad_id, region_id, ciudad, ciudades(nombre, region_id, regiones(nombre))').eq('codigo', evento.nodo_origen).single() : Promise.resolve({ data: null }),
+            evento.nodo_destino ? supabase.from('nodos').select('id, codigo, ciudad_id, region_id, ciudad, ciudades(nombre, region_id, regiones(nombre))').eq('codigo', evento.nodo_destino).single() : Promise.resolve({ data: null }),
+          ]);
+
+          return {
+            ...evento,
+            carriers: carrierRes.data,
+            productos_cliente: productoRes.data,
+            panelista_origen: panelistaOrigenRes.data,
+            panelista_destino: panelistaDestinoRes.data,
+            validado_por_usuario: validadorRes.data,
+            nodo_origen_data: nodoOrigenRes.data,
+            nodo_destino_data: nodoDestinoRes.data,
+          };
+        })
+      );
+
+      // Sort by fecha_validacion descending
+      const sortedEventos = eventosWithRelations.sort((a, b) => 
+        new Date(b.fecha_validacion).getTime() - new Date(a.fecha_validacion).getTime()
+      );
+
+      const { data, error } = { data: sortedEventos, error: null };
 
       if (error) throw error;
 
