@@ -50,7 +50,8 @@ import {
   Brain,
   Clock,
   Wrench,
-  CheckCircle
+  CheckCircle,
+  Calendar
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { User } from "@supabase/supabase-js";
