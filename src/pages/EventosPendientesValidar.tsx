@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Info, Search, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp, Eye } from "lucide-react";
+import { Info, Search, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp, Eye, BookOpen } from "lucide-react";
 import { QuickFixValidationForm } from "@/components/validation/QuickFixValidationForm";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import ValidationDetailsDialog from "@/components/validation/ValidationDetailsDialog";
+import ValidationRulesDialog from "@/components/validation/ValidationRulesDialog";
 import { format } from "date-fns";
 import type { Json } from "@/integrations/supabase/types";
 
@@ -74,6 +75,7 @@ export default function EventosPendientesValidar() {
     warning: 0,
     info: 0
   });
+  const [rulesDialogOpen, setRulesDialogOpen] = useState(false);
 
   useEffect(() => {
     loadValidations();
@@ -319,13 +321,23 @@ export default function EventosPendientesValidar() {
     <AppLayout>
       <div className="p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Pending Validation Events
-          </h1>
-          <p className="text-muted-foreground">
-            Review and validate events that require manual approval
-          </p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Pending Validation Events
+            </h1>
+            <p className="text-muted-foreground">
+              Review and validate events that require manual approval
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setRulesDialogOpen(true)}
+            className="gap-2"
+          >
+            <BookOpen className="h-4 w-4" />
+            Validation Rules
+          </Button>
         </div>
 
         {/* Stats Cards */}
@@ -558,7 +570,7 @@ export default function EventosPendientesValidar() {
           open={detailsDialogOpen}
           onOpenChange={setDetailsDialogOpen}
           validaciones={parseValidationErrors(selectedValidation.validaciones_fallidas)}
-          envioId={selectedValidation.envio_id}
+          envioId={selectedValidation.allocation_plan_detail_id}
         />
       )}
 
@@ -594,6 +606,12 @@ export default function EventosPendientesValidar() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Validation Rules Dialog */}
+      <ValidationRulesDialog
+        open={rulesDialogOpen}
+        onOpenChange={setRulesDialogOpen}
+      />
     </AppLayout>
   );
 }
