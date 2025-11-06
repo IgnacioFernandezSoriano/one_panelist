@@ -429,7 +429,7 @@ export default function E2EMeasurement() {
       
       if (!cityStats.has(key)) {
         cityStats.set(key, {
-          region: evento.nodo_destino_data?.regiones?.nombre || 'N/A',
+          region: evento.nodo_destino_data?.ciudades?.regiones?.nombre || 'N/A',
           city: evento.ciudad_destino || 'Unknown',
           events: [],
           standardDays: 0,
@@ -773,13 +773,12 @@ export default function E2EMeasurement() {
         {/* J+n Cumulative Performance Table - MOVED TO TOP */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>J+n Cumulative Performance</CardTitle>
-                <CardDescription>Cumulative delivery percentage by day after shipment</CardDescription>
-              </div>
+            <CardTitle>J+n Cumulative Performance</CardTitle>
+            <CardDescription>Cumulative delivery percentage by day after shipment</CardDescription>
+            <div className="mt-4">
+              <Label className="text-sm font-medium">Filter by Origin City</Label>
               <Select value={selectedOriginCity} onValueChange={setSelectedOriginCity}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[250px] mt-2">
                   <SelectValue placeholder="Origin City" />
                 </SelectTrigger>
                 <SelectContent>
