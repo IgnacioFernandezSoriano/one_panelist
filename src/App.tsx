@@ -54,6 +54,7 @@ import Documentation from "./pages/Documentation";
 import Profile from "./pages/Profile";
 import RegulatorDashboard from "./pages/RegulatorDashboard";
 import E2EMeasurement from "./pages/reporting/E2EMeasurement";
+import ExecutiveDashboard from "./pages/ExecutiveDashboard";
 
 const queryClient = new QueryClient();
 
@@ -73,7 +74,8 @@ const App = () => {
             <Route path="/unauthorized" element={<Unauthorized />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/documentation" element={<Documentation />} />
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={<ExecutiveDashboard />} />
+            <Route path="/dashboard-old" element={<Dashboard />} />
             <Route path="/panelistas" element={<Panelistas />} />
             <Route path="/envios" element={<Envios />} />
             <Route path="/envios/nuevo" element={<NuevoEnvio />} />
