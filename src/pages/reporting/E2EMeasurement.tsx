@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCliente } from "@/contexts/ClienteContext";
+import { useUserRole } from "@/hooks/useUserRole";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -50,7 +51,8 @@ interface EventoReal {
 }
 
 export default function E2EMeasurement() {
-  const { clienteId } = useCliente();
+  const { clienteId, availableClientes, setSelectedClienteId } = useCliente();
+  const { isSuperAdmin } = useUserRole();
   const [loading, setLoading] = useState(true);
   const [eventos, setEventos] = useState<EventoReal[]>([]);
   const [carriers, setCarriers] = useState<any[]>([]);
@@ -585,6 +587,28 @@ export default function E2EMeasurement() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Cliente Filter (only for superadmin) */}
+              {isSuperAdmin() && (
+                <div className="space-y-2">
+                  <Label>Client Account</Label>
+                  <Select 
+                    value={clienteId?.toString() || ""} 
+                    onValueChange={(value) => setSelectedClienteId(parseInt(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableClientes.map((cliente) => (
+                        <SelectItem key={cliente.id} value={cliente.id.toString()}>
+                          {cliente.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               {/* Carrier Filter */}
               <div className="space-y-2">
                 <Label>Carrier</Label>
