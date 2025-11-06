@@ -53,6 +53,7 @@ import RegistrarEnvioRecepcion from "./pages/RegistrarEnvioRecepcion2";
 import Documentation from "./pages/Documentation";
 import Profile from "./pages/Profile";
 import RegulatorDashboard from "./pages/RegulatorDashboard";
+import E2EMeasurement from "./pages/reporting/E2EMeasurement";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,7 @@ const App = () => {
 
             {/* Reporting Routes */}
             <Route path="/reporting/regulator" element={<RegulatorDashboard />} />
+            <Route path="/reporting/e2e-measurement" element={<E2EMeasurement />} />
 
             {/* Admin & Super Admin Routes */}
             <Route path="/configuracion/usuarios" element={
