@@ -143,7 +143,6 @@ const NodosDescubiertos = () => {
           ciudad_id,
           region_id,
           pais,
-          panelista_id,
           region:regiones(id, nombre),
           ciudad_info:ciudades(id, nombre, clasificacion)
         `)
@@ -151,45 +150,21 @@ const NodosDescubiertos = () => {
 
       if (nodosError) throw nodosError;
 
-      // Fetch panelistas information from TWO sources:
-      // 1. From nodos.panelista_id (if assigned)
-      const panelistaIds = nodos
-        ?.filter(n => n.panelista_id)
-        .map(n => n.panelista_id) || [];
-
-      const { data: panelistasByIds, error: panelistasByIdsError } = await supabase
-        .from('panelistas')
-        .select('id, nombre_completo')
-        .in('id', panelistaIds);
-
-      if (panelistasByIdsError) throw panelistasByIdsError;
-
-      // 2. From panelistas.nodo_asignado (main source until event is sent)
+      // Fetch panelistas information by nodo_asignado
       const { data: panelistasByNodo, error: panelistasByNodoError } = await supabase
         .from('panelistas')
         .select('id, nombre_completo, nodo_asignado')
         .in('nodo_asignado', nodeCodes);
 
       if (panelistasByNodoError) throw panelistasByNodoError;
-
-      // Create maps for quick panelista lookup
-      // Map by panelista ID
-      const panelistasByIdMap = new Map(
-        panelistasByIds?.map(p => [p.id, p.nombre_completo]) || []
-      );
       
-      // Map by nodo codigo
+      // Map by nodo codigo for quick lookup
       const panelistasByNodoMap = new Map(
         panelistasByNodo?.map(p => [p.nodo_asignado, { id: p.id, nombre_completo: p.nombre_completo }]) || []
       );
-
-      // Combine both sources: prioritize nodos.panelista_id, fallback to panelistas.nodo_asignado
-      const panelistasMap = new Map();
-      panelistasByIdMap.forEach((nombre, id) => panelistasMap.set(id, nombre));
       
-      // Also collect all panelista IDs for leaves query
+      // Collect all panelista IDs for leaves query
       const allPanelistaIds = new Set<number>();
-      panelistaIds.forEach(id => allPanelistaIds.add(id));
       panelistasByNodo?.forEach(p => allPanelistaIds.add(p.id));
 
       // Fetch all scheduled leaves for all panelistas found
@@ -209,20 +184,13 @@ const NodosDescubiertos = () => {
         const nodo = nodosMap.get(nodoCodigo);
         if (!nodo) return { available: false, reason: 'sin_panelista' };
         
-        // Try to find panelista from TWO sources:
-        // 1. From nodos.panelista_id (if event already sent)
-        let panelistaId = nodo.panelista_id;
+        // Find panelista from panelistas.nodo_asignado
+        const panelistaInfo = panelistasByNodoMap.get(nodoCodigo);
         
-        // 2. From panelistas.nodo_asignado (before event is sent)
-        if (!panelistaId) {
-          const panelistaInfo = panelistasByNodoMap.get(nodoCodigo);
-          if (panelistaInfo) {
-            panelistaId = panelistaInfo.id;
-          }
-        }
+        // If no panelista found, node has no panelista
+        if (!panelistaInfo) return { available: false, reason: 'sin_panelista' };
         
-        // If no panelista found in either source, node has no panelista
-        if (!panelistaId) return { available: false, reason: 'sin_panelista' };
+        const panelistaId = panelistaInfo.id;
 
         // Check if panelist is on leave on this date
         const panelistLeaves = leaves?.filter(l => l.panelista_id === panelistaId) || [];
