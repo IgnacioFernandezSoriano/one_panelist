@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertCircle, Search, UserX, Calendar, ChevronDown, ChevronRight, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useCliente } from "@/contexts/ClienteContext";
 import { format } from "date-fns";
 
 interface AffectedEvent {
@@ -49,6 +50,7 @@ interface NodeRisk {
 
 const NodosDescubiertos = () => {
   const navigate = useNavigate();
+  const { clienteId } = useCliente();
   const [risks, setRisks] = useState<NodeRisk[]>([]);
   const [filteredRisks, setFilteredRisks] = useState<NodeRisk[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,8 +75,10 @@ const NodosDescubiertos = () => {
   const panelistaBajaCount = filteredRisks.filter(r => r.risk_type === 'panelista_de_baja').length;
 
   useEffect(() => {
-    loadNodeRisks();
-  }, []);
+    if (clienteId) {
+      loadNodeRisks();
+    }
+  }, [clienteId]);
 
   useEffect(() => {
     applyFilters();
@@ -111,10 +115,11 @@ const NodosDescubiertos = () => {
         .from('generated_allocation_plan_details')
         .select(`
           *,
-          plan:generated_allocation_plans!inner(status),
+          plan:generated_allocation_plans!inner(status, cliente_id),
           producto:productos_cliente(id, nombre_producto),
           carrier:carriers(id, legal_name)
         `)
+        .eq('plan.cliente_id', clienteId)
         .in('plan.status', ['draft', 'merged'])
         .neq('status', 'CANCELLED');
 
@@ -146,6 +151,7 @@ const NodosDescubiertos = () => {
           region:regiones(id, nombre),
           ciudad_info:ciudades(id, nombre, clasificacion)
         `)
+        .eq('cliente_id', clienteId)
         .in('codigo', nodeCodes);
 
       if (nodosError) throw nodosError;
@@ -154,6 +160,7 @@ const NodosDescubiertos = () => {
       const { data: panelistasByNodo, error: panelistasByNodoError } = await supabase
         .from('panelistas')
         .select('id, nombre_completo, nodo_asignado')
+        .eq('cliente_id', clienteId)
         .in('nodo_asignado', nodeCodes);
 
       if (panelistasByNodoError) throw panelistasByNodoError;
