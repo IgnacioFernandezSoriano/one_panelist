@@ -94,6 +94,8 @@ interface EventoReal {
       };
     };
   };
+  standard_transit_days?: number;
+  target_performance_percentage?: number;
 }
 
 export default function EventosReales() {
@@ -119,6 +121,8 @@ export default function EventosReales() {
   const [regiones, setRegiones] = useState<any[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<EventoReal | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
 
   useEffect(() => {
     if (!roleLoading && clienteId) {
@@ -216,9 +220,9 @@ export default function EventosReales() {
       setCiudades(ciudadesRes.data || []);
       setRegiones(regionesRes.data || []);
 
-      // Fetch eventos reales with joins (including nodos)
+      // Fetch eventos reales with joins (using view with standards)
       const { data, error } = await supabase
-        .from("eventos_reales")
+        .from("eventos_reales_with_standards")
         .select(`
           *,
           carriers:carrier_id (
@@ -364,6 +368,7 @@ export default function EventosReales() {
     }
 
     setFilteredEventos(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
   };
 
   const handleExport = () => {
@@ -711,21 +716,35 @@ export default function EventosReales() {
 
       {/* Table */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
             Events ({filteredEventos.length} {filteredEventos.length === 1 ? "event" : "events"})
           </CardTitle>
+          <div className="flex items-center gap-2">
+            <Label className="text-sm text-muted-foreground">Items per page:</Label>
+            <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="200">200</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
+                  <TableHead>Tracking #</TableHead>
                   <TableHead>Carrier</TableHead>
                   <TableHead>Product</TableHead>
-                  <TableHead>Route</TableHead>
-                  <TableHead>Scheduled</TableHead>
+                  <TableHead>Origin</TableHead>
+                  <TableHead>Destination</TableHead>
                   <TableHead>Transit</TableHead>
                   <TableHead>Standard</TableHead>
                   <TableHead>Performance</TableHead>
@@ -741,13 +760,15 @@ export default function EventosReales() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEventos.map((evento) => (
+                  filteredEventos
+                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                    .map((evento) => (
                     <TableRow key={evento.id}>
-                      <TableCell className="font-mono">{evento.id}</TableCell>
+                      <TableCell className="font-mono text-sm">{evento.numero_etiqueta || "N/A"}</TableCell>
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">
-                            {evento.carriers?.legal_name || evento.carrier_name || "N/A"}
+                            {evento.carriers?.legal_name || "N/A"}
                           </span>
                           {evento.carriers?.carrier_code && (
                             <span className="text-xs text-muted-foreground">
@@ -761,28 +782,40 @@ export default function EventosReales() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col text-sm">
-                          <span>
+                          <span className="font-medium">
                             {evento.nodo_origen_data?.ciudades?.regiones?.nombre || "N/A"} - {evento.nodo_origen_data?.ciudades?.nombre || "N/A"}
                           </span>
-                          <span className="text-muted-foreground">↓</span>
-                          <span>
-                            {evento.nodo_destino_data?.ciudades?.regiones?.nombre || "N/A"} - {evento.nodo_destino_data?.ciudades?.nombre || "N/A"}
-                          </span>
+                          {evento.fecha_envio_real && (
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(evento.fecha_envio_real), "MMM dd, yyyy HH:mm")}
+                            </span>
+                          )}
                         </div>
                       </TableCell>
-                      <TableCell>{format(new Date(evento.fecha_programada), "MMM dd, yyyy")}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col text-sm">
+                          <span className="font-medium">
+                            {evento.nodo_destino_data?.ciudades?.regiones?.nombre || "N/A"} - {evento.nodo_destino_data?.ciudades?.nombre || "N/A"}
+                          </span>
+                          {evento.fecha_recepcion_real && (
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(evento.fecha_recepcion_real), "MMM dd, yyyy HH:mm")}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         {evento.tiempo_transito_dias ? `${evento.tiempo_transito_dias} days` : "N/A"}
                       </TableCell>
                       <TableCell>
-                        {evento.productos_cliente?.standard_delivery_hours 
-                          ? `${(evento.productos_cliente.standard_delivery_hours / 24).toFixed(1)} days`
+                        {evento.standard_transit_days 
+                          ? `${evento.standard_transit_days} days`
                           : "N/A"}
                       </TableCell>
                       <TableCell>
                         {getPerformanceBadge(
                           evento.tiempo_transito_dias, 
-                          evento.productos_cliente?.standard_delivery_hours || null
+                          evento.standard_transit_days ? evento.standard_transit_days * 24 : null
                         )}
                       </TableCell>
                       <TableCell>
@@ -810,6 +843,52 @@ export default function EventosReales() {
               </TableBody>
             </Table>
           </div>
+          
+          {/* Pagination Controls */}
+          {filteredEventos.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredEventos.length)} of {filteredEventos.length} events
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm">
+                  Page {currentPage} of {Math.ceil(filteredEventos.length / itemsPerPage)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredEventos.length / itemsPerPage), p + 1))}
+                  disabled={currentPage >= Math.ceil(filteredEventos.length / itemsPerPage)}
+                >
+                  Next
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.ceil(filteredEventos.length / itemsPerPage))}
+                  disabled={currentPage >= Math.ceil(filteredEventos.length / itemsPerPage)}
+                >
+                  Last
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
