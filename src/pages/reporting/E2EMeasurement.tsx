@@ -56,7 +56,8 @@ export default function E2EMeasurement() {
   const [carriers, setCarriers] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   
-  // Filters  const [selectedCarrier, setSelectedCarrier] = useState<string>("all");
+  // Filters
+  const [selectedCarrier, setSelectedCarrier] = useState<string>("all");
   const [selectedProduct, setSelectedProduct] = useState<string>("all");
   const [selectedPeriod, setSelectedPeriod] = useState<string>("last_month");
   const [selectedOriginCity, setSelectedOriginCity] = useState<string>("all");
