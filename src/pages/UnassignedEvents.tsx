@@ -205,8 +205,6 @@ export default function UnassignedEvents() {
             status: event.status,
             issue_type: issueType,
             issue_description: issueDescription,
-            nodo_origen_data: null,
-            nodo_destino_data: null,
           });
         }
       });
