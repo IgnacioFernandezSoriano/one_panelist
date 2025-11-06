@@ -189,15 +189,15 @@ export default function ExecutiveDashboard() {
   const fetchAllocationPlansData = async () => {
     const { data: plans } = await supabase
       .from("generated_allocation_plans")
-      .select("id, estado, producto_id, productos_cliente(nombre_producto)")
+      .select("id, status, producto_id, created_at, productos_cliente(nombre_producto)")
       .eq("cliente_id", clienteId);
 
-    const activePlans = plans?.filter(p => p.estado === 'activo').length || 0;
-    const pendingPlans = plans?.filter(p => p.estado === 'pendiente').length || 0;
+    const activePlans = plans?.filter(p => p.status === 'merged').length || 0;
+    const pendingPlans = plans?.filter(p => p.status === 'draft').length || 0;
 
     const monthStart = startOfMonth(new Date());
     const completedPlansThisMonth = plans?.filter(p => 
-      p.estado === 'completado' && new Date(p.id) >= monthStart
+      p.status === 'merged' && new Date(p.created_at) >= monthStart
     ).length || 0;
 
     // Geographic coverage
