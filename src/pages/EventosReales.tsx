@@ -30,7 +30,7 @@ import { EventoRealDetailsDialog } from "@/components/eventos-reales/EventoRealD
 
 interface EventoReal {
   id: number;
-  envio_id: number;
+  allocation_plan_detail_id: number;
   cliente_id: number;
   carrier_id: number | null;
   producto_id: number | null;
@@ -42,9 +42,8 @@ interface EventoReal {
   fecha_envio_real: string | null;
   fecha_recepcion_real: string | null;
   tiempo_transito_dias: number | null;
+  tiempo_transito_horas: number | null;
   numero_etiqueta: string | null;
-  tipo_producto: string | null;
-  carrier_name: string | null;
   fecha_validacion: string;
   validado_por: number | null;
   carriers?: {

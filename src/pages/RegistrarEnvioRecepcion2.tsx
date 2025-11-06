@@ -233,10 +233,42 @@ export default function RegistrarEnvioRecepcion() {
         variant: "destructive",
       });
     } else {
-      toast({
-        title: "Éxito",
-        description: "Recepción registrada correctamente",
-      });
+      // Ejecutar validación automática
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        const { data: usuarioData } = await supabase
+          .from("usuarios")
+          .select("id")
+          .eq("email", userData.user.email)
+          .single();
+        
+        if (usuarioData) {
+          // Llamar a la función de validación
+          const { data: validationResult, error: validationError } = await supabase
+            .rpc("validate_and_move_to_eventos_reales", {
+              p_allocation_plan_detail_id: eventoId,
+              p_validado_por: usuarioData.id
+            });
+          
+          if (validationError) {
+            console.error("Error en validación:", validationError);
+          } else if (validationResult && validationResult.length > 0) {
+            const result = validationResult[0];
+            if (result.success) {
+              toast({
+                title: "Éxito",
+                description: "Recepción registrada y evento validado correctamente",
+              });
+            } else {
+              toast({
+                title: "Recepción registrada",
+                description: result.message,
+                variant: "default",
+              });
+            }
+          }
+        }
+      }
       
       // Recargar datos
       await loadEventosNotified();
