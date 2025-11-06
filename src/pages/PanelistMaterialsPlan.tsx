@@ -78,6 +78,7 @@ export default function PanelistMaterialsPlan() {
         .eq("cliente_id", clienteId)
         .gte("fecha_programada", startDate)
         .lte("fecha_programada", endDate)
+        .in("status", ["PENDING", "NOTIFIED"])
         .not("producto_id", "is", null);
 
       if (eventosError) {
@@ -307,7 +308,7 @@ export default function PanelistMaterialsPlan() {
             Panelist Materials Plan
           </h1>
           <p className="text-muted-foreground">
-            Calculate materials needed per panelist based on scheduled shipments
+            Calculate materials needed per panelist for pending and notified events (not yet sent)
           </p>
         </div>
 
@@ -319,7 +320,7 @@ export default function PanelistMaterialsPlan() {
               Date Range Filter
             </CardTitle>
             <CardDescription>
-              Select date range to calculate materials for scheduled shipments
+              Select date range to calculate materials for events not yet sent (PENDING and NOTIFIED status)
             </CardDescription>
           </CardHeader>
           <CardContent>
