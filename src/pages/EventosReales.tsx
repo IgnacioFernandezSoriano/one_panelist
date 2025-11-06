@@ -226,31 +226,46 @@ export default function EventosReales() {
 
       if (eventosError) throw eventosError;
 
-      // Fetch related data for each evento
-      const eventosWithRelations = await Promise.all(
-        (eventosData || []).map(async (evento: any) => {
-          const [carrierRes, productoRes, panelistaOrigenRes, panelistaDestinoRes, validadorRes, nodoOrigenRes, nodoDestinoRes] = await Promise.all([
-            evento.carrier_id ? supabase.from('carriers').select('legal_name, carrier_code, commercial_name, status').eq('id', evento.carrier_id).single() : Promise.resolve({ data: null }),
-            evento.producto_id ? supabase.from('productos_cliente').select('nombre_producto, codigo_producto, standard_delivery_hours').eq('id', evento.producto_id).single() : Promise.resolve({ data: null }),
-            evento.panelista_origen_id ? supabase.from('panelistas').select('nombre_completo').eq('id', evento.panelista_origen_id).single() : Promise.resolve({ data: null }),
-            evento.panelista_destino_id ? supabase.from('panelistas').select('nombre_completo').eq('id', evento.panelista_destino_id).single() : Promise.resolve({ data: null }),
-            evento.validado_por ? supabase.from('usuarios').select('nombre_completo').eq('id', evento.validado_por).single() : Promise.resolve({ data: null }),
-            evento.nodo_origen ? supabase.from('nodos').select('id, codigo, ciudad_id, region_id, ciudad, ciudades(nombre, region_id, regiones(nombre))').eq('codigo', evento.nodo_origen).single() : Promise.resolve({ data: null }),
-            evento.nodo_destino ? supabase.from('nodos').select('id, codigo, ciudad_id, region_id, ciudad, ciudades(nombre, region_id, regiones(nombre))').eq('codigo', evento.nodo_destino).single() : Promise.resolve({ data: null }),
-          ]);
+      if (!eventosData || eventosData.length === 0) {
+        setEventos([]);
+        setLoading(false);
+        return;
+      }
 
-          return {
-            ...evento,
-            carriers: carrierRes.data,
-            productos_cliente: productoRes.data,
-            panelista_origen: panelistaOrigenRes.data,
-            panelista_destino: panelistaDestinoRes.data,
-            validado_por_usuario: validadorRes.data,
-            nodo_origen_data: nodoOrigenRes.data,
-            nodo_destino_data: nodoDestinoRes.data,
-          };
-        })
-      );
+      // Get unique IDs for batch fetching
+      const carrierIds = [...new Set(eventosData.map((e: any) => e.carrier_id).filter(Boolean))];
+      const productoIds = [...new Set(eventosData.map((e: any) => e.producto_id).filter(Boolean))];
+      const panelistaIds = [...new Set([...eventosData.map((e: any) => e.panelista_origen_id), ...eventosData.map((e: any) => e.panelista_destino_id)].filter(Boolean))];
+      const usuarioIds = [...new Set(eventosData.map((e: any) => e.validado_por).filter(Boolean))];
+      const nodoCodigos = [...new Set([...eventosData.map((e: any) => e.nodo_origen), ...eventosData.map((e: any) => e.nodo_destino)].filter(Boolean))];
+
+      // Batch fetch all related data
+      const [carriersData, productosData, panelistasData, usuariosData, nodosData] = await Promise.all([
+        carrierIds.length > 0 ? supabase.from('carriers').select('id, legal_name, carrier_code, commercial_name, status').in('id', carrierIds) : Promise.resolve({ data: [] }),
+        productoIds.length > 0 ? supabase.from('productos_cliente').select('id, nombre_producto, codigo_producto, standard_delivery_hours').in('id', productoIds) : Promise.resolve({ data: [] }),
+        panelistaIds.length > 0 ? supabase.from('panelistas').select('id, nombre_completo').in('id', panelistaIds) : Promise.resolve({ data: [] }),
+        usuarioIds.length > 0 ? supabase.from('usuarios').select('id, nombre_completo').in('id', usuarioIds) : Promise.resolve({ data: [] }),
+        nodoCodigos.length > 0 ? supabase.from('nodos').select('codigo, ciudad_id, region_id, ciudad, ciudades(nombre, region_id, regiones(nombre))').in('codigo', nodoCodigos) : Promise.resolve({ data: [] }),
+      ]);
+
+      // Create lookup maps
+      const carriersMap = new Map((carriersData.data || []).map((c: any) => [c.id, c]));
+      const productosMap = new Map((productosData.data || []).map((p: any) => [p.id, p]));
+      const panelistasMap = new Map((panelistasData.data || []).map((p: any) => [p.id, p]));
+      const usuariosMap = new Map((usuariosData.data || []).map((u: any) => [u.id, u]));
+      const nodosMap = new Map((nodosData.data || []).map((n: any) => [n.codigo, n]));
+
+      // Map eventos with related data
+      const eventosWithRelations = eventosData.map((evento: any) => ({
+        ...evento,
+        carriers: carriersMap.get(evento.carrier_id) || null,
+        productos_cliente: productosMap.get(evento.producto_id) || null,
+        panelista_origen: panelistasMap.get(evento.panelista_origen_id) || null,
+        panelista_destino: panelistasMap.get(evento.panelista_destino_id) || null,
+        validado_por_usuario: usuariosMap.get(evento.validado_por) || null,
+        nodo_origen_data: nodosMap.get(evento.nodo_origen) || null,
+        nodo_destino_data: nodosMap.get(evento.nodo_destino) || null,
+      }));
 
       // Sort by fecha_validacion descending
       const sortedEventos = eventosWithRelations.sort((a, b) => 
