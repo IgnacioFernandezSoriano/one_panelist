@@ -264,9 +264,8 @@ export default function Topology() {
     return nodos.filter((n) => n.ciudad_id === ciudadId);
   };
 
-  const getPanelistaById = (panelistaId: number | null) => {
-    if (!panelistaId) return null;
-    return panelistas.find((p) => p.id === panelistaId);
+  const getPanelistaByNodo = (nodoCodigo: string) => {
+    return panelistas.find((p) => p.nodo_asignado === nodoCodigo);
   };
 
   const handleViewCliente = (cliente: Cliente) => {
@@ -505,7 +504,7 @@ export default function Topology() {
                                               </div>
 
                                               {getNodosByCiudad(ciudad.id).map((nodo) => {
-                                                const panelista = getPanelistaById(nodo.panelista_id);
+                                                const panelista = getPanelistaByNodo(nodo.codigo);
                                                 return (
                                                   <Card key={nodo.codigo} className="bg-muted/20">
                                                     <CardContent className="p-3">
@@ -514,7 +513,12 @@ export default function Topology() {
                                                           <GitBranch className="w-4 h-4 text-primary" />
                                                             <div className="flex-1">
                                                               <div className="flex items-center gap-2">
-                                                                <p className="font-medium text-sm">{nodo.codigo}</p>
+                                                                <button
+                                                                  onClick={() => handleViewNodo(nodo)}
+                                                                  className="font-medium text-sm text-primary hover:underline cursor-pointer"
+                                                                >
+                                                                  {nodo.codigo}
+                                                                </button>
                                                                 <Badge variant="outline" className="text-xs">Node</Badge>
                                                                 {getEstadoBadge(nodo.estado)}
                                                               </div>
