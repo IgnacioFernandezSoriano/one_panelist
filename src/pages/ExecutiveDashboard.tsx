@@ -907,7 +907,7 @@ export default function ExecutiveDashboard() {
                 <div className="grid grid-cols-3 gap-2">
                   <div 
                     className="p-3 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
-                    onClick={() => navigate('/nodos?unassigned=true')}
+                    onClick={() => navigate('/issues/nodos-descubiertos')}
                   >
                     <p className="text-xs text-muted-foreground">Unassigned Nodes</p>
                     <p className="text-lg font-bold text-orange-600">{stats.unassignedNodesCount}</p>
