@@ -578,6 +578,14 @@ export default function ExecutiveDashboard() {
             <p className="text-muted-foreground">Comprehensive overview of your postal quality operations</p>
           </div>
           <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => navigate('/registration-events')}
+              className="gap-2"
+              variant="default"
+            >
+              <Calendar className="h-4 w-4" />
+              Registration Events
+            </Button>
             <div className="text-sm text-muted-foreground">
               Last updated: {format(new Date(), 'MMM dd, HH:mm')}
             </div>
