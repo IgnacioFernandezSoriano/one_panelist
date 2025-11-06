@@ -328,13 +328,22 @@ export default function ExecutiveDashboard() {
       .eq("cliente_id", clienteId);
 
     // Check for unassigned nodes
-    const { data: unassignedNodes } = await supabase
+    // Get all nodes for this client
+    const { data: allNodes } = await supabase
       .from("nodos")
-      .select("id, codigo")
-      .eq("cliente_id", clienteId)
-      .is("panelista_id", null);
+      .select("codigo")
+      .eq("cliente_id", clienteId);
 
-    const unassignedNodesCount = unassignedNodes?.length || 0;
+    // Get all assigned nodes (from panelistas table)
+    const { data: assignedNodes } = await supabase
+      .from("panelistas")
+      .select("nodo_asignado")
+      .eq("cliente_id", clienteId)
+      .not("nodo_asignado", "is", null);
+
+    // Find nodes that are not assigned
+    const assignedNodeCodes = new Set(assignedNodes?.map(p => p.nodo_asignado) || []);
+    const unassignedNodesCount = allNodes?.filter(n => !assignedNodeCodes.has(n.codigo)).length || 0;
 
     // Check for events without panelist
     const { data: eventsWithoutPanelist } = await supabase
