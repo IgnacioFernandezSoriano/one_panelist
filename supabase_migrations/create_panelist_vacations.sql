@@ -25,9 +25,8 @@ CREATE POLICY "Users can view vacations from their cliente"
   FOR SELECT
   USING (
     cliente_id IN (
-      SELECT ur.cliente_id 
-      FROM public.user_roles ur
-      JOIN public.usuarios u ON u.id = ur.user_id
+      SELECT u.cliente_id 
+      FROM public.usuarios u
       WHERE u.email = auth.email()
     )
   );
@@ -37,9 +36,8 @@ CREATE POLICY "Users can insert vacations for their cliente"
   FOR INSERT
   WITH CHECK (
     cliente_id IN (
-      SELECT ur.cliente_id 
-      FROM public.user_roles ur
-      JOIN public.usuarios u ON u.id = ur.user_id
+      SELECT u.cliente_id 
+      FROM public.usuarios u
       WHERE u.email = auth.email()
     )
   );
@@ -49,9 +47,8 @@ CREATE POLICY "Users can update vacations from their cliente"
   FOR UPDATE
   USING (
     cliente_id IN (
-      SELECT ur.cliente_id 
-      FROM public.user_roles ur
-      JOIN public.usuarios u ON u.id = ur.user_id
+      SELECT u.cliente_id 
+      FROM public.usuarios u
       WHERE u.email = auth.email()
     )
   );
@@ -61,9 +58,8 @@ CREATE POLICY "Users can delete vacations from their cliente"
   FOR DELETE
   USING (
     cliente_id IN (
-      SELECT ur.cliente_id 
-      FROM public.user_roles ur
-      JOIN public.usuarios u ON u.id = ur.user_id
+      SELECT u.cliente_id 
+      FROM public.usuarios u
       WHERE u.email = auth.email()
     )
   );

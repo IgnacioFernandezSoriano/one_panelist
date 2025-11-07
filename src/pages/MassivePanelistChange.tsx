@@ -9,10 +9,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { ArrowLeft, CalendarIcon, Check, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCliente } from "@/contexts/ClienteContext";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,13 +42,13 @@ export default function MassivePanelistChange() {
   const [processing, setProcessing] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [affectedCount, setAffectedCount] = useState(0);
-  const [affectedNodes, setAffectedNodes] = useState<string[]>([]);
   
   // Form state
   const [currentPanelist, setCurrentPanelist] = useState<string>("");
   const [newPanelist, setNewPanelist] = useState<string>("");
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
+  const [motivo, setMotivo] = useState<string>("");
   
   // Combobox state - only one can be open at a time
   const [openCombo, setOpenCombo] = useState<"current" | "new" | null>(null);
@@ -128,6 +129,18 @@ export default function MassivePanelistChange() {
       return false;
     }
 
+    // Validate that start date is in the future
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (dateFrom < today) {
+      toast({
+        title: "Validation Error",
+        description: "Start date must be today or in the future",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     try {
       const fromDate = format(dateFrom, 'yyyy-MM-dd');
       const toDate = format(dateTo, 'yyyy-MM-dd');
@@ -155,15 +168,35 @@ export default function MassivePanelistChange() {
       // Validate new panelist if selected
       if (newPanelist) {
         const newPanelistaData = panelistas.find(p => p.id.toString() === newPanelist);
-        if (!newPanelistaData?.nodo_asignado) {
+        if (newPanelistaData?.nodo_asignado) {
           toast({
             title: "Validation Error",
-            description: "The selected replacement panelist has no assigned node. Please select a panelist with an assigned node or leave empty to unassign.",
+            description: `The selected replacement panelist already has a node assigned (${newPanelistaData.nodo_asignado}). Please select a panelist without an assigned node or leave empty to unassign.`,
             variant: "destructive",
           });
           return false;
         }
-        console.log('[MassiveChange] New panelist node:', newPanelistaData.nodo_asignado);
+        console.log('[MassiveChange] New panelist has no node (OK)');
+      }
+
+      // Check for conflicting scheduled changes
+      const { data: conflicts, error: conflictError } = await supabase
+        .from("scheduled_panelist_changes")
+        .select("id, fecha_inicio, fecha_fin, status")
+        .eq("cliente_id", clienteId)
+        .eq("nodo_codigo", nodoAsignado)
+        .in("status", ["pending", "active"])
+        .or(`and(fecha_inicio.lte.${toDate},fecha_fin.gte.${fromDate})`);
+
+      if (conflictError) throw conflictError;
+
+      if (conflicts && conflicts.length > 0) {
+        toast({
+          title: "Validation Error",
+          description: `There is already a scheduled change for this node in the selected date range. Please choose different dates or cancel the existing change.`,
+          variant: "destructive",
+        });
+        return false;
       }
 
       // Count affected events where this panelist's node appears as origin or destination
@@ -203,7 +236,6 @@ export default function MassivePanelistChange() {
       console.log('[MassiveChange] === END DEBUG ===');
       
       setAffectedCount(totalCount);
-      setAffectedNodes([nodoAsignado]);
       
       if (totalCount === 0) {
         toast({
@@ -233,7 +265,7 @@ export default function MassivePanelistChange() {
     }
   };
 
-  const handleExecuteChange = async () => {
+  const handleScheduleChange = async () => {
     if (!clienteId) return;
     
     setProcessing(true);
@@ -245,56 +277,51 @@ export default function MassivePanelistChange() {
         throw new Error("Current panelist has no assigned node");
       }
 
-      const oldNodo = currentPanelistaData.nodo_asignado;
-      const newNodo = newPanelistaData?.nodo_asignado || null;
+      const nodoAsignado = currentPanelistaData.nodo_asignado;
 
-      console.log('[MassiveChange] Executing change:', {
-        oldNodo,
-        newNodo,
+      console.log('[MassiveChange] Scheduling change:', {
+        nodo: nodoAsignado,
+        currentPanelist: currentPanelistaData.id,
+        newPanelist: newPanelistaData?.id || null,
         dateRange: [format(dateFrom!, "yyyy-MM-dd"), format(dateTo!, "yyyy-MM-dd")]
       });
 
-      // Strategy: We need to reassign the NODE, not update panelist IDs
-      // Since panelists are assigned to nodes, we update events to use the new panelist's node
-      // Validation of node assignment is done in validateAndCountAffected()
+      // Get current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', user?.email)
+        .single();
 
-      // Update events where nodo_origen matches the old panelist's node
-      const { error: errorOrigen } = await supabase
-        .from("generated_allocation_plan_details")
-        .update({ nodo_origen: newNodo })
-        .eq("cliente_id", clienteId)
-        .eq("nodo_origen", oldNodo)
-        .in("status", ["PENDING", "NOTIFIED"])
-        .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
-        .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd"));
+      // Create scheduled change record
+      const { error: insertError } = await supabase
+        .from("scheduled_panelist_changes")
+        .insert({
+          cliente_id: clienteId,
+          nodo_codigo: nodoAsignado,
+          panelista_current_id: currentPanelistaData.id,
+          panelista_new_id: newPanelistaData?.id || null,
+          fecha_inicio: format(dateFrom!, "yyyy-MM-dd"),
+          fecha_fin: format(dateTo!, "yyyy-MM-dd"),
+          motivo: motivo || null,
+          affected_events_count: affectedCount,
+          created_by: userData?.id || null,
+          status: 'pending'
+        });
 
-      if (errorOrigen) {
-        console.error('[MassiveChange] Error updating origin:', errorOrigen);
-        throw errorOrigen;
+      if (insertError) {
+        console.error('[MassiveChange] Error creating scheduled change:', insertError);
+        throw insertError;
       }
 
-      // Update events where nodo_destino matches the old panelist's node
-      const { error: errorDestino } = await supabase
-        .from("generated_allocation_plan_details")
-        .update({ nodo_destino: newNodo })
-        .eq("cliente_id", clienteId)
-        .eq("nodo_destino", oldNodo)
-        .in("status", ["PENDING", "NOTIFIED"])
-        .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
-        .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd"));
-
-      if (errorDestino) {
-        console.error('[MassiveChange] Error updating destination:', errorDestino);
-        throw errorDestino;
-      }
-
-      const actionText = newPanelist 
-        ? `replaced with ${newPanelistaData?.nombre_completo}`
-        : "unassigned";
+      const actionText = newPanelistaData 
+        ? `will be replaced with ${newPanelistaData.nombre_completo}`
+        : "will be unassigned";
 
       toast({
         title: "Success",
-        description: `Successfully updated ${affectedCount} allocation plan(s). Panelist ${actionText}.`,
+        description: `Scheduled change created successfully. ${currentPanelistaData.nombre_completo} ${actionText} from ${format(dateFrom!, "MMM d")} to ${format(dateTo!, "MMM d, yyyy")}. The change will be applied automatically on the start date.`,
       });
 
       // Reset form
@@ -302,13 +329,14 @@ export default function MassivePanelistChange() {
       setNewPanelist("");
       setDateFrom(undefined);
       setDateTo(undefined);
+      setMotivo("");
       setConfirmDialogOpen(false);
 
     } catch (error: any) {
-      console.error('[MassiveChange] Error executing change:', error);
+      console.error('[MassiveChange] Error scheduling change:', error);
       toast({
         title: "Error",
-        description: error.message || "An error occurred during the update",
+        description: error.message || "An error occurred while scheduling the change",
         variant: "destructive",
       });
     } finally {
@@ -325,17 +353,17 @@ export default function MassivePanelistChange() {
         <div className="mb-6">
           <Button 
             variant="ghost" 
-            onClick={() => navigate("/envios")}
+            onClick={() => navigate("/panelistas")}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Allocation Plan
+            Back to Panelists
           </Button>
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Massive Panelist Change
+            Scheduled Panelist Change
           </h1>
           <p className="text-muted-foreground">
-            Replace a panelist with another across multiple allocation plans within a date range
+            Schedule a temporary panelist reassignment that will be applied automatically on specific dates
           </p>
         </div>
 
@@ -343,7 +371,7 @@ export default function MassivePanelistChange() {
           <div className="space-y-6">
             {/* Current Panelist Selector */}
             <div className="space-y-2">
-              <Label>Current Panelist (to replace)</Label>
+              <Label>Current Panelist (to replace temporarily)</Label>
               <Popover 
                 open={openCombo === "current"} 
                 onOpenChange={(open) => setOpenCombo(open ? "current" : null)}
@@ -368,7 +396,7 @@ export default function MassivePanelistChange() {
                     <CommandList>
                       <CommandEmpty>No panelist found.</CommandEmpty>
                       <CommandGroup>
-                        {panelistas.map((panelista) => (
+                        {panelistas.filter(p => p.nodo_asignado).map((panelista) => (
                           <CommandItem
                             key={panelista.id}
                             value={`${panelista.nombre_completo} ${panelista.nodo_asignado || ""}`}
@@ -386,7 +414,7 @@ export default function MassivePanelistChange() {
                             <div className="flex flex-col">
                               <span className="font-medium">{panelista.nombre_completo}</span>
                               <span className="text-xs text-muted-foreground">
-                                ID: {panelista.id} | Node: {panelista.nodo_asignado || "Not assigned"}
+                                ID: {panelista.id} | Node: {panelista.nodo_asignado}
                               </span>
                             </div>
                           </CommandItem>
@@ -397,13 +425,13 @@ export default function MassivePanelistChange() {
                 </PopoverContent>
               </Popover>
               <p className="text-sm text-muted-foreground">
-                Select the panelist to be replaced (both as sender and receiver in all allocation plans)
+                Select the panelist who currently has the node assigned
               </p>
             </div>
 
             {/* New Panelist Selector */}
             <div className="space-y-2">
-              <Label>New Panelist (replacement)</Label>
+              <Label>New Panelist (temporary replacement)</Label>
               <div className="flex gap-2">
                 <Popover 
                   open={openCombo === "new"} 
@@ -418,7 +446,7 @@ export default function MassivePanelistChange() {
                       disabled={loading}
                     >
                       {newPanelistaData
-                        ? `${newPanelistaData.nombre_completo} (ID: ${newPanelistaData.id})${newPanelistaData.nodo_asignado ? ` - ${newPanelistaData.nodo_asignado}` : " - No node"}`
+                        ? `${newPanelistaData.nombre_completo} (ID: ${newPanelistaData.id})`
                         : "Select replacement panelist..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -430,11 +458,11 @@ export default function MassivePanelistChange() {
                         <CommandEmpty>No panelist found.</CommandEmpty>
                         <CommandGroup>
                           {panelistas
-                            .filter(p => p.id.toString() !== currentPanelist)
+                            .filter(p => p.id.toString() !== currentPanelist && !p.nodo_asignado)
                             .map((panelista) => (
                               <CommandItem
                                 key={panelista.id}
-                                value={`${panelista.nombre_completo} ${panelista.nodo_asignado || ""}`}
+                                value={`${panelista.nombre_completo}`}
                                 onSelect={() => {
                                   setNewPanelist(panelista.id.toString());
                                   setOpenCombo(null);
@@ -449,7 +477,7 @@ export default function MassivePanelistChange() {
                                 <div className="flex flex-col">
                                   <span className="font-medium">{panelista.nombre_completo}</span>
                                   <span className="text-xs text-muted-foreground">
-                                    ID: {panelista.id} | Node: {panelista.nodo_asignado || "Not assigned"}
+                                    ID: {panelista.id} | Available
                                   </span>
                                 </div>
                               </CommandItem>
@@ -470,7 +498,7 @@ export default function MassivePanelistChange() {
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground">
-                Select the replacement panelist, or leave empty to unassign
+                Select a panelist without an assigned node, or leave empty to unassign
               </p>
             </div>
 
@@ -497,6 +525,7 @@ export default function MassivePanelistChange() {
                       selected={dateFrom}
                       onSelect={setDateFrom}
                       initialFocus
+                      disabled={(date) => date < new Date()}
                     />
                   </PopoverContent>
                 </Popover>
@@ -523,6 +552,7 @@ export default function MassivePanelistChange() {
                       selected={dateTo}
                       onSelect={setDateTo}
                       initialFocus
+                      disabled={(date) => date < new Date()}
                     />
                   </PopoverContent>
                 </Popover>
@@ -530,14 +560,26 @@ export default function MassivePanelistChange() {
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Only allocation plans with scheduled dates within this range will be updated
+              The change will be applied automatically on the start date and reverted on the day after the end date
             </p>
+
+            {/* Reason */}
+            <div className="space-y-2">
+              <Label htmlFor="motivo">Reason (optional)</Label>
+              <Textarea
+                id="motivo"
+                placeholder="e.g., Vacation coverage, Training period, etc."
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                rows={3}
+              />
+            </div>
 
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
               <Button
                 variant="outline"
-                onClick={() => navigate("/envios")}
+                onClick={() => navigate("/panelistas")}
                 className="flex-1"
               >
                 Cancel
@@ -547,7 +589,7 @@ export default function MassivePanelistChange() {
                 disabled={!currentPanelist || !dateFrom || !dateTo || loading}
                 className="flex-1"
               >
-                Preview Changes
+                Preview & Schedule
               </Button>
             </div>
           </div>
@@ -558,26 +600,30 @@ export default function MassivePanelistChange() {
       <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Massive Change</AlertDialogTitle>
+            <AlertDialogTitle>Confirm Scheduled Change</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">
-              <p>You are about to modify <strong>{affectedCount}</strong> allocation plan(s).</p>
+              <p>You are about to schedule a temporary panelist change affecting <strong>{affectedCount}</strong> allocation plan(s).</p>
               <div className="bg-muted p-3 rounded-md space-y-1 text-sm">
-                <p><strong>Current Panelist:</strong> {currentPanelistaData?.nombre_completo} (Node: {currentPanelistaData?.nodo_asignado})</p>
-                <p><strong>New Panelist:</strong> {newPanelistaData ? `${newPanelistaData.nombre_completo} (Node: ${newPanelistaData.nodo_asignado})` : "Unassign (no panelist)"}</p>
-                <p><strong>Date Range:</strong> {dateFrom && format(dateFrom, "PPP")} to {dateTo && format(dateTo, "PPP")}</p>
-                <p><strong>Status Filter:</strong> PENDING and NOTIFIED only</p>
+                <p><strong>Node:</strong> {currentPanelistaData?.nodo_asignado}</p>
+                <p><strong>Current Panelist:</strong> {currentPanelistaData?.nombre_completo}</p>
+                <p><strong>Temporary Panelist:</strong> {newPanelistaData ? newPanelistaData.nombre_completo : "Unassign (no panelist)"}</p>
+                <p><strong>Period:</strong> {dateFrom && format(dateFrom, "PPP")} to {dateTo && format(dateTo, "PPP")}</p>
+                {motivo && <p><strong>Reason:</strong> {motivo}</p>}
               </div>
-              <p className="text-destructive font-medium">This action cannot be undone.</p>
+              <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-md text-sm">
+                <p className="font-medium mb-1">📅 Automatic execution:</p>
+                <p>• On <strong>{dateFrom && format(dateFrom, "MMM d, yyyy")}</strong>: Node will be reassigned to temporary panelist</p>
+                <p>• On <strong>{dateTo && format(new Date(dateTo.getTime() + 86400000), "MMM d, yyyy")}</strong>: Node will be restored to original panelist</p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={processing}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleExecuteChange}
+              onClick={handleScheduleChange}
               disabled={processing}
-              className="bg-destructive hover:bg-destructive/90"
             >
-              {processing ? "Processing..." : "Confirm Change"}
+              {processing ? "Scheduling..." : "Confirm Schedule"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

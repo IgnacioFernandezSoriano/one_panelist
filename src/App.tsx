@@ -50,6 +50,7 @@ import IntelligentPlanGenerator from "./pages/IntelligentPlanGenerator";
 import GeneratedAllocationPlans from "./pages/GeneratedAllocationPlans";
 import ImportCSVPlan from "./pages/ImportCSVPlan";
 import MassivePanelistChange from "./pages/MassivePanelistChange";
+import ScheduledChanges from "./pages/ScheduledChanges";
 import PanelistMaterialsPlan from "./pages/PanelistMaterialsPlan";
 import RegistrarEnvioRecepcion from "./pages/RegistrarEnvioRecepcion2";
 import Documentation from "./pages/Documentation";
@@ -89,6 +90,7 @@ const App = () => {
             <Route path="/envios/eventos-reales" element={<EventosReales />} />
             <Route path="/envios/registrar-envio-recepcion" element={<RegistrarEnvioRecepcion />} />
             <Route path="/envios/massive-change" element={<MassivePanelistChange />} />
+            <Route path="/panelistas/scheduled-changes" element={<ScheduledChanges />} />
             <Route path="/envios/materials-plan" element={<PanelistMaterialsPlan />} />
             <Route path="/envios/:id" element={<EditarEnvio />} />
             <Route path="/incidencias" element={<Incidencias />} />

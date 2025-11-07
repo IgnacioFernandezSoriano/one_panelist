@@ -213,6 +213,7 @@ const AppSidebarContent = () => {
   const panelistItems = [
     { icon: Calendar, label: "Vacations", path: "/panelistas/vacations" },
     { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
+    { icon: Clock, label: "Scheduled Changes", path: "/panelistas/scheduled-changes" },
     { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
   ];
 
