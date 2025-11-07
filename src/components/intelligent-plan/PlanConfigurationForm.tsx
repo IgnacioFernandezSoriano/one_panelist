@@ -53,10 +53,19 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
   useEffect(() => {
     initializeForm();
+  }, []);
+
+  // Sync clienteId from context to formData
+  useEffect(() => {
+    if (clienteId && clienteId !== formData.cliente_id) {
+      console.log('[PlanConfigForm] Syncing clienteId from context:', clienteId);
+      setFormData(prev => ({ ...prev, cliente_id: clienteId }));
+    }
   }, [clienteId]);
 
   useEffect(() => {
     if (formData.cliente_id) {
+      console.log('[PlanConfigForm] Loading carriers for cliente_id:', formData.cliente_id);
       loadCarriers(formData.cliente_id);
       loadDefaultMaxEvents(formData.cliente_id);
     }
@@ -110,20 +119,13 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           .eq('estado', 'activo')
           .order('nombre');
         setClientes(clientesData || []);
-      } else {
-        // Para usuarios no-superadmin, usar cliente_id del contexto global
-        if (clienteId) {
-          setFormData(prev => ({ ...prev, cliente_id: clienteId }));
-          loadCarriers(clienteId);
-          loadDefaultMaxEvents(clienteId);
-        }
       }
+      // Note: clienteId sync and carrier loading is handled by useEffect hooks
 
       console.log('[PlanConfigForm] Initialized:', {
         isSuperAdmin,
         userId: userData.id,
-        clienteId: clienteId,
-        carriersCount: carriers.length
+        contextClienteId: clienteId
       });
     } catch (error) {
       console.error("Error initializing form:", error);
