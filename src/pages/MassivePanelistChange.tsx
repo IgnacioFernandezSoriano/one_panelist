@@ -123,10 +123,12 @@ export default function MassivePanelistChange() {
       console.log('Panelist Data:', currentPanelistData);
       
       // Count affected records - both origin and destination
+      // Only count events with status PENDING or NOTIFIED
       const { count: countOrigen, error: errorOrigen } = await supabase
         .from("envios")
         .select("id", { count: "exact", head: true })
         .eq("panelista_origen_id", parseInt(currentPanelist))
+        .in("status", ["PENDING", "NOTIFIED"])
         .gte("fecha_programada", fromDate)
         .lte("fecha_programada", toDate);
 
@@ -137,6 +139,7 @@ export default function MassivePanelistChange() {
         .from("envios")
         .select("id", { count: "exact", head: true })
         .eq("panelista_destino_id", parseInt(currentPanelist))
+        .in("status", ["PENDING", "NOTIFIED"])
         .gte("fecha_programada", fromDate)
         .lte("fecha_programada", toDate);
 
@@ -188,12 +191,14 @@ export default function MassivePanelistChange() {
           .from("envios")
           .update({ panelista_origen_id: updateValue })
           .eq("panelista_origen_id", parseInt(currentPanelist))
+          .in("status", ["PENDING", "NOTIFIED"])
           .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
           .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd")),
         supabase
           .from("envios")
           .update({ panelista_destino_id: updateValue })
           .eq("panelista_destino_id", parseInt(currentPanelist))
+          .in("status", ["PENDING", "NOTIFIED"])
           .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
           .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd"))
       ]);
