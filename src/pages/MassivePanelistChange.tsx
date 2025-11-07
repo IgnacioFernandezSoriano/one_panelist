@@ -9,9 +9,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { ArrowLeft, CalendarIcon, Check, ChevronsUpDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCliente } from "@/contexts/ClienteContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,18 +28,20 @@ import {
 interface Panelista {
   id: number;
   nombre_completo: string;
-  nodo_asignado?: string;
+  nodo_asignado: string | null;
   estado: string;
 }
 
 export default function MassivePanelistChange() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { clienteId } = useCliente();
   const [panelistas, setPanelistas] = useState<Panelista[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [affectedCount, setAffectedCount] = useState(0);
+  const [affectedNodes, setAffectedNodes] = useState<string[]>([]);
   
   // Form state
   const [currentPanelist, setCurrentPanelist] = useState<string>("");
@@ -50,14 +53,19 @@ export default function MassivePanelistChange() {
   const [openCombo, setOpenCombo] = useState<"current" | "new" | null>(null);
 
   useEffect(() => {
-    loadPanelistas();
-  }, []);
+    if (clienteId) {
+      loadPanelistas();
+    }
+  }, [clienteId]);
 
   const loadPanelistas = async () => {
+    if (!clienteId) return;
+    
     try {
       const { data, error } = await supabase
         .from("panelistas")
         .select("id, nombre_completo, nodo_asignado, estado")
+        .eq("cliente_id", clienteId)
         .eq("estado", "activo")
         .order("nombre_completo");
 
@@ -68,13 +76,11 @@ export default function MassivePanelistChange() {
         new Map((data ?? []).map(p => [p.id, p])).values()
       );
       
-      console.log('Panelistas loaded - Original:', data?.length, 'Unique:', uniquePanelistas.length);
-      
-      // Sort by name for better UX
-      uniquePanelistas.sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo));
+      console.log('[MassiveChange] Panelistas loaded:', uniquePanelistas.length);
       
       setPanelistas(uniquePanelistas);
     } catch (error: any) {
+      console.error('[MassiveChange] Error loading panelistas:', error);
       toast({
         title: "Error",
         description: "Could not load panelists",
@@ -86,6 +92,15 @@ export default function MassivePanelistChange() {
   };
 
   const validateAndCountAffected = async () => {
+    if (!clienteId) {
+      toast({
+        title: "Error",
+        description: "Client ID not available",
+        variant: "destructive",
+      });
+      return false;
+    }
+
     if (!currentPanelist) {
       toast({
         title: "Validation Error",
@@ -117,45 +132,69 @@ export default function MassivePanelistChange() {
       const fromDate = format(dateFrom, 'yyyy-MM-dd');
       const toDate = format(dateTo, 'yyyy-MM-dd');
       
-      console.log('=== VALIDATION DEBUG ===');
-      console.log('Current Panelist ID:', currentPanelist);
-      console.log('Date Range:', fromDate, 'to', toDate);
-      console.log('Panelist Data:', currentPanelistData);
+      console.log('[MassiveChange] === VALIDATION DEBUG ===');
+      console.log('[MassiveChange] Current Panelist ID:', currentPanelist);
+      console.log('[MassiveChange] Date Range:', fromDate, 'to', toDate);
+      console.log('[MassiveChange] Cliente ID:', clienteId);
       
-      // Count affected records - both origin and destination
+      // Get the current panelist's assigned node
+      const currentPanelistaData = panelistas.find(p => p.id.toString() === currentPanelist);
+      
+      if (!currentPanelistaData?.nodo_asignado) {
+        toast({
+          title: "Validation Error",
+          description: "The selected panelist has no assigned node",
+          variant: "destructive",
+        });
+        return false;
+      }
+
+      const nodoAsignado = currentPanelistaData.nodo_asignado;
+      console.log('[MassiveChange] Current panelist node:', nodoAsignado);
+
+      // Count affected events where this panelist's node appears as origin or destination
       // Only count events with status PENDING or NOTIFIED
       const { count: countOrigen, error: errorOrigen } = await supabase
-        .from("envios")
+        .from("generated_allocation_plan_details")
         .select("id", { count: "exact", head: true })
-        .eq("panelista_origen_id", parseInt(currentPanelist))
+        .eq("cliente_id", clienteId)
+        .eq("nodo_origen", nodoAsignado)
         .in("status", ["PENDING", "NOTIFIED"])
         .gte("fecha_programada", fromDate)
         .lte("fecha_programada", toDate);
 
-      if (errorOrigen) throw errorOrigen;
-      console.log('Origin Count:', countOrigen);
+      if (errorOrigen) {
+        console.error('[MassiveChange] Error counting origin:', errorOrigen);
+        throw errorOrigen;
+      }
+      console.log('[MassiveChange] Origin Count:', countOrigen);
 
       const { count: countDestino, error: errorDestino } = await supabase
-        .from("envios")
+        .from("generated_allocation_plan_details")
         .select("id", { count: "exact", head: true })
-        .eq("panelista_destino_id", parseInt(currentPanelist))
+        .eq("cliente_id", clienteId)
+        .eq("nodo_destino", nodoAsignado)
         .in("status", ["PENDING", "NOTIFIED"])
         .gte("fecha_programada", fromDate)
         .lte("fecha_programada", toDate);
 
-      if (errorDestino) throw errorDestino;
-      console.log('Destination Count:', countDestino);
+      if (errorDestino) {
+        console.error('[MassiveChange] Error counting destination:', errorDestino);
+        throw errorDestino;
+      }
+      console.log('[MassiveChange] Destination Count:', countDestino);
       
       const totalCount = (countOrigen || 0) + (countDestino || 0);
-      console.log('Total Affected:', totalCount);
-      console.log('=== END DEBUG ===');
+      console.log('[MassiveChange] Total Affected:', totalCount);
+      console.log('[MassiveChange] === END DEBUG ===');
       
       setAffectedCount(totalCount);
+      setAffectedNodes([nodoAsignado]);
       
       if (totalCount === 0) {
         toast({
           title: "No Records Found",
-          description: "No allocation plans match the selected criteria",
+          description: "No allocation plans match the selected criteria (status PENDING or NOTIFIED)",
           variant: "destructive",
         });
         return false;
@@ -163,10 +202,10 @@ export default function MassivePanelistChange() {
 
       return true;
     } catch (error: any) {
-      console.error('Error validating:', error);
+      console.error('[MassiveChange] Error validating:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during validation",
         variant: "destructive",
       });
       return false;
@@ -181,34 +220,72 @@ export default function MassivePanelistChange() {
   };
 
   const handleExecuteChange = async () => {
+    if (!clienteId) return;
+    
     setProcessing(true);
     try {
-      const updateValue = newPanelist ? parseInt(newPanelist) : null;
+      const currentPanelistaData = panelistas.find(p => p.id.toString() === currentPanelist);
+      const newPanelistaData = newPanelist ? panelistas.find(p => p.id.toString() === newPanelist) : null;
 
-      // Update both origin and destination panelists
-      const [resultOrigen, resultDestino] = await Promise.all([
-        supabase
-          .from("envios")
-          .update({ panelista_origen_id: updateValue })
-          .eq("panelista_origen_id", parseInt(currentPanelist))
-          .in("status", ["PENDING", "NOTIFIED"])
-          .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
-          .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd")),
-        supabase
-          .from("envios")
-          .update({ panelista_destino_id: updateValue })
-          .eq("panelista_destino_id", parseInt(currentPanelist))
-          .in("status", ["PENDING", "NOTIFIED"])
-          .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
-          .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd"))
-      ]);
+      if (!currentPanelistaData?.nodo_asignado) {
+        throw new Error("Current panelist has no assigned node");
+      }
 
-      if (resultOrigen.error) throw resultOrigen.error;
-      if (resultDestino.error) throw resultDestino.error;
+      const oldNodo = currentPanelistaData.nodo_asignado;
+      const newNodo = newPanelistaData?.nodo_asignado || null;
+
+      console.log('[MassiveChange] Executing change:', {
+        oldNodo,
+        newNodo,
+        dateRange: [format(dateFrom!, "yyyy-MM-dd"), format(dateTo!, "yyyy-MM-dd")]
+      });
+
+      // Strategy: We need to reassign the NODE, not update panelist IDs
+      // Since panelists are assigned to nodes, we need to:
+      // 1. If newPanelist is selected: verify they have a node assigned
+      // 2. Update events to use the new panelist's node instead of the old one
+
+      if (newNodo === null && newPanelist) {
+        throw new Error("New panelist has no assigned node");
+      }
+
+      // Update events where nodo_origen matches the old panelist's node
+      const { error: errorOrigen } = await supabase
+        .from("generated_allocation_plan_details")
+        .update({ nodo_origen: newNodo })
+        .eq("cliente_id", clienteId)
+        .eq("nodo_origen", oldNodo)
+        .in("status", ["PENDING", "NOTIFIED"])
+        .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
+        .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd"));
+
+      if (errorOrigen) {
+        console.error('[MassiveChange] Error updating origin:', errorOrigen);
+        throw errorOrigen;
+      }
+
+      // Update events where nodo_destino matches the old panelist's node
+      const { error: errorDestino } = await supabase
+        .from("generated_allocation_plan_details")
+        .update({ nodo_destino: newNodo })
+        .eq("cliente_id", clienteId)
+        .eq("nodo_destino", oldNodo)
+        .in("status", ["PENDING", "NOTIFIED"])
+        .gte("fecha_programada", format(dateFrom!, "yyyy-MM-dd"))
+        .lte("fecha_programada", format(dateTo!, "yyyy-MM-dd"));
+
+      if (errorDestino) {
+        console.error('[MassiveChange] Error updating destination:', errorDestino);
+        throw errorDestino;
+      }
+
+      const actionText = newPanelist 
+        ? `replaced with ${newPanelistaData?.nombre_completo}`
+        : "unassigned";
 
       toast({
         title: "Success",
-        description: `Successfully updated ${affectedCount} allocation plan(s)`,
+        description: `Successfully updated ${affectedCount} allocation plan(s). Panelist ${actionText}.`,
       });
 
       // Reset form
@@ -219,9 +296,10 @@ export default function MassivePanelistChange() {
       setConfirmDialogOpen(false);
 
     } catch (error: any) {
+      console.error('[MassiveChange] Error executing change:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "An error occurred during the update",
         variant: "destructive",
       });
     } finally {
@@ -229,8 +307,8 @@ export default function MassivePanelistChange() {
     }
   };
 
-  const currentPanelistData = panelistas.find(p => p.id.toString() === currentPanelist);
-  const newPanelistData = panelistas.find(p => p.id.toString() === newPanelist);
+  const currentPanelistaData = panelistas.find(p => p.id.toString() === currentPanelist);
+  const newPanelistaData = panelistas.find(p => p.id.toString() === newPanelist);
 
   return (
     <AppLayout>
@@ -241,7 +319,7 @@ export default function MassivePanelistChange() {
             onClick={() => navigate("/envios")}
             className="mb-4"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Allocation Plan
           </Button>
           <h1 className="text-3xl font-bold text-foreground mb-2">
@@ -267,9 +345,10 @@ export default function MassivePanelistChange() {
                     role="combobox"
                     aria-expanded={openCombo === "current"}
                     className="w-full justify-between"
+                    disabled={loading}
                   >
-                    {currentPanelistData
-                      ? `${currentPanelistData.nombre_completo} (ID: ${currentPanelistData.id}) ${currentPanelistData.nodo_asignado ? `- ${currentPanelistData.nodo_asignado}` : ""}`
+                    {currentPanelistaData
+                      ? `${currentPanelistaData.nombre_completo} (ID: ${currentPanelistaData.id})${currentPanelistaData.nodo_asignado ? ` - ${currentPanelistaData.nodo_asignado}` : " - No node"}`
                       : "Select current panelist..."}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -296,9 +375,9 @@ export default function MassivePanelistChange() {
                               )}
                             />
                             <div className="flex flex-col">
-                              <span className="font-medium">{panelista.nombre_completo} (ID: {panelista.id})</span>
-                              <span className="text-sm text-muted-foreground">
-                                {panelista.nodo_asignado || 'No node assigned'}
+                              <span className="font-medium">{panelista.nombre_completo}</span>
+                              <span className="text-xs text-muted-foreground">
+                                ID: {panelista.id} | Node: {panelista.nodo_asignado || "Not assigned"}
                               </span>
                             </div>
                           </CommandItem>
@@ -326,11 +405,12 @@ export default function MassivePanelistChange() {
                       variant="outline"
                       role="combobox"
                       aria-expanded={openCombo === "new"}
-                      className="flex-1 justify-between"
+                      className="w-full justify-between"
+                      disabled={loading}
                     >
-                      {newPanelistData
-                        ? `${newPanelistData.nombre_completo} (ID: ${newPanelistData.id}) ${newPanelistData.nodo_asignado ? `- ${newPanelistData.nodo_asignado}` : ""}`
-                        : "Select new panelist (optional)..."}
+                      {newPanelistaData
+                        ? `${newPanelistaData.nombre_completo} (ID: ${newPanelistaData.id})${newPanelistaData.nodo_asignado ? ` - ${newPanelistaData.nodo_asignado}` : " - No node"}`
+                        : "Select replacement panelist..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -358,9 +438,9 @@ export default function MassivePanelistChange() {
                                   )}
                                 />
                                 <div className="flex flex-col">
-                                  <span className="font-medium">{panelista.nombre_completo} (ID: {panelista.id})</span>
-                                  <span className="text-sm text-muted-foreground">
-                                    {panelista.nodo_asignado || 'No node assigned'}
+                                  <span className="font-medium">{panelista.nombre_completo}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ID: {panelista.id} | Node: {panelista.nodo_asignado || "Not assigned"}
                                   </span>
                                 </div>
                               </CommandItem>
@@ -370,15 +450,15 @@ export default function MassivePanelistChange() {
                     </Command>
                   </PopoverContent>
                 </Popover>
-                {newPanelist && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setNewPanelist("")}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                )}
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setNewPanelist("")}
+                  disabled={!newPanelist}
+                  title="Clear selection"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
               </div>
               <p className="text-sm text-muted-foreground">
                 Select the replacement panelist, or leave empty to unassign
@@ -402,13 +482,12 @@ export default function MassivePanelistChange() {
                       {dateFrom ? format(dateFrom, "PPP") : "Pick a date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
                       selected={dateFrom}
                       onSelect={setDateFrom}
                       initialFocus
-                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -429,69 +508,71 @@ export default function MassivePanelistChange() {
                       {dateTo ? format(dateTo, "PPP") : "Pick a date"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
+                  <PopoverContent className="w-auto p-0">
                     <Calendar
                       mode="single"
                       selected={dateTo}
                       onSelect={setDateTo}
                       initialFocus
-                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
               </div>
             </div>
+
             <p className="text-sm text-muted-foreground">
               Only allocation plans with scheduled dates within this range will be updated
             </p>
 
             {/* Action Buttons */}
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex gap-3 pt-4">
               <Button
                 variant="outline"
                 onClick={() => navigate("/envios")}
+                className="flex-1"
               >
                 Cancel
               </Button>
               <Button
                 onClick={handlePreview}
-                disabled={loading || processing}
+                disabled={!currentPanelist || !dateFrom || !dateTo || loading}
+                className="flex-1"
               >
                 Preview Changes
               </Button>
             </div>
           </div>
         </Card>
-
-        {/* Confirmation Dialog */}
-        <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Confirm Massive Panelist Change</AlertDialogTitle>
-              <AlertDialogDescription className="space-y-2">
-                <p>You are about to update <strong>{affectedCount}</strong> allocation plan(s).</p>
-                <div className="bg-muted p-3 rounded-md space-y-1 text-sm">
-                  <p><strong>Current Panelist:</strong> {currentPanelistData?.nombre_completo}</p>
-                  <p><strong>New Panelist:</strong> {newPanelistData?.nombre_completo || "(Unassigned)"}</p>
-                  <p><strong>Date Range:</strong> {dateFrom && format(dateFrom, "PPP")} to {dateTo && format(dateTo, "PPP")}</p>
-                  <p className="text-xs text-muted-foreground mt-2">This will replace the panelist in both sender and receiver roles</p>
-                </div>
-                <p className="text-destructive font-semibold">This action cannot be undone.</p>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={processing}>Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={handleExecuteChange}
-                disabled={processing}
-                className="bg-primary"
-              >
-                {processing ? "Processing..." : "Confirm & Execute"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Massive Change</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>You are about to modify <strong>{affectedCount}</strong> allocation plan(s).</p>
+              <div className="bg-muted p-3 rounded-md space-y-1 text-sm">
+                <p><strong>Current Panelist:</strong> {currentPanelistaData?.nombre_completo} (Node: {currentPanelistaData?.nodo_asignado})</p>
+                <p><strong>New Panelist:</strong> {newPanelistaData ? `${newPanelistaData.nombre_completo} (Node: ${newPanelistaData.nodo_asignado})` : "Unassign (no panelist)"}</p>
+                <p><strong>Date Range:</strong> {dateFrom && format(dateFrom, "PPP")} to {dateTo && format(dateTo, "PPP")}</p>
+                <p><strong>Status Filter:</strong> PENDING and NOTIFIED only</p>
+              </div>
+              <p className="text-destructive font-medium">This action cannot be undone.</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processing}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleExecuteChange}
+              disabled={processing}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {processing ? "Processing..." : "Confirm Change"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
