@@ -152,6 +152,20 @@ export default function MassivePanelistChange() {
       const nodoAsignado = currentPanelistaData.nodo_asignado;
       console.log('[MassiveChange] Current panelist node:', nodoAsignado);
 
+      // Validate new panelist if selected
+      if (newPanelist) {
+        const newPanelistaData = panelistas.find(p => p.id.toString() === newPanelist);
+        if (!newPanelistaData?.nodo_asignado) {
+          toast({
+            title: "Validation Error",
+            description: "The selected replacement panelist has no assigned node. Please select a panelist with an assigned node or leave empty to unassign.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        console.log('[MassiveChange] New panelist node:', newPanelistaData.nodo_asignado);
+      }
+
       // Count affected events where this panelist's node appears as origin or destination
       // Only count events with status PENDING or NOTIFIED
       const { count: countOrigen, error: errorOrigen } = await supabase
@@ -241,13 +255,8 @@ export default function MassivePanelistChange() {
       });
 
       // Strategy: We need to reassign the NODE, not update panelist IDs
-      // Since panelists are assigned to nodes, we need to:
-      // 1. If newPanelist is selected: verify they have a node assigned
-      // 2. Update events to use the new panelist's node instead of the old one
-
-      if (newNodo === null && newPanelist) {
-        throw new Error("New panelist has no assigned node");
-      }
+      // Since panelists are assigned to nodes, we update events to use the new panelist's node
+      // Validation of node assignment is done in validateAndCountAffected()
 
       // Update events where nodo_origen matches the old panelist's node
       const { error: errorOrigen } = await supabase
