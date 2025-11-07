@@ -11,6 +11,7 @@ export interface PlanConfig {
   max_events_per_week: number;
   merge_strategy: 'add' | 'replace';
   created_by: number;
+  plan_name?: string; // Optional custom plan name
 }
 
 export interface GeneratedEvent {
@@ -486,8 +487,8 @@ async function saveDraftPlan(
   unassignedEvents: number,
   unassignedBreakdown: UnassignedCity[]
 ) {
-  // Generate plan name
-  const planName = `Plan ${format(config.start_date, 'MMM yyyy')} - ${format(config.end_date, 'MMM yyyy')}`;
+  // Use custom plan name if provided, otherwise generate one
+  const planName = config.plan_name || `Plan ${format(config.start_date, 'MMM yyyy')} - ${format(config.end_date, 'MMM yyyy')}`;
 
   const { data: plan, error: planError } = await supabase
     .from('generated_allocation_plans' as any)

@@ -25,6 +25,7 @@ export interface PlanConfiguration {
   total_events: number;
   max_events_per_week: number;
   merge_strategy: 'add' | 'replace';
+  plan_name?: string; // Optional custom plan name
 }
 
 interface PlanConfigurationFormProps {
@@ -247,26 +248,21 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
   return (
     <div className="space-y-6">
-      {isSuperAdmin && (
-        <div className="space-y-2">
-          <Label htmlFor="cliente">{t('intelligent_plan.account')} *</Label>
-          <Select
-            value={formData.cliente_id?.toString()}
-            onValueChange={(value) => setFormData({ ...formData, cliente_id: parseInt(value), carrier_id: undefined, producto_id: undefined })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('intelligent_plan.select_account')} />
-            </SelectTrigger>
-            <SelectContent>
-              {clientes.map((cliente) => (
-                <SelectItem key={cliente.id} value={cliente.id.toString()}>
-                  {cliente.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      {/* Account selector removed - using global account selector from header */}
+
+      <div className="space-y-2">
+        <Label htmlFor="plan_name">Plan Name (optional)</Label>
+        <Input
+          id="plan_name"
+          type="text"
+          placeholder="e.g., Q1 2025 Expansion Plan"
+          value={formData.plan_name || ''}
+          onChange={(e) => setFormData({ ...formData, plan_name: e.target.value })}
+        />
+        <p className="text-sm text-muted-foreground">
+          If not provided, a name will be generated automatically based on dates
+        </p>
+      </div>
 
       <div className="space-y-2">
         <Label htmlFor="carrier">{t('intelligent_plan.carrier')} *</Label>
