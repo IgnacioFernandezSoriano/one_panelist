@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useCliente } from "@/contexts/ClienteContext";
 import { ClassificationAllocationTable } from "./ClassificationAllocationTable";
 import { ProductSeasonalityTableVertical } from "./ProductSeasonalityTableVertical";
 
@@ -37,6 +38,7 @@ interface PlanConfigurationFormProps {
 export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: PlanConfigurationFormProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { clienteId } = useCliente(); // Get cliente_id from global context
   const [clientes, setClientes] = useState<any[]>([]);
   const [carriers, setCarriers] = useState<any[]>([]);
   const [productos, setProductos] = useState<any[]>([]);
@@ -51,7 +53,7 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
 
   useEffect(() => {
     initializeForm();
-  }, []);
+  }, [clienteId]);
 
   useEffect(() => {
     if (formData.cliente_id) {
@@ -109,18 +111,18 @@ export function PlanConfigurationForm({ initialConfig, onSubmit, onCancel }: Pla
           .order('nombre');
         setClientes(clientesData || []);
       } else {
-        // Para usuarios no-superadmin, establecer su cliente_id
-        if (userData.cliente_id) {
-          setFormData(prev => ({ ...prev, cliente_id: userData.cliente_id }));
-          loadCarriers(userData.cliente_id);
-          loadDefaultMaxEvents(userData.cliente_id);
+        // Para usuarios no-superadmin, usar cliente_id del contexto global
+        if (clienteId) {
+          setFormData(prev => ({ ...prev, cliente_id: clienteId }));
+          loadCarriers(clienteId);
+          loadDefaultMaxEvents(clienteId);
         }
       }
 
       console.log('[PlanConfigForm] Initialized:', {
         isSuperAdmin,
         userId: userData.id,
-        clienteId: userData.cliente_id,
+        clienteId: clienteId,
         carriersCount: carriers.length
       });
     } catch (error) {
