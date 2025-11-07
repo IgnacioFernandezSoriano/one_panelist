@@ -30,6 +30,7 @@ interface Panelista {
   id: number;
   nombre_completo: string;
   nodo_asignado: string | null;
+  direccion_ciudad: string;
   estado: string;
 }
 
@@ -65,7 +66,7 @@ export default function MassivePanelistChange() {
     try {
       const { data, error } = await supabase
         .from("panelistas")
-        .select("id, nombre_completo, nodo_asignado, estado")
+        .select("id, nombre_completo, nodo_asignado, direccion_ciudad, estado")
         .eq("cliente_id", clienteId)
         .eq("estado", "activo")
         .order("nombre_completo");
@@ -446,7 +447,7 @@ export default function MassivePanelistChange() {
                       disabled={loading}
                     >
                       {newPanelistaData
-                        ? `${newPanelistaData.nombre_completo} (ID: ${newPanelistaData.id})`
+                        ? `${newPanelistaData.nombre_completo} (ID: ${newPanelistaData.id}) - ${newPanelistaData.direccion_ciudad}`
                         : "Select replacement panelist..."}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
@@ -477,7 +478,7 @@ export default function MassivePanelistChange() {
                                 <div className="flex flex-col">
                                   <span className="font-medium">{panelista.nombre_completo}</span>
                                   <span className="text-xs text-muted-foreground">
-                                    ID: {panelista.id} | Available
+                                    ID: {panelista.id} | City: {panelista.direccion_ciudad} | Available
                                   </span>
                                 </div>
                               </CommandItem>
