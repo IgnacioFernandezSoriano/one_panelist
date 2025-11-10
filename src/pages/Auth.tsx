@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuthTranslation } from "@/hooks/useAuthTranslation";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { t } = useAuthTranslation();
+  const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
 
     console.log("Attempting to sign in with:", email);
 
@@ -23,60 +29,61 @@ export default function Auth() {
       });
 
       if (error) {
-        console.error("Sign-in error:", error.message);
-        setError(error.message);
-      } else {
-        console.log("Sign-in successful!");
-        // Verificar que el usuario esté autenticado
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          console.log("User authenticated:", user.email);
-          setError("");
-          // Redirigir al dashboard después del login exitoso
-          navigate("/dashboard");
-        } else {
-          setError("Authentication verification failed");
-        }
+        console.error("Sign in error:", error);
+        toast({
+          title: t("auth.error"),
+          description: t("auth.invalid_credentials"),
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
       }
-    } catch (err: any) {
-      console.error("Unexpected error:", err.message);
-      setError("An unexpected error occurred.");
-    } finally {
+
+      console.log("Sign in successful, navigating to dashboard");
+      navigate("/");
+    } catch (error: any) {
+      console.error("Unexpected error:", error);
+      toast({
+        title: t("auth.error"),
+        description: error.message || t("auth.unexpected_error"),
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <div style={{ width: '300px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-        <h2>Login</h2>
-        <form onSubmit={handleSignIn}>
-          <div style={{ marginBottom: '10px' }}>
-            <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            />
-          </div>
-          <div style={{ marginBottom: '10px' }}>
-            <label>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-            />
-          </div>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          <button type="submit" disabled={loading} style={{ width: '100%', padding: '10px', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}>
-            {loading ? "Loading..." : "Sign In"}
-          </button>
-        </form>
-      </div>
-    </div>
+    <AuthLayout 
+      title={t("auth.welcome")} 
+      subtitle={t("auth.sign_in_subtitle")}
+    >
+      <form onSubmit={handleSignIn} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">{t("auth.email")}</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            placeholder={t("auth.email_placeholder")}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">{t("auth.password")}</Label>
+          <Input
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            placeholder={t("auth.password_placeholder")}
+          />
+        </div>
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? t("auth.loading") : t("auth.sign_in")}
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }

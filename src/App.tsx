@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { TranslationProvider } from "./hooks/useTranslation";
+import { AuthTranslationProvider } from "./hooks/useAuthTranslation";
 import { ClienteProvider } from "./contexts/ClienteContext";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import Auth from "./pages/Auth";
@@ -64,12 +65,13 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <TranslationProvider>
-        <ClienteProvider>
-          <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <AuthTranslationProvider>
+        <TranslationProvider>
+          <ClienteProvider>
+            <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/auth" element={<Auth />} />
@@ -208,6 +210,7 @@ const App = () => {
           </TooltipProvider>
         </ClienteProvider>
       </TranslationProvider>
+      </AuthTranslationProvider>
     </QueryClientProvider>
   );
 };

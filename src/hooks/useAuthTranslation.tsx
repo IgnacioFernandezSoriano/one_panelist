@@ -28,12 +28,13 @@ interface AuthTranslationContextType {
 const AuthTranslationContext = createContext<AuthTranslationContextType | undefined>(undefined);
 
 const AUTH_LANGUAGE_KEY = 'auth_language';
-const DEFAULT_LANGUAGE = 'en';
+const DEFAULT_LANGUAGE = 'es';
 
 export const AuthTranslationProvider = ({ children }: { children: ReactNode }) => {
   const [currentLanguage, setCurrentLanguage] = useState<string>(() => {
     return localStorage.getItem(AUTH_LANGUAGE_KEY) || DEFAULT_LANGUAGE;
   });
+  const [defaultLanguageLoaded, setDefaultLanguageLoaded] = useState(false);
 
   // Fetch available languages
   const { data: availableLanguages = [] } = useQuery({
@@ -90,11 +91,31 @@ export const AuthTranslationProvider = ({ children }: { children: ReactNode }) =
     localStorage.setItem(AUTH_LANGUAGE_KEY, languageCode);
   };
 
-  // Set default language if not set
+  // Load default language from database
   useEffect(() => {
-    if (!localStorage.getItem(AUTH_LANGUAGE_KEY)) {
-      localStorage.setItem(AUTH_LANGUAGE_KEY, DEFAULT_LANGUAGE);
-    }
+    const loadDefaultLanguage = async () => {
+      try {
+        const { data: defaultLang } = await supabase
+          .from('idiomas_disponibles')
+          .select('codigo')
+          .eq('es_default', true)
+          .eq('activo', true)
+          .single();
+
+        const dbDefaultLanguage = defaultLang?.codigo || DEFAULT_LANGUAGE;
+        
+        // Only set if not already in localStorage
+        if (!localStorage.getItem(AUTH_LANGUAGE_KEY)) {
+          setCurrentLanguage(dbDefaultLanguage);
+          localStorage.setItem(AUTH_LANGUAGE_KEY, dbDefaultLanguage);
+        }
+      } catch (error) {
+        console.error('Error loading default language:', error);
+      }
+      setDefaultLanguageLoaded(true);
+    };
+
+    loadDefaultLanguage();
   }, []);
 
   return (
