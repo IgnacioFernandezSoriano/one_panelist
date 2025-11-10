@@ -267,14 +267,17 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
           {t('label.account')} {selectedRole !== 'superadmin' && '*'}
         </Label>
         <Select 
-          value={formData.cliente_id?.toString() || ""} 
-          onValueChange={(value) => setFormData({ ...formData, cliente_id: parseInt(value) })}
+          value={formData.cliente_id?.toString() || "none"} 
+          onValueChange={(value) => setFormData({ ...formData, cliente_id: value === "none" ? null : parseInt(value) })}
           disabled={!isSuperAdmin() || selectedRole === 'superadmin'}
         >
           <SelectTrigger>
             <SelectValue placeholder={selectedRole === 'superadmin' ? t('form.no_account_global') : t('form.select_account')} />
           </SelectTrigger>
           <SelectContent>
+            {selectedRole === 'superadmin' && (
+              <SelectItem value="none">{t('form.no_account_global')}</SelectItem>
+            )}
             {clientes.map((cliente) => (
               <SelectItem key={cliente.id} value={cliente.id.toString()}>
                 {cliente.nombre}
@@ -298,7 +301,7 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
         <Label htmlFor="role">Role *</Label>
         <Select value={selectedRole} onValueChange={(value: AppRole) => setSelectedRole(value)}>
           <SelectTrigger>
-            <SelectValue />
+            <SelectValue placeholder="Select role" />
           </SelectTrigger>
           <SelectContent>
             {isSuperAdmin() && (
