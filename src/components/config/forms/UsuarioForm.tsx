@@ -143,37 +143,7 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
           return;
         }
 
-        // First, create the auth user
-        try {
-          const { data: functionData, error: functionError } = await supabase.functions.invoke(
-            'create-admin-user',
-            {
-              body: {
-                email: formData.email,
-                password: formData.password_hash,
-                nombre_completo: formData.nombre_completo
-              }
-            }
-          );
-
-          if (functionError) {
-            throw new Error(`Failed to create auth user: ${functionError.message}`);
-          }
-
-          if (!functionData?.success) {
-            throw new Error(functionData?.error || 'Failed to create authentication account');
-          }
-        } catch (authErr: any) {
-          toast({
-            title: "Error creating authentication account",
-            description: authErr.message,
-            variant: "destructive",
-          });
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Then create the user record in the usuarios table
+        // Create the user record in the usuarios table
         const { data, error } = await supabase
           .from("usuarios")
           .insert([{ ...userData, password_hash: formData.password_hash }])
