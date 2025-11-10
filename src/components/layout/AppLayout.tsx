@@ -205,51 +205,51 @@ const AppSidebarContent = () => {
   };
 
   const mainMenuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    { icon: LayoutDashboard, label: t("menu.dashboard"), path: "/dashboard" },
   ];
 
   // Topology is now a direct link, no submenu items
 
   const panelistItems = [
-    { icon: Calendar, label: "Vacations", path: "/panelistas/vacations" },
-    { icon: RefreshCw, label: "Massive Panelist Change", path: "/envios/massive-change" },
-    { icon: Clock, label: "Scheduled Changes", path: "/panelistas/scheduled-changes" },
-    { icon: PackageSearch, label: "Panelist Materials Plan", path: "/envios/materials-plan" },
+    { icon: Calendar, label: t("menu.vacations"), path: "/panelistas/vacations" },
+    { icon: RefreshCw, label: t("menu.massive_panelist_change"), path: "/envios/massive-change" },
+    { icon: Clock, label: t("menu.scheduled_changes"), path: "/panelistas/scheduled-changes" },
+    { icon: PackageSearch, label: t("menu.panelist_materials_plan"), path: "/envios/materials-plan" },
   ];
 
 
 
   const issuesItems = [
-    { icon: UserX, label: "Unassigned Nodes", path: "/issues/nodos-descubiertos" },
-    { icon: Package, label: "Unassigned Events", path: "/issues/unassigned-events" },
-    { icon: AlertCircle, label: "Pending Validation Events", path: "/envios/eventos-pendientes-validar" },
+    { icon: UserX, label: t("menu.unassigned_nodes"), path: "/issues/nodos-descubiertos" },
+    { icon: Package, label: t("menu.unassigned_events"), path: "/issues/unassigned-events" },
+    { icon: AlertCircle, label: t("menu.pending_validation_events"), path: "/envios/eventos-pendientes-validar" },
   ];
 
   const measurementTopologyItems = [
-    { icon: MapPin, label: "Regions", path: "/configuracion/regiones" },
-    { icon: MapPin, label: "Cities", path: "/configuracion/ciudades" },
-    { icon: MapPin, label: "Nodes", path: "/configuracion/nodos" },
-    { icon: Clock, label: "Transit Times", path: "/configuracion/tiempos-transito" },
+    { icon: MapPin, label: t("menu.regions"), path: "/configuracion/regiones" },
+    { icon: MapPin, label: t("menu.cities"), path: "/configuracion/ciudades" },
+    { icon: MapPin, label: t("menu.nodes"), path: "/configuracion/nodos" },
+    { icon: Clock, label: t("menu.transit_times"), path: "/configuracion/tiempos-transito" },
   ];
 
   const solutionParametersItems = [
-    { icon: Truck, label: "Carriers", path: "/configuracion/carriers" },
+    { icon: Truck, label: t("menu.carriers"), path: "/configuracion/carriers" },
     { icon: Package, label: t("menu.material_types"), path: "/configuracion/tipos-materiales" },
-    { icon: Box, label: "Products", path: "/configuracion/productos" },
-    { icon: Workflow, label: "Workflows", path: "/configuracion/workflows" },
-    { icon: AlertCircle, label: "Issues", path: "/configuracion/incidencias" },
+    { icon: Box, label: t("menu.products"), path: "/configuracion/productos" },
+    { icon: Workflow, label: t("menu.workflows"), path: "/configuracion/workflows" },
+    { icon: AlertCircle, label: t("menu.issues_config"), path: "/configuracion/incidencias" },
   ];
 
   const administrationItems = [
-    { icon: UserCog, label: "Users", path: "/configuracion/usuarios" },
-    { icon: Shield, label: "Users Permissions", path: "/configuracion/menu-permissions" },
+    { icon: UserCog, label: t("menu.users"), path: "/configuracion/usuarios" },
+    { icon: Shield, label: t("menu.users_permissions"), path: "/configuracion/menu-permissions" },
   ];
 
   const superAdminItems = [
-    { icon: Building2, label: "Accounts", path: "/configuracion/clientes" },
-    { icon: Languages, label: "Languages", path: "/configuracion/idiomas" },
-    { icon: Languages, label: "Translations", path: "/configuracion/traducciones" },
-    { icon: Wrench, label: "Maintenance", path: "/configuracion/mantenimiento" },
+    { icon: Building2, label: t("menu.accounts"), path: "/configuracion/clientes" },
+    { icon: Languages, label: t("menu.languages"), path: "/configuracion/idiomas" },
+    { icon: Languages, label: t("menu.translations"), path: "/configuracion/traducciones" },
+    { icon: Wrench, label: t("menu.maintenance"), path: "/configuracion/mantenimiento" },
   ];
 
   return (
@@ -295,7 +295,7 @@ const AppSidebarContent = () => {
                 >
                   <Link to="/topology">
                     <GitBranch className="w-5 h-5" />
-                    {sidebarOpen && <span>Topology</span>}
+                    {sidebarOpen && <span>{t("menu.topology")}</span>}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -308,7 +308,7 @@ const AppSidebarContent = () => {
                 <CollapsibleTrigger asChild>
                   <SidebarMenuButton isActive={location.pathname === "/panelistas" || location.pathname === "/envios/massive-change" || location.pathname === "/envios/materials-plan"}>
                     <Users className="w-5 h-5" />
-                    {sidebarOpen && <span>Panelists</span>}
+                    {sidebarOpen && <span>{t("menu.panelists")}</span>}
                     {sidebarOpen && (panelistsOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -325,7 +325,7 @@ const AppSidebarContent = () => {
                           >
                             <Link to="/panelistas">
                               <Users className="w-4 h-4" />
-                              {sidebarOpen && <span className="text-sm">View Panelists</span>}
+                              {sidebarOpen && <span className="text-sm">{t("menu.view_panelists")}</span>}
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -371,7 +371,7 @@ const AppSidebarContent = () => {
                     }}
                   >
                     <Send className="w-5 h-5" />
-                    {sidebarOpen && <span>Allocation Plan</span>}
+                    {sidebarOpen && <span>{t("menu.allocation_plan")}</span>}
                     {sidebarOpen && (allocationPlanOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
                   </SidebarMenuButton>
                 </CollapsibleTrigger>
@@ -416,7 +416,7 @@ const AppSidebarContent = () => {
                           >
                             <Link to="/envios/generated-allocation-plans">
                               <Send className="w-4 h-4" />
-                              {sidebarOpen && <span className="text-sm">View Plan</span>}
+                              {sidebarOpen && <span className="text-sm">{t("menu.view_plan")}</span>}
                             </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -435,7 +435,7 @@ const AppSidebarContent = () => {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton isActive={location.pathname.startsWith("/incidencias") || location.pathname.startsWith("/issues")}>
                       <AlertCircle className="w-5 h-5" />
-                      {sidebarOpen && <span>Issues</span>}
+                      {sidebarOpen && <span>{t("menu.issues")}</span>}
                       {sidebarOpen && (issuesOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -474,7 +474,7 @@ const AppSidebarContent = () => {
                 <SidebarMenuButton asChild isActive={location.pathname === "/envios/registrar-envio-recepcion"}>
                   <Link to="/envios/registrar-envio-recepcion">
                     <CheckCircle className="w-5 h-5" />
-                    {sidebarOpen && <span>Register Shipment/Receipt</span>}
+                    {sidebarOpen && <span>{t("menu.register_shipment_receipt")}</span>}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -486,7 +486,7 @@ const AppSidebarContent = () => {
                 <SidebarMenuButton asChild isActive={location.pathname === "/envios/eventos-reales"}>
                   <Link to="/envios/eventos-reales">
                     <Database className="w-5 h-5" />
-                    {sidebarOpen && <span>Real Events</span>}
+                    {sidebarOpen && <span>{t("menu.real_events")}</span>}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -502,7 +502,7 @@ const AppSidebarContent = () => {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
                       <FileBarChart className="w-5 h-5" />
-                      {sidebarOpen && <span>Reporting</span>}
+                      {sidebarOpen && <span>{t("menu.reporting")}</span>}
                       {sidebarOpen && (
                         <ChevronDown
                           className={`ml-auto h-4 w-4 transition-transform ${
@@ -523,7 +523,7 @@ const AppSidebarContent = () => {
                         }`}
                       >
                         <CheckCircle className="w-4 h-4" />
-                        <span>E2E Measurement</span>
+                        <span>{t("menu.e2e_measurement")}</span>
                       </Link>
                     </CollapsibleContent>
                   )}
@@ -538,7 +538,7 @@ const AppSidebarContent = () => {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton>
                       <Settings className="w-5 h-5" />
-                      {sidebarOpen && <span>Configuration</span>}
+                      {sidebarOpen && <span>{t("menu.configuration")}</span>}
                       {sidebarOpen && (configOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
@@ -547,7 +547,7 @@ const AppSidebarContent = () => {
                     <SidebarGroup>
                       {sidebarOpen && (
                         <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                          Measurement Topology
+                          {t("menu.measurement_topology")}
                         </SidebarGroupLabel>
                       )}
                       <SidebarGroupContent>
@@ -575,7 +575,7 @@ const AppSidebarContent = () => {
                     <SidebarGroup>
                       {sidebarOpen && (
                         <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                          Solution Parameters
+                          {t("menu.solution_parameters")}
                         </SidebarGroupLabel>
                       )}
                       <SidebarGroupContent>
@@ -603,7 +603,7 @@ const AppSidebarContent = () => {
                     <SidebarGroup>
                       {sidebarOpen && (
                         <SidebarGroupLabel className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                          Administration
+                          {t("menu.administration")}
                         </SidebarGroupLabel>
                       )}
                       <SidebarGroupContent>
@@ -636,7 +636,7 @@ const AppSidebarContent = () => {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton isActive={location.pathname.startsWith("/configuracion/clientes") || location.pathname.startsWith("/configuracion/idiomas") || location.pathname.startsWith("/configuracion/traducciones")}>
                       <Shield className="w-5 h-5" />
-                      {sidebarOpen && <span>Super Admin</span>}
+                      {sidebarOpen && <span>{t("menu.super_admin")}</span>}
                       {sidebarOpen && (superAdminOpen ? <ChevronDown className="ml-auto w-4 h-4" /> : <ChevronRight className="ml-auto w-4 h-4" />)}
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
