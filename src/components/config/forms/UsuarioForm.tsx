@@ -100,7 +100,8 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
 
     try {
       // Validate cliente_id is required for non-superadmin users
-      if (selectedRole !== 'superadmin' && !formData.cliente_id) {
+      // Check both selectedRole and isSuperAdmin to handle editing own profile
+      if (selectedRole !== 'superadmin' && !isSuperAdmin && !formData.cliente_id) {
         toast({
           title: "Error",
           description: "Client is required for non-superadmin users",
