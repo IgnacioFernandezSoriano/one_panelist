@@ -85,44 +85,27 @@ export default function TraduccionesNew() {
   };
 
   const handleImportClick = () => {
-    console.log('=== IMPORT BUTTON CLICKED ===');
-    console.log('File input ref:', fileInputRef.current);
     fileInputRef.current?.click();
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('=== FILE CHANGE EVENT TRIGGERED ===');
     const file = event.target.files?.[0];
-    console.log('File selected:', file);
-    if (!file) {
-      console.log('No file selected, returning');
-      return;
-    }
+    if (!file) return;
 
     setIsImporting(true);
     
     try {
       const text = await file.text();
       
-      console.log('Starting Papa.parse...');
-      console.log('CSV text length:', text.length);
-      console.log('First 200 chars:', text.substring(0, 200));
-      
       Papa.parse(text, {
         header: true,
         skipEmptyLines: true,
         complete: async (results) => {
-          console.log('Papa.parse complete');
-          console.log('Results:', results);
-          console.log('Data rows:', results.data.length);
-          console.log('Available languages:', languages);
           try {
             const translations: any[] = [];
             
             // Procesar cada fila
-            console.log('Processing', results.data.length, 'rows');
             for (const row of results.data as any[]) {
-              console.log('Processing row:', row);
               // Normalizar claves de columna
               const normalizedRow: any = {};
               Object.keys(row).forEach(key => {

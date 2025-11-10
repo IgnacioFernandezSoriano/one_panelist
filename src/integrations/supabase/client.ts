@@ -23,5 +23,23 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
-  }
+    detectSessionInUrl: true,
+  },
+  global: {
+    headers: {
+      'x-client-info': 'onepanelist-web',
+    },
+  },
 });
+
+// Debug: Log cuando se hacen peticiones
+if (typeof window !== 'undefined') {
+  supabase.auth.getSession().then(({ data: { session }, error }) => {
+    console.log('[Supabase Client] Session check:', {
+      hasSession: !!session,
+      hasAccessToken: !!session?.access_token,
+      user: session?.user?.email,
+      error: error?.message
+    });
+  });
+}
