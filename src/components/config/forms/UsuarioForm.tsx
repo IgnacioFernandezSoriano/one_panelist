@@ -143,7 +143,36 @@ export function UsuarioForm({ onSuccess, onCancel, initialData }: UsuarioFormPro
           return;
         }
 
-        // Create the user record in the usuarios table
+        // First, create the auth user using Netlify Function
+        try {
+          const response = await fetch('/.netlify/functions/create-auth-user', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password_hash,
+              nombre_completo: formData.nombre_completo
+            })
+          });
+
+          const result = await response.json();
+
+          if (!response.ok || !result.success) {
+            throw new Error(result.error || 'Failed to create authentication account');
+          }
+        } catch (authErr: any) {
+          toast({
+            title: "Error creating authentication account",
+            description: authErr.message,
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Then create the user record in the usuarios table
         const { data, error } = await supabase
           .from("usuarios")
           .insert([{ ...userData, password_hash: formData.password_hash }])
