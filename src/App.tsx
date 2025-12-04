@@ -45,6 +45,7 @@ import ConfigTraducciones from "./pages/config/Traducciones";
 import ConfigIdiomas from "./pages/config/Idiomas";
 import MenuPermissions from "./pages/config/MenuPermissions";
 import Mantenimiento from "./pages/config/Mantenimiento";
+import GestionCuentas from "./pages/superadmin/GestionCuentas";
 import NuevoEnvio from "./pages/NuevoEnvio";
 import EditarEnvio from "./pages/EditarEnvio";
 import IntelligentPlanGenerator from "./pages/IntelligentPlanGenerator";
@@ -124,6 +125,11 @@ const App = () => {
             <Route path="/configuracion/mantenimiento" element={
               <RoleGuard allowedRoles={['superadmin']}>
                 <Mantenimiento />
+              </RoleGuard>
+            } />
+            <Route path="/superadmin/cuentas" element={
+              <RoleGuard allowedRoles={['superadmin']}>
+                <GestionCuentas />
               </RoleGuard>
             } />
 
