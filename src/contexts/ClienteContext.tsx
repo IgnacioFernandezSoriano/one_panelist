@@ -33,14 +33,20 @@ export function ClienteProvider({ children }: { children: ReactNode }) {
 
   const loadAvailableClientes = async () => {
     try {
+      console.log('[ClienteContext] Loading clientes...');
       const { data, error } = await supabase
         .from("clientes")
-        .select("id, nombre")
-        .eq("estado", "activo")
-        .order("nombre");
+        .select("id, nombre");
 
+      console.log('[ClienteContext] Query result:', { data, error });
+      
       if (error) throw error;
-      setAvailableClientes(data || []);
+      
+      // Sort in frontend
+      const sortedData = data?.sort((a, b) => a.nombre.localeCompare(b.nombre)) || [];
+      console.log('[ClienteContext] Loaded:', sortedData.length, 'clientes');
+      
+      setAvailableClientes(sortedData);
       
       // Auto-select first cliente if available and none selected
       if (data && data.length > 0 && !selectedClienteId) {
