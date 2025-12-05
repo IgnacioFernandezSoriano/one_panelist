@@ -1,3 +1,7 @@
+// Auto-generated types from database schema
+// Generated at: 2025-12-05T10:16:05.754Z
+// DO NOT EDIT MANUALLY
+
 export type Json =
   | string
   | number
@@ -6,2510 +10,901 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
+export interface Database {
   public: {
     Tables: {
-      admin_audit_log: {
+      idiomas_disponibles: {
         Row: {
-          action: string
-          created_at: string
-          details: Json | null
-          id: string
-          ip_address: string | null
-          resource_id: string | null
-          resource_type: string
-          user_agent: string | null
-          user_id: number
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          details?: Json | null
-          id?: string
-          ip_address?: string | null
-          resource_id?: string | null
-          resource_type: string
-          user_agent?: string | null
-          user_id: number
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          details?: Json | null
-          id?: string
-          ip_address?: string | null
-          resource_id?: string | null
-          resource_type?: string
-          user_agent?: string | null
-          user_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_audit_log_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      carrier_productos: {
-        Row: {
-          carrier_id: number
-          cliente_id: number
-          created_at: string
           id: number
-          producto_id: number
-        }
-        Insert: {
-          carrier_id: number
-          cliente_id: number
-          created_at?: string
-          id?: number
-          producto_id: number
-        }
-        Update: {
-          carrier_id?: number
-          cliente_id?: number
-          created_at?: string
-          id?: number
-          producto_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "carrier_productos_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "carrier_productos_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers_public_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "carrier_productos_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "carrier_productos_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos_cliente"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      carriers: {
-        Row: {
-          authorization_date: string | null
-          carrier_code: string | null
-          cliente_id: number
-          commercial_name: string | null
-          created_at: string | null
-          declared_coverage: string | null
-          email: string | null
-          geographic_scope:
-            | Database["public"]["Enums"]["geographic_scope"]
-            | null
-          guarantee_amount: number | null
-          id: number
-          legal_address: string | null
-          legal_name: string
-          legal_representative: string | null
-          license_expiration_date: string | null
-          license_number: string | null
-          notes: string | null
-          number_of_branches: number | null
-          operator_type: Database["public"]["Enums"]["operator_type"]
-          phone: string | null
-          regulator_data_api_url: string | null
-          regulatory_status: Database["public"]["Enums"]["regulatory_status"]
-          report_format: Database["public"]["Enums"]["report_format"] | null
-          status: string
-          tax_id: string | null
-          tracking_api_url: string | null
-          updated_at: string | null
-          website: string | null
-        }
-        Insert: {
-          authorization_date?: string | null
-          carrier_code?: string | null
-          cliente_id: number
-          commercial_name?: string | null
-          created_at?: string | null
-          declared_coverage?: string | null
-          email?: string | null
-          geographic_scope?:
-            | Database["public"]["Enums"]["geographic_scope"]
-            | null
-          guarantee_amount?: number | null
-          id?: number
-          legal_address?: string | null
-          legal_name: string
-          legal_representative?: string | null
-          license_expiration_date?: string | null
-          license_number?: string | null
-          notes?: string | null
-          number_of_branches?: number | null
-          operator_type: Database["public"]["Enums"]["operator_type"]
-          phone?: string | null
-          regulator_data_api_url?: string | null
-          regulatory_status: Database["public"]["Enums"]["regulatory_status"]
-          report_format?: Database["public"]["Enums"]["report_format"] | null
-          status?: string
-          tax_id?: string | null
-          tracking_api_url?: string | null
-          updated_at?: string | null
-          website?: string | null
-        }
-        Update: {
-          authorization_date?: string | null
-          carrier_code?: string | null
-          cliente_id?: number
-          commercial_name?: string | null
-          created_at?: string | null
-          declared_coverage?: string | null
-          email?: string | null
-          geographic_scope?:
-            | Database["public"]["Enums"]["geographic_scope"]
-            | null
-          guarantee_amount?: number | null
-          id?: number
-          legal_address?: string | null
-          legal_name?: string
-          legal_representative?: string | null
-          license_expiration_date?: string | null
-          license_number?: string | null
-          notes?: string | null
-          number_of_branches?: number | null
-          operator_type?: Database["public"]["Enums"]["operator_type"]
-          phone?: string | null
-          regulator_data_api_url?: string | null
-          regulatory_status?: Database["public"]["Enums"]["regulatory_status"]
-          report_format?: Database["public"]["Enums"]["report_format"] | null
-          status?: string
-          tax_id?: string | null
-          tracking_api_url?: string | null
-          updated_at?: string | null
-          website?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "carriers_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      city_allocation_requirements: {
-        Row: {
-          ciudad_id: number
-          cliente_id: number
-          created_at: string
-          id: number
-          percentage_from_a: number | null
-          percentage_from_b: number | null
-          percentage_from_c: number | null
-          updated_at: string
-        }
-        Insert: {
-          ciudad_id: number
-          cliente_id: number
-          created_at?: string
-          id?: number
-          percentage_from_a?: number | null
-          percentage_from_b?: number | null
-          percentage_from_c?: number | null
-          updated_at?: string
-        }
-        Update: {
-          ciudad_id?: number
-          cliente_id?: number
-          created_at?: string
-          id?: number
-          percentage_from_a?: number | null
-          percentage_from_b?: number | null
-          percentage_from_c?: number | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "city_allocation_requirements_ciudad_id_fkey"
-            columns: ["ciudad_id"]
-            isOneToOne: false
-            referencedRelation: "ciudades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "city_allocation_requirements_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ciudad_transit_times: {
-        Row: {
-          carrier_id: number
-          ciudad_destino_id: number
-          ciudad_origen_id: number
-          cliente_id: number
-          created_at: string
-          dias_transito: number
-          id: number
-          producto_id: number
-          target_percentage: number
-          updated_at: string
-        }
-        Insert: {
-          carrier_id: number
-          ciudad_destino_id: number
-          ciudad_origen_id: number
-          cliente_id: number
-          created_at?: string
-          dias_transito?: number
-          id?: number
-          producto_id: number
-          target_percentage?: number
-          updated_at?: string
-        }
-        Update: {
-          carrier_id?: number
-          ciudad_destino_id?: number
-          ciudad_origen_id?: number
-          cliente_id?: number
-          created_at?: string
-          dias_transito?: number
-          id?: number
-          producto_id?: number
-          target_percentage?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ciudad_transit_times_carrier_fk"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ciudad_transit_times_carrier_fk"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers_public_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ciudad_transit_times_ciudad_destino_id_fkey"
-            columns: ["ciudad_destino_id"]
-            isOneToOne: false
-            referencedRelation: "ciudades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ciudad_transit_times_ciudad_origen_id_fkey"
-            columns: ["ciudad_origen_id"]
-            isOneToOne: false
-            referencedRelation: "ciudades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ciudad_transit_times_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ciudad_transit_times_producto_fk"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos_cliente"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ciudades: {
-        Row: {
-          clasificacion: string
-          cliente_id: number
           codigo: string
-          codigo_postal_principal: string | null
-          criterio_clasificacion: string | null
-          descripcion: string | null
-          estado: string
+          nombre_nativo: string
+          nombre_ingles: string
+          bandera_emoji: string
+          es_default: boolean
+          activo: boolean
+          fecha_creacion: string
+        }
+        Insert: {
+          id?: number
+          codigo: string
+          nombre_nativo: string
+          nombre_ingles: string
+          bandera_emoji: string
+          es_default: boolean
+          activo: boolean
+          fecha_creacion?: string
+        }
+        Update: {
+          id?: number
+          codigo?: string
+          nombre_nativo?: string
+          nombre_ingles?: string
+          bandera_emoji?: string
+          es_default?: boolean
+          activo?: boolean
+          fecha_creacion?: string
+        }
+      }
+      traducciones: {
+        Row: {
+          id: number
+          clave: string
+          idioma: string
+          texto: string
+          categoria: null | null
+          descripcion: null | null
           fecha_creacion: string
           fecha_modificacion: string
-          id: number
-          latitud: number | null
-          longitud: number | null
-          nombre: string
-          pais: string
-          region_id: number
-          volumen_poblacional: number | null
-          volumen_trafico_postal: number | null
         }
         Insert: {
-          clasificacion: string
-          cliente_id: number
-          codigo: string
-          codigo_postal_principal?: string | null
-          criterio_clasificacion?: string | null
-          descripcion?: string | null
-          estado?: string
+          id?: number
+          clave: string
+          idioma: string
+          texto: string
+          categoria: null | null
+          descripcion: null | null
           fecha_creacion?: string
           fecha_modificacion?: string
-          id?: number
-          latitud?: number | null
-          longitud?: number | null
-          nombre: string
-          pais: string
-          region_id: number
-          volumen_poblacional?: number | null
-          volumen_trafico_postal?: number | null
         }
         Update: {
-          clasificacion?: string
-          cliente_id?: number
-          codigo?: string
-          codigo_postal_principal?: string | null
-          criterio_clasificacion?: string | null
-          descripcion?: string | null
-          estado?: string
+          id?: number
+          clave?: string
+          idioma?: string
+          texto?: string
+          categoria?: null | null
+          descripcion?: null | null
           fecha_creacion?: string
           fecha_modificacion?: string
-          id?: number
-          latitud?: number | null
-          longitud?: number | null
-          nombre?: string
-          pais?: string
-          region_id?: number
-          volumen_poblacional?: number | null
-          volumen_trafico_postal?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_ciudades_cliente"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_ciudades_region"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "regiones"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      classification_allocation_matrix: {
-        Row: {
-          cliente_id: number
-          created_at: string
-          destination_classification: string
-          id: number
-          percentage_from_a: number
-          percentage_from_b: number
-          percentage_from_c: number
-          updated_at: string
-        }
-        Insert: {
-          cliente_id: number
-          created_at?: string
-          destination_classification: string
-          id?: number
-          percentage_from_a?: number
-          percentage_from_b?: number
-          percentage_from_c?: number
-          updated_at?: string
-        }
-        Update: {
-          cliente_id?: number
-          created_at?: string
-          destination_classification?: string
-          id?: number
-          percentage_from_a?: number
-          percentage_from_b?: number
-          percentage_from_c?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "classification_allocation_matrix_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       clientes: {
         Row: {
+          id: number
+          nombre: string
           codigo: string
+          pais: string
           estado: string
           fecha_alta: string
-          id: number
-          max_events_per_panelist_week: number | null
-          nombre: string
-          pais: string
+          max_events_per_panelist_week: null | null
         }
         Insert: {
-          codigo: string
-          estado?: string
-          fecha_alta?: string
           id?: number
-          max_events_per_panelist_week?: number | null
           nombre: string
+          codigo: string
           pais: string
+          estado: string
+          fecha_alta?: string
+          max_events_per_panelist_week: null | null
         }
         Update: {
+          id?: number
+          nombre?: string
           codigo?: string
+          pais?: string
           estado?: string
           fecha_alta?: string
-          id?: number
-          max_events_per_panelist_week?: number | null
-          nombre?: string
-          pais?: string
+          max_events_per_panelist_week?: null | null
         }
-        Relationships: []
       }
-      configuracion_workflows: {
+      usuarios: {
         Row: {
+          id: number
+          nombre_completo: string
+          email: string
+          password_hash: string
+          telefono: string
+          whatsapp_telegram_cuenta: string
+          estado: string
+          fecha_creacion: string
+          fecha_ultimo_acceso: null | null
+          idioma_preferido: string
+          cliente_id: null | null
+          avatar_url: null | null
+        }
+        Insert: {
+          id?: number
+          nombre_completo: string
+          email: string
+          password_hash: string
+          telefono: string
+          whatsapp_telegram_cuenta: string
+          estado: string
+          fecha_creacion?: string
+          fecha_ultimo_acceso?: null | null
+          idioma_preferido: string
+          cliente_id: null | null
+          avatar_url: null | null
+        }
+        Update: {
+          id?: number
+          nombre_completo?: string
+          email?: string
+          password_hash?: string
+          telefono?: string
+          whatsapp_telegram_cuenta?: string
+          estado?: string
+          fecha_creacion?: string
+          fecha_ultimo_acceso?: null | null
+          idioma_preferido?: string
+          cliente_id?: null | null
+          avatar_url?: null | null
+        }
+      }
+      user_roles: {
+        Row: {
+          id: number
+          user_id: number
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          user_id: number
+          role: string
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          user_id?: number
+          role?: string
+          created_at?: string
+        }
+      }
+      regiones: {
+        Row: {
+          id: number
           cliente_id: number
+          codigo: string
+          nombre: string
+          pais: string
+          descripcion: string
+          estado: string
           fecha_creacion: string
           fecha_modificacion: string
-          hours_receiver_escalation: number
-          hours_receiver_verification: number
-          hours_sender_escalation: number
-          hours_sender_first_reminder: number
-          hours_sender_second_reminder: number
-          id: number
-          producto_id: number | null
-          tipo_dias: string
         }
         Insert: {
-          cliente_id: number
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          hours_receiver_escalation?: number
-          hours_receiver_verification?: number
-          hours_sender_escalation?: number
-          hours_sender_first_reminder?: number
-          hours_sender_second_reminder?: number
           id?: number
-          producto_id?: number | null
-          tipo_dias: string
-        }
-        Update: {
-          cliente_id?: number
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          hours_receiver_escalation?: number
-          hours_receiver_verification?: number
-          hours_sender_escalation?: number
-          hours_sender_first_reminder?: number
-          hours_sender_second_reminder?: number
-          id?: number
-          producto_id?: number | null
-          tipo_dias?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "configuracion_workflows_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "configuracion_workflows_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos_cliente"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      envios: {
-        Row: {
-          carrier_id: number | null
-          carrier_name: string | null
           cliente_id: number
-          estado: Database["public"]["Enums"]["estado_envio"]
-          fecha_creacion: string
-          fecha_envio_real: string | null
-          fecha_limite: string | null
-          fecha_notificacion: string | null
-          fecha_programada: string
-          fecha_recepcion_real: string | null
-          fecha_ultima_modificacion: string
-          id: number
-          motivo_creacion: string
-          nodo_destino: string
-          nodo_origen: string
-          numero_etiqueta: string | null
-          observaciones: string | null
-          panelista_destino_id: number | null
-          panelista_origen_id: number | null
-          producto_id: number | null
-          tiempo_transito_dias: number | null
-          tipo_producto: string | null
-          validation_status: string | null
-        }
-        Insert: {
-          carrier_id?: number | null
-          carrier_name?: string | null
-          cliente_id: number
-          estado?: Database["public"]["Enums"]["estado_envio"]
-          fecha_creacion?: string
-          fecha_envio_real?: string | null
-          fecha_limite?: string | null
-          fecha_notificacion?: string | null
-          fecha_programada: string
-          fecha_recepcion_real?: string | null
-          fecha_ultima_modificacion?: string
-          id?: number
-          motivo_creacion: string
-          nodo_destino: string
-          nodo_origen: string
-          numero_etiqueta?: string | null
-          observaciones?: string | null
-          panelista_destino_id?: number | null
-          panelista_origen_id?: number | null
-          producto_id?: number | null
-          tiempo_transito_dias?: number | null
-          tipo_producto?: string | null
-          validation_status?: string | null
-        }
-        Update: {
-          carrier_id?: number | null
-          carrier_name?: string | null
-          cliente_id?: number
-          estado?: Database["public"]["Enums"]["estado_envio"]
-          fecha_creacion?: string
-          fecha_envio_real?: string | null
-          fecha_limite?: string | null
-          fecha_notificacion?: string | null
-          fecha_programada?: string
-          fecha_recepcion_real?: string | null
-          fecha_ultima_modificacion?: string
-          id?: number
-          motivo_creacion?: string
-          nodo_destino?: string
-          nodo_origen?: string
-          numero_etiqueta?: string | null
-          observaciones?: string | null
-          panelista_destino_id?: number | null
-          panelista_origen_id?: number | null
-          producto_id?: number | null
-          tiempo_transito_dias?: number | null
-          tipo_producto?: string | null
-          validation_status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "envios_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers_public_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_nodo_destino_fkey"
-            columns: ["nodo_destino"]
-            isOneToOne: false
-            referencedRelation: "nodos"
-            referencedColumns: ["codigo"]
-          },
-          {
-            foreignKeyName: "envios_nodo_origen_fkey"
-            columns: ["nodo_origen"]
-            isOneToOne: false
-            referencedRelation: "nodos"
-            referencedColumns: ["codigo"]
-          },
-          {
-            foreignKeyName: "envios_panelista_destino_id_fkey"
-            columns: ["panelista_destino_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_panelista_destino_id_fkey"
-            columns: ["panelista_destino_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas_basic_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_panelista_origen_id_fkey"
-            columns: ["panelista_origen_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_panelista_origen_id_fkey"
-            columns: ["panelista_origen_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas_basic_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos_cliente"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      envios_estado_historial: {
-        Row: {
-          cliente_id: number
-          created_at: string
-          envio_id: number
-          estado_anterior: Database["public"]["Enums"]["estado_envio"] | null
-          estado_nuevo: Database["public"]["Enums"]["estado_envio"]
-          fecha_cambio: string
-          id: number
-          notas: string | null
-          usuario_id: number | null
-        }
-        Insert: {
-          cliente_id: number
-          created_at?: string
-          envio_id: number
-          estado_anterior?: Database["public"]["Enums"]["estado_envio"] | null
-          estado_nuevo: Database["public"]["Enums"]["estado_envio"]
-          fecha_cambio?: string
-          id?: number
-          notas?: string | null
-          usuario_id?: number | null
-        }
-        Update: {
-          cliente_id?: number
-          created_at?: string
-          envio_id?: number
-          estado_anterior?: Database["public"]["Enums"]["estado_envio"] | null
-          estado_nuevo?: Database["public"]["Enums"]["estado_envio"]
-          fecha_cambio?: string
-          id?: number
-          notas?: string | null
-          usuario_id?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "envios_estado_historial_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_estado_historial_envio_id_fkey"
-            columns: ["envio_id"]
-            isOneToOne: false
-            referencedRelation: "envios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_estado_historial_usuario_id_fkey"
-            columns: ["usuario_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      envios_validacion_pendiente: {
-        Row: {
-          cliente_id: number
-          created_at: string
-          envio_id: number
+          codigo: string
+          nombre: string
+          pais: string
+          descripcion: string
           estado: string
-          fecha_revision: string | null
-          id: number
-          notas_revision: string | null
-          revisado_por: number | null
-          updated_at: string
-          validaciones_fallidas: Json
-        }
-        Insert: {
-          cliente_id: number
-          created_at?: string
-          envio_id: number
-          estado?: string
-          fecha_revision?: string | null
-          id?: number
-          notas_revision?: string | null
-          revisado_por?: number | null
-          updated_at?: string
-          validaciones_fallidas?: Json
-        }
-        Update: {
-          cliente_id?: number
-          created_at?: string
-          envio_id?: number
-          estado?: string
-          fecha_revision?: string | null
-          id?: number
-          notas_revision?: string | null
-          revisado_por?: number | null
-          updated_at?: string
-          validaciones_fallidas?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "envios_validacion_pendiente_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_validacion_pendiente_envio_id_fkey"
-            columns: ["envio_id"]
-            isOneToOne: true
-            referencedRelation: "envios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "envios_validacion_pendiente_revisado_por_fkey"
-            columns: ["revisado_por"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      eventos_reales: {
-        Row: {
-          carrier_id: number | null
-          carrier_name: string | null
-          cliente_id: number
-          created_at: string
-          envio_id: number
-          fecha_envio_real: string | null
-          fecha_programada: string
-          fecha_recepcion_real: string | null
-          fecha_validacion: string
-          id: number
-          nodo_destino: string
-          nodo_origen: string
-          numero_etiqueta: string | null
-          panelista_destino_id: number | null
-          panelista_origen_id: number | null
-          producto_id: number | null
-          tiempo_transito_dias: number | null
-          tipo_producto: string | null
-          updated_at: string
-          validado_por: number | null
-        }
-        Insert: {
-          carrier_id?: number | null
-          carrier_name?: string | null
-          cliente_id: number
-          created_at?: string
-          envio_id: number
-          fecha_envio_real?: string | null
-          fecha_programada: string
-          fecha_recepcion_real?: string | null
-          fecha_validacion?: string
-          id?: number
-          nodo_destino: string
-          nodo_origen: string
-          numero_etiqueta?: string | null
-          panelista_destino_id?: number | null
-          panelista_origen_id?: number | null
-          producto_id?: number | null
-          tiempo_transito_dias?: number | null
-          tipo_producto?: string | null
-          updated_at?: string
-          validado_por?: number | null
-        }
-        Update: {
-          carrier_id?: number | null
-          carrier_name?: string | null
-          cliente_id?: number
-          created_at?: string
-          envio_id?: number
-          fecha_envio_real?: string | null
-          fecha_programada?: string
-          fecha_recepcion_real?: string | null
-          fecha_validacion?: string
-          id?: number
-          nodo_destino?: string
-          nodo_origen?: string
-          numero_etiqueta?: string | null
-          panelista_destino_id?: number | null
-          panelista_origen_id?: number | null
-          producto_id?: number | null
-          tiempo_transito_dias?: number | null
-          tipo_producto?: string | null
-          updated_at?: string
-          validado_por?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "eventos_reales_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers_public_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_envio_id_fkey"
-            columns: ["envio_id"]
-            isOneToOne: false
-            referencedRelation: "envios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_panelista_destino_id_fkey"
-            columns: ["panelista_destino_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_panelista_destino_id_fkey"
-            columns: ["panelista_destino_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas_basic_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_panelista_origen_id_fkey"
-            columns: ["panelista_origen_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_panelista_origen_id_fkey"
-            columns: ["panelista_origen_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas_basic_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos_cliente"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "eventos_reales_validado_por_fkey"
-            columns: ["validado_por"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      generated_allocation_plan_details: {
-        Row: {
-          carrier_id: number
-          cliente_id: number
-          created_at: string
-          fecha_programada: string
-          id: number
-          nodo_destino: string
-          nodo_origen: string
-          plan_id: number
-          producto_id: number
-          status: Database["public"]["Enums"]["estado_envio"] | null
-        }
-        Insert: {
-          carrier_id: number
-          cliente_id: number
-          created_at?: string
-          fecha_programada: string
-          id?: number
-          nodo_destino: string
-          nodo_origen: string
-          plan_id: number
-          producto_id: number
-          status?: Database["public"]["Enums"]["estado_envio"] | null
-        }
-        Update: {
-          carrier_id?: number
-          cliente_id?: number
-          created_at?: string
-          fecha_programada?: string
-          id?: number
-          nodo_destino?: string
-          nodo_origen?: string
-          plan_id?: number
-          producto_id?: number
-          status?: Database["public"]["Enums"]["estado_envio"] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "generated_allocation_plan_details_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_allocation_plan_details_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers_public_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_allocation_plan_details_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_allocation_plan_details_plan_id_fkey"
-            columns: ["plan_id"]
-            isOneToOne: false
-            referencedRelation: "generated_allocation_plans"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_allocation_plan_details_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos_cliente"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      generated_allocation_plans: {
-        Row: {
-          calculated_events: number
-          carrier_id: number
-          cliente_id: number
-          created_at: string
-          created_by: number | null
-          end_date: string
-          generation_params: Json | null
-          id: number
-          max_events_per_week: number | null
-          merge_strategy: string
-          merged_at: string | null
-          producto_id: number
-          start_date: string
-          status: string
-          total_events: number
-          unassigned_breakdown: Json | null
-          unassigned_events: number | null
-        }
-        Insert: {
-          calculated_events?: number
-          carrier_id: number
-          cliente_id: number
-          created_at?: string
-          created_by?: number | null
-          end_date: string
-          generation_params?: Json | null
-          id?: number
-          max_events_per_week?: number | null
-          merge_strategy?: string
-          merged_at?: string | null
-          producto_id: number
-          start_date: string
-          status?: string
-          total_events: number
-          unassigned_breakdown?: Json | null
-          unassigned_events?: number | null
-        }
-        Update: {
-          calculated_events?: number
-          carrier_id?: number
-          cliente_id?: number
-          created_at?: string
-          created_by?: number | null
-          end_date?: string
-          generation_params?: Json | null
-          id?: number
-          max_events_per_week?: number | null
-          merge_strategy?: string
-          merged_at?: string | null
-          producto_id?: number
-          start_date?: string
-          status?: string
-          total_events?: number
-          unassigned_breakdown?: Json | null
-          unassigned_events?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "generated_allocation_plans_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_allocation_plans_carrier_id_fkey"
-            columns: ["carrier_id"]
-            isOneToOne: false
-            referencedRelation: "carriers_public_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_allocation_plans_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_allocation_plans_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "generated_allocation_plans_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos_cliente"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      historial_incidencias: {
-        Row: {
-          accion: string
-          cliente_id: number | null
-          comentario: string | null
-          estado_anterior: string | null
-          estado_nuevo: string | null
-          fecha: string
-          id: number
-          incidencia_id: number
-          usuario_id: number | null
-        }
-        Insert: {
-          accion: string
-          cliente_id?: number | null
-          comentario?: string | null
-          estado_anterior?: string | null
-          estado_nuevo?: string | null
-          fecha?: string
-          id?: number
-          incidencia_id: number
-          usuario_id?: number | null
-        }
-        Update: {
-          accion?: string
-          cliente_id?: number | null
-          comentario?: string | null
-          estado_anterior?: string | null
-          estado_nuevo?: string | null
-          fecha?: string
-          id?: number
-          incidencia_id?: number
-          usuario_id?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "historial_incidencias_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "historial_incidencias_incidencia_id_fkey"
-            columns: ["incidencia_id"]
-            isOneToOne: false
-            referencedRelation: "incidencias"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "historial_incidencias_usuario_id_fkey"
-            columns: ["usuario_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      idiomas_disponibles: {
-        Row: {
-          activo: boolean
-          bandera_emoji: string | null
-          codigo: string
-          es_default: boolean
-          fecha_creacion: string
-          id: number
-          nombre_ingles: string
-          nombre_nativo: string
-        }
-        Insert: {
-          activo?: boolean
-          bandera_emoji?: string | null
-          codigo: string
-          es_default?: boolean
           fecha_creacion?: string
-          id?: number
-          nombre_ingles: string
-          nombre_nativo: string
+          fecha_modificacion?: string
         }
         Update: {
-          activo?: boolean
-          bandera_emoji?: string | null
+          id?: number
+          cliente_id?: number
           codigo?: string
-          es_default?: boolean
-          fecha_creacion?: string
-          id?: number
-          nombre_ingles?: string
-          nombre_nativo?: string
-        }
-        Relationships: []
-      }
-      incidencias: {
-        Row: {
-          cliente_id: number | null
-          datos_adicionales: Json | null
-          descripcion: string
-          envio_id: number | null
-          estado: Database["public"]["Enums"]["estado_incidencia"]
-          fecha_creacion: string
-          fecha_resolucion: string | null
-          fecha_ultima_actualizacion: string
-          gestor_asignado_id: number | null
-          id: number
-          origen: Database["public"]["Enums"]["origen_incidencia"]
-          panelista_id: number
-          prioridad: Database["public"]["Enums"]["prioridad_incidencia"]
-          tipo: Database["public"]["Enums"]["tipo_incidencia"]
-        }
-        Insert: {
-          cliente_id?: number | null
-          datos_adicionales?: Json | null
-          descripcion: string
-          envio_id?: number | null
-          estado?: Database["public"]["Enums"]["estado_incidencia"]
-          fecha_creacion?: string
-          fecha_resolucion?: string | null
-          fecha_ultima_actualizacion?: string
-          gestor_asignado_id?: number | null
-          id?: number
-          origen: Database["public"]["Enums"]["origen_incidencia"]
-          panelista_id: number
-          prioridad: Database["public"]["Enums"]["prioridad_incidencia"]
-          tipo: Database["public"]["Enums"]["tipo_incidencia"]
-        }
-        Update: {
-          cliente_id?: number | null
-          datos_adicionales?: Json | null
+          nombre?: string
+          pais?: string
           descripcion?: string
-          envio_id?: number | null
-          estado?: Database["public"]["Enums"]["estado_incidencia"]
+          estado?: string
           fecha_creacion?: string
-          fecha_resolucion?: string | null
-          fecha_ultima_actualizacion?: string
-          gestor_asignado_id?: number | null
-          id?: number
-          origen?: Database["public"]["Enums"]["origen_incidencia"]
-          panelista_id?: number
-          prioridad?: Database["public"]["Enums"]["prioridad_incidencia"]
-          tipo?: Database["public"]["Enums"]["tipo_incidencia"]
+          fecha_modificacion?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "incidencias_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incidencias_envio_id_fkey"
-            columns: ["envio_id"]
-            isOneToOne: false
-            referencedRelation: "envios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incidencias_gestor_asignado_id_fkey"
-            columns: ["gestor_asignado_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incidencias_panelista_id_fkey"
-            columns: ["panelista_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "incidencias_panelista_id_fkey"
-            columns: ["panelista_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas_basic_view"
-            referencedColumns: ["id"]
-          },
-        ]
       }
-      menu_permissions: {
+      ciudades: {
         Row: {
-          can_access: boolean
-          created_at: string
-          id: string
-          menu_item: string
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at: string
+          id: number
+          cliente_id: number
+          region_id: number
+          codigo: string
+          nombre: string
+          codigo_postal_principal: null | null
+          pais: string
+          clasificacion: string
+          latitud: null | null
+          longitud: null | null
+          volumen_poblacional: null | null
+          volumen_trafico_postal: null | null
+          criterio_clasificacion: null | null
+          descripcion: null | null
+          estado: string
+          fecha_creacion: string
+          fecha_modificacion: string
         }
         Insert: {
-          can_access?: boolean
-          created_at?: string
-          id?: string
-          menu_item: string
-          role: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
+          id?: number
+          cliente_id: number
+          region_id: number
+          codigo: string
+          nombre: string
+          codigo_postal_principal: null | null
+          pais: string
+          clasificacion: string
+          latitud: null | null
+          longitud: null | null
+          volumen_poblacional: null | null
+          volumen_trafico_postal: null | null
+          criterio_clasificacion: null | null
+          descripcion: null | null
+          estado: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
         }
         Update: {
-          can_access?: boolean
-          created_at?: string
-          id?: string
-          menu_item?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          updated_at?: string
+          id?: number
+          cliente_id?: number
+          region_id?: number
+          codigo?: string
+          nombre?: string
+          codigo_postal_principal?: null | null
+          pais?: string
+          clasificacion?: string
+          latitud?: null | null
+          longitud?: null | null
+          volumen_poblacional?: null | null
+          volumen_trafico_postal?: null | null
+          criterio_clasificacion?: null | null
+          descripcion?: null | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
         }
-        Relationships: []
       }
       nodos: {
         Row: {
-          ciudad: string
-          ciudad_id: number | null
-          cliente_id: number
           codigo: string
-          estado: string
+          ciudad: string
           pais: string
-          panelista_id: number | null
-          region_id: number | null
+          estado: string
+          ciudad_id: number
+          region_id: number
+          panelista_id: null | null
+          cliente_id: number
         }
         Insert: {
-          ciudad: string
-          ciudad_id?: number | null
-          cliente_id: number
           codigo: string
-          estado?: string
+          ciudad: string
           pais: string
-          panelista_id?: number | null
-          region_id?: number | null
+          estado: string
+          ciudad_id: number
+          region_id: number
+          panelista_id: null | null
+          cliente_id: number
         }
         Update: {
-          ciudad?: string
-          ciudad_id?: number | null
-          cliente_id?: number
           codigo?: string
-          estado?: string
+          ciudad?: string
           pais?: string
-          panelista_id?: number | null
-          region_id?: number | null
+          estado?: string
+          ciudad_id?: number
+          region_id?: number
+          panelista_id?: null | null
+          cliente_id?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_nodos_ciudad"
-            columns: ["ciudad_id"]
-            isOneToOne: false
-            referencedRelation: "ciudades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_nodos_panelista"
-            columns: ["panelista_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_nodos_panelista"
-            columns: ["panelista_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas_basic_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_nodos_region"
-            columns: ["region_id"]
-            isOneToOne: false
-            referencedRelation: "regiones"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "nodos_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       panelistas: {
         Row: {
-          availability_status: string | null
-          ciudad_id: number | null
-          cliente_id: number
-          dias_comunicacion: Database["public"]["Enums"]["dias_comunicacion"]
+          id: number
+          nombre_completo: string
           direccion_calle: string
           direccion_ciudad: string
           direccion_codigo_postal: string
           direccion_pais: string
-          email: string | null
+          telefono: string
+          email: string
+          idioma: string
+          plataforma_preferida: string
+          zona_horaria: string
+          horario_inicio: string
+          horario_fin: string
+          nodo_asignado: string
           estado: string
+          gestor_asignado_id: null | null
           fecha_alta: string
           fecha_ultima_modificacion: string
-          gestor_asignado_id: number | null
-          horario_fin: string
-          horario_inicio: string
-          id: number
-          idioma: string
-          last_availability_change: string | null
-          nodo_asignado: string | null
-          nombre_completo: string
-          plataforma_preferida: string
-          telefono: string
-          zona_horaria: string
+          cliente_id: number
+          availability_status: string
+          current_leave_start: null | null
+          current_leave_end: null | null
+          last_availability_change: string
+          dias_comunicacion: null | null
         }
         Insert: {
-          availability_status?: string | null
-          ciudad_id?: number | null
-          cliente_id: number
-          dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
+          id?: number
+          nombre_completo: string
           direccion_calle: string
           direccion_ciudad: string
           direccion_codigo_postal: string
           direccion_pais: string
-          email?: string | null
-          estado?: string
+          telefono: string
+          email: string
+          idioma: string
+          plataforma_preferida: string
+          zona_horaria: string
+          horario_inicio: string
+          horario_fin: string
+          nodo_asignado: string
+          estado: string
+          gestor_asignado_id: null | null
           fecha_alta?: string
           fecha_ultima_modificacion?: string
-          gestor_asignado_id?: number | null
-          horario_fin: string
-          horario_inicio: string
-          id?: number
-          idioma: string
-          last_availability_change?: string | null
-          nodo_asignado?: string | null
-          nombre_completo: string
-          plataforma_preferida: string
-          telefono: string
-          zona_horaria: string
+          cliente_id: number
+          availability_status: string
+          current_leave_start: null | null
+          current_leave_end: null | null
+          last_availability_change: string
+          dias_comunicacion: null | null
         }
         Update: {
-          availability_status?: string | null
-          ciudad_id?: number | null
-          cliente_id?: number
-          dias_comunicacion?: Database["public"]["Enums"]["dias_comunicacion"]
+          id?: number
+          nombre_completo?: string
           direccion_calle?: string
           direccion_ciudad?: string
           direccion_codigo_postal?: string
           direccion_pais?: string
-          email?: string | null
+          telefono?: string
+          email?: string
+          idioma?: string
+          plataforma_preferida?: string
+          zona_horaria?: string
+          horario_inicio?: string
+          horario_fin?: string
+          nodo_asignado?: string
           estado?: string
+          gestor_asignado_id?: null | null
           fecha_alta?: string
           fecha_ultima_modificacion?: string
-          gestor_asignado_id?: number | null
-          horario_fin?: string
-          horario_inicio?: string
-          id?: number
-          idioma?: string
-          last_availability_change?: string | null
-          nodo_asignado?: string | null
-          nombre_completo?: string
-          plataforma_preferida?: string
-          telefono?: string
-          zona_horaria?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_panelistas_ciudad"
-            columns: ["ciudad_id"]
-            isOneToOne: false
-            referencedRelation: "ciudades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "panelistas_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "panelistas_gestor_asignado_id_fkey"
-            columns: ["gestor_asignado_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "panelistas_nodo_asignado_fkey"
-            columns: ["nodo_asignado"]
-            isOneToOne: false
-            referencedRelation: "nodos"
-            referencedColumns: ["codigo"]
-          },
-        ]
-      }
-      panelistas_availability_log: {
-        Row: {
-          changed_at: string
-          changed_by: number | null
-          cliente_id: number
-          id: number
-          leave_end_date: string | null
-          leave_start_date: string | null
-          notes: string | null
-          panelista_id: number
-          previous_status: string | null
-          reason: string | null
-          status: string
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: number | null
-          cliente_id: number
-          id?: number
-          leave_end_date?: string | null
-          leave_start_date?: string | null
-          notes?: string | null
-          panelista_id: number
-          previous_status?: string | null
-          reason?: string | null
-          status: string
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: number | null
           cliente_id?: number
-          id?: number
-          leave_end_date?: string | null
-          leave_start_date?: string | null
-          notes?: string | null
-          panelista_id?: number
-          previous_status?: string | null
-          reason?: string | null
-          status?: string
+          availability_status?: string
+          current_leave_start?: null | null
+          current_leave_end?: null | null
+          last_availability_change?: string
+          dias_comunicacion?: null | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "panelistas_availability_log_changed_by_fkey"
-            columns: ["changed_by"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "panelistas_availability_log_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "panelistas_availability_log_panelista_id_fkey"
-            columns: ["panelista_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "panelistas_availability_log_panelista_id_fkey"
-            columns: ["panelista_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas_basic_view"
-            referencedColumns: ["id"]
-          },
-        ]
       }
-      plantillas_mensajes: {
+      carriers: {
         Row: {
-          codigo: string
-          contenido: string
-          estado: string
-          fecha_creacion: string
-          fecha_modificacion: string
           id: number
-          idioma: string
-          tipo: string
-          variables: Json | null
+          carrier_code: null | null
+          legal_name: string
+          commercial_name: string
+          tax_id: null | null
+          operator_type: string
+          license_number: null | null
+          regulatory_status: string
+          authorization_date: null | null
+          license_expiration_date: null | null
+          guarantee_amount: null | null
+          legal_representative: null | null
+          legal_address: null | null
+          phone: null | null
+          email: null | null
+          website: null | null
+          geographic_scope: null | null
+          declared_coverage: null | null
+          number_of_branches: null | null
+          tracking_api_url: null | null
+          regulator_data_api_url: null | null
+          report_format: null | null
+          status: string
+          notes: null | null
+          created_at: string
+          updated_at: string
+          cliente_id: number
         }
         Insert: {
-          codigo: string
-          contenido: string
-          estado?: string
-          fecha_creacion?: string
-          fecha_modificacion?: string
           id?: number
-          idioma: string
-          tipo: string
-          variables?: Json | null
+          carrier_code: null | null
+          legal_name: string
+          commercial_name: string
+          tax_id: null | null
+          operator_type: string
+          license_number: null | null
+          regulatory_status: string
+          authorization_date: null | null
+          license_expiration_date: null | null
+          guarantee_amount: null | null
+          legal_representative: null | null
+          legal_address: null | null
+          phone: null | null
+          email: null | null
+          website: null | null
+          geographic_scope: null | null
+          declared_coverage: null | null
+          number_of_branches: null | null
+          tracking_api_url: null | null
+          regulator_data_api_url: null | null
+          report_format: null | null
+          status: string
+          notes: null | null
+          created_at?: string
+          updated_at?: string
+          cliente_id: number
         }
         Update: {
-          codigo?: string
-          contenido?: string
-          estado?: string
-          fecha_creacion?: string
-          fecha_modificacion?: string
           id?: number
-          idioma?: string
-          tipo?: string
-          variables?: Json | null
+          carrier_code?: null | null
+          legal_name?: string
+          commercial_name?: string
+          tax_id?: null | null
+          operator_type?: string
+          license_number?: null | null
+          regulatory_status?: string
+          authorization_date?: null | null
+          license_expiration_date?: null | null
+          guarantee_amount?: null | null
+          legal_representative?: null | null
+          legal_address?: null | null
+          phone?: null | null
+          email?: null | null
+          website?: null | null
+          geographic_scope?: null | null
+          declared_coverage?: null | null
+          number_of_branches?: null | null
+          tracking_api_url?: null | null
+          regulator_data_api_url?: null | null
+          report_format?: null | null
+          status?: string
+          notes?: null | null
+          created_at?: string
+          updated_at?: string
+          cliente_id?: number
         }
-        Relationships: []
       }
-      product_seasonality: {
+      carrier_productos: {
         Row: {
-          april_percentage: number
-          august_percentage: number
+          id: number
+          producto_id: number
+          carrier_id: number
           cliente_id: number
           created_at: string
-          december_percentage: number
-          february_percentage: number
-          id: number
-          january_percentage: number
-          july_percentage: number
-          june_percentage: number
-          march_percentage: number
-          may_percentage: number
-          november_percentage: number
-          october_percentage: number
-          producto_id: number
-          september_percentage: number
-          updated_at: string
-          year: number
         }
         Insert: {
-          april_percentage?: number
-          august_percentage?: number
+          id?: number
+          producto_id: number
+          carrier_id: number
           cliente_id: number
           created_at?: string
-          december_percentage?: number
-          february_percentage?: number
-          id?: number
-          january_percentage?: number
-          july_percentage?: number
-          june_percentage?: number
-          march_percentage?: number
-          may_percentage?: number
-          november_percentage?: number
-          october_percentage?: number
-          producto_id: number
-          september_percentage?: number
-          updated_at?: string
-          year?: number
         }
         Update: {
-          april_percentage?: number
-          august_percentage?: number
-          cliente_id?: number
-          created_at?: string
-          december_percentage?: number
-          february_percentage?: number
           id?: number
-          january_percentage?: number
-          july_percentage?: number
-          june_percentage?: number
-          march_percentage?: number
-          may_percentage?: number
-          november_percentage?: number
-          october_percentage?: number
           producto_id?: number
-          september_percentage?: number
-          updated_at?: string
-          year?: number
-        }
-        Relationships: []
-      }
-      producto_materiales: {
-        Row: {
-          cantidad: number
-          es_obligatorio: boolean
-          fecha_creacion: string
-          fecha_modificacion: string
-          id: number
-          notas: string | null
-          producto_id: number
-          tipo_material_id: number
-        }
-        Insert: {
-          cantidad?: number
-          es_obligatorio?: boolean
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          notas?: string | null
-          producto_id: number
-          tipo_material_id: number
-        }
-        Update: {
-          cantidad?: number
-          es_obligatorio?: boolean
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          notas?: string | null
-          producto_id?: number
-          tipo_material_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "producto_materiales_producto_id_fkey"
-            columns: ["producto_id"]
-            isOneToOne: false
-            referencedRelation: "productos_cliente"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "producto_materiales_tipo_material_id_fkey"
-            columns: ["tipo_material_id"]
-            isOneToOne: false
-            referencedRelation: "tipos_material"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      productos_cliente: {
-        Row: {
-          cliente_id: number
-          codigo_producto: string
-          descripcion: string | null
-          estado: string
-          fecha_creacion: string
-          fecha_modificacion: string
-          id: number
-          nombre_producto: string
-          standard_delivery_hours: number | null
-        }
-        Insert: {
-          cliente_id: number
-          codigo_producto: string
-          descripcion?: string | null
-          estado?: string
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          nombre_producto: string
-          standard_delivery_hours?: number | null
-        }
-        Update: {
-          cliente_id?: number
-          codigo_producto?: string
-          descripcion?: string | null
-          estado?: string
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          nombre_producto?: string
-          standard_delivery_hours?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "productos_cliente_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      regiones: {
-        Row: {
-          cliente_id: number
-          codigo: string
-          descripcion: string | null
-          estado: string
-          fecha_creacion: string
-          fecha_modificacion: string
-          id: number
-          nombre: string
-          pais: string
-        }
-        Insert: {
-          cliente_id: number
-          codigo: string
-          descripcion?: string | null
-          estado?: string
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          nombre: string
-          pais: string
-        }
-        Update: {
-          cliente_id?: number
-          codigo?: string
-          descripcion?: string | null
-          estado?: string
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          nombre?: string
-          pais?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_regiones_cliente"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      scheduled_leaves: {
-        Row: {
-          cliente_id: number
-          created_at: string
-          created_by: number | null
-          id: number
-          leave_end_date: string
-          leave_start_date: string
-          notes: string | null
-          panelista_id: number
-          reason: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          cliente_id: number
-          created_at?: string
-          created_by?: number | null
-          id?: number
-          leave_end_date: string
-          leave_start_date: string
-          notes?: string | null
-          panelista_id: number
-          reason?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
+          carrier_id?: number
           cliente_id?: number
           created_at?: string
-          created_by?: number | null
-          id?: number
-          leave_end_date?: string
-          leave_start_date?: string
-          notes?: string | null
-          panelista_id?: number
-          reason?: string | null
-          status?: string
-          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "scheduled_leaves_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scheduled_leaves_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scheduled_leaves_panelista_id_fkey"
-            columns: ["panelista_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "scheduled_leaves_panelista_id_fkey"
-            columns: ["panelista_id"]
-            isOneToOne: false
-            referencedRelation: "panelistas_basic_view"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       tipos_material: {
         Row: {
-          cliente_id: number
-          codigo: string
-          descripcion: string | null
-          estado: string
-          fecha_creacion: string
-          fecha_modificacion: string
           id: number
+          codigo: string
           nombre: string
+          descripcion: string
           unidad_medida: string
-        }
-        Insert: {
-          cliente_id: number
-          codigo: string
-          descripcion?: string | null
-          estado?: string
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          nombre: string
-          unidad_medida?: string
-        }
-        Update: {
-          cliente_id?: number
-          codigo?: string
-          descripcion?: string | null
-          estado?: string
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          nombre?: string
-          unidad_medida?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tipos_material_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      traducciones: {
-        Row: {
-          categoria: string | null
-          clave: string
-          descripcion: string | null
-          fecha_creacion: string
-          fecha_modificacion: string
-          id: number
-          idioma: string
-          texto: string
-        }
-        Insert: {
-          categoria?: string | null
-          clave: string
-          descripcion?: string | null
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          idioma: string
-          texto: string
-        }
-        Update: {
-          categoria?: string | null
-          clave?: string
-          descripcion?: string | null
-          fecha_creacion?: string
-          fecha_modificacion?: string
-          id?: number
-          idioma?: string
-          texto?: string
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: number
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: number
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_roles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "usuarios"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      usuarios: {
-        Row: {
-          avatar_url: string | null
-          cliente_id: number | null
-          email: string
           estado: string
           fecha_creacion: string
-          fecha_ultimo_acceso: string | null
-          id: number
-          idioma_preferido: string
-          nombre_completo: string
-          password_hash: string
-          telefono: string | null
-          whatsapp_telegram_cuenta: string | null
+          fecha_modificacion: string
+          cliente_id: number
         }
         Insert: {
-          avatar_url?: string | null
-          cliente_id?: number | null
-          email: string
-          estado?: string
-          fecha_creacion?: string
-          fecha_ultimo_acceso?: string | null
           id?: number
-          idioma_preferido?: string
-          nombre_completo: string
-          password_hash: string
-          telefono?: string | null
-          whatsapp_telegram_cuenta?: string | null
+          codigo: string
+          nombre: string
+          descripcion: string
+          unidad_medida: string
+          estado: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          cliente_id: number
         }
         Update: {
-          avatar_url?: string | null
-          cliente_id?: number | null
-          email?: string
+          id?: number
+          codigo?: string
+          nombre?: string
+          descripcion?: string
+          unidad_medida?: string
           estado?: string
           fecha_creacion?: string
-          fecha_ultimo_acceso?: string | null
-          id?: number
-          idioma_preferido?: string
-          nombre_completo?: string
-          password_hash?: string
-          telefono?: string | null
-          whatsapp_telegram_cuenta?: string | null
+          fecha_modificacion?: string
+          cliente_id?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "usuarios_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "usuarios_idioma_preferido_fkey"
-            columns: ["idioma_preferido"]
-            isOneToOne: false
-            referencedRelation: "idiomas_disponibles"
-            referencedColumns: ["codigo"]
-          },
-        ]
+      }
+      productos_cliente: {
+        Row: {
+          id: number
+          cliente_id: number
+          codigo_producto: string
+          nombre_producto: string
+          descripcion: null | null
+          estado: string
+          fecha_creacion: string
+          fecha_modificacion: string
+          standard_delivery_hours: null | null
+        }
+        Insert: {
+          id?: number
+          cliente_id: number
+          codigo_producto: string
+          nombre_producto: string
+          descripcion: null | null
+          estado: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          standard_delivery_hours: null | null
+        }
+        Update: {
+          id?: number
+          cliente_id?: number
+          codigo_producto?: string
+          nombre_producto?: string
+          descripcion?: null | null
+          estado?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          standard_delivery_hours?: null | null
+        }
+      }
+      producto_materiales: {
+        Row: {
+          id: number
+          producto_id: number
+          tipo_material_id: number
+          cantidad: number
+          es_obligatorio: boolean
+          notas: null | null
+          fecha_creacion: string
+          fecha_modificacion: string
+        }
+        Insert: {
+          id?: number
+          producto_id: number
+          tipo_material_id: number
+          cantidad: number
+          es_obligatorio: boolean
+          notas: null | null
+          fecha_creacion?: string
+          fecha_modificacion?: string
+        }
+        Update: {
+          id?: number
+          producto_id?: number
+          tipo_material_id?: number
+          cantidad?: number
+          es_obligatorio?: boolean
+          notas?: null | null
+          fecha_creacion?: string
+          fecha_modificacion?: string
+        }
+      }
+      envios: {
+        Row: {
+          id: number
+          cliente_id: number
+          nodo_origen: string
+          nodo_destino: string
+          panelista_origen_id: null | null
+          panelista_destino_id: null | null
+          fecha_programada: string
+          fecha_limite: null | null
+          tipo_producto: string
+          numero_etiqueta: null | null
+          estado: string
+          fecha_notificacion: null | null
+          fecha_envio_real: null | null
+          fecha_recepcion_real: null | null
+          tiempo_transito_dias: null | null
+          motivo_creacion: string
+          observaciones: string
+          fecha_creacion: string
+          carrier_id: number
+          carrier_name: string
+          producto_id: number
+          fecha_ultima_modificacion: string
+        }
+        Insert: {
+          id?: number
+          cliente_id: number
+          nodo_origen: string
+          nodo_destino: string
+          panelista_origen_id: null | null
+          panelista_destino_id: null | null
+          fecha_programada?: string
+          fecha_limite?: null | null
+          tipo_producto: string
+          numero_etiqueta: null | null
+          estado: string
+          fecha_notificacion?: null | null
+          fecha_envio_real?: null | null
+          fecha_recepcion_real?: null | null
+          tiempo_transito_dias: null | null
+          motivo_creacion: string
+          observaciones: string
+          fecha_creacion?: string
+          carrier_id: number
+          carrier_name: string
+          producto_id: number
+          fecha_ultima_modificacion?: string
+        }
+        Update: {
+          id?: number
+          cliente_id?: number
+          nodo_origen?: string
+          nodo_destino?: string
+          panelista_origen_id?: null | null
+          panelista_destino_id?: null | null
+          fecha_programada?: string
+          fecha_limite?: null | null
+          tipo_producto?: string
+          numero_etiqueta?: null | null
+          estado?: string
+          fecha_notificacion?: null | null
+          fecha_envio_real?: null | null
+          fecha_recepcion_real?: null | null
+          tiempo_transito_dias?: null | null
+          motivo_creacion?: string
+          observaciones?: string
+          fecha_creacion?: string
+          carrier_id?: number
+          carrier_name?: string
+          producto_id?: number
+          fecha_ultima_modificacion?: string
+        }
+      }
+      configuracion_workflows: {
+        Row: {
+          id: number
+          cliente_id: number
+          tipo_dias: string
+          fecha_creacion: string
+          fecha_modificacion: string
+          producto_id: null | null
+          hours_sender_first_reminder: number
+          hours_sender_second_reminder: number
+          hours_sender_escalation: number
+          hours_receiver_verification: number
+          hours_receiver_escalation: number
+        }
+        Insert: {
+          id?: number
+          cliente_id: number
+          tipo_dias: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          producto_id: null | null
+          hours_sender_first_reminder: number
+          hours_sender_second_reminder: number
+          hours_sender_escalation: number
+          hours_receiver_verification: number
+          hours_receiver_escalation: number
+        }
+        Update: {
+          id?: number
+          cliente_id?: number
+          tipo_dias?: string
+          fecha_creacion?: string
+          fecha_modificacion?: string
+          producto_id?: null | null
+          hours_sender_first_reminder?: number
+          hours_sender_second_reminder?: number
+          hours_sender_escalation?: number
+          hours_receiver_verification?: number
+          hours_receiver_escalation?: number
+        }
+      }
+      ciudad_transit_times: {
+        Row: {
+          id: number
+          cliente_id: number
+          ciudad_origen_id: number
+          ciudad_destino_id: number
+          dias_transito: number
+          carrier_id: number
+          producto_id: number
+          target_percentage: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          cliente_id: number
+          ciudad_origen_id: number
+          ciudad_destino_id: number
+          dias_transito: number
+          carrier_id: number
+          producto_id: number
+          target_percentage: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          cliente_id?: number
+          ciudad_origen_id?: number
+          ciudad_destino_id?: number
+          dias_transito?: number
+          carrier_id?: number
+          producto_id?: number
+          target_percentage?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      generated_allocation_plans: {
+        Row: {
+          id: number
+          cliente_id: number
+          plan_name: string
+          generation_date: string
+          created_by: number
+          status: string
+          notes: null | null
+          calculated_events: number
+          carrier_id: number
+          end_date: string
+          total_events: number
+          max_events_per_week: number
+          unassigned_events: number
+          unassigned_breakdown: any
+          merge_strategy: string
+          generation_params: any
+          merged_at: string
+          producto_id: number
+          start_date: string
+        }
+        Insert: {
+          id?: number
+          cliente_id: number
+          plan_name: string
+          generation_date: string
+          created_by: number
+          status: string
+          notes: null | null
+          calculated_events: number
+          carrier_id: number
+          end_date: string
+          total_events: number
+          max_events_per_week: number
+          unassigned_events: number
+          unassigned_breakdown: any
+          merge_strategy: string
+          generation_params: any
+          merged_at: string
+          producto_id: number
+          start_date: string
+        }
+        Update: {
+          id?: number
+          cliente_id?: number
+          plan_name?: string
+          generation_date?: string
+          created_by?: number
+          status?: string
+          notes?: null | null
+          calculated_events?: number
+          carrier_id?: number
+          end_date?: string
+          total_events?: number
+          max_events_per_week?: number
+          unassigned_events?: number
+          unassigned_breakdown?: any
+          merge_strategy?: string
+          generation_params?: any
+          merged_at?: string
+          producto_id?: number
+          start_date?: string
+        }
+      }
+      generated_allocation_plan_details: {
+        Row: {
+          id: number
+          plan_id: number
+          nodo_origen: string
+          nodo_destino: string
+          fecha_programada: string
+          producto_id: number
+          carrier_id: number
+          cliente_id: number
+          created_at: string
+          status: string
+          fecha_envio_real: null | null
+          fecha_recepcion_real: null | null
+          numero_etiqueta: null | null
+        }
+        Insert: {
+          id?: number
+          plan_id: number
+          nodo_origen: string
+          nodo_destino: string
+          fecha_programada?: string
+          producto_id: number
+          carrier_id: number
+          cliente_id: number
+          created_at?: string
+          status: string
+          fecha_envio_real?: null | null
+          fecha_recepcion_real?: null | null
+          numero_etiqueta: null | null
+        }
+        Update: {
+          id?: number
+          plan_id?: number
+          nodo_origen?: string
+          nodo_destino?: string
+          fecha_programada?: string
+          producto_id?: number
+          carrier_id?: number
+          cliente_id?: number
+          created_at?: string
+          status?: string
+          fecha_envio_real?: null | null
+          fecha_recepcion_real?: null | null
+          numero_etiqueta?: null | null
+        }
+      }
+      scheduled_leaves: {
+        Row: {
+          id: number
+          panelista_id: number
+          cliente_id: number
+          leave_start_date: string
+          leave_end_date: string
+          reason: string
+          notes: null | null
+          status: string
+          created_by: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          panelista_id: number
+          cliente_id: number
+          leave_start_date: string
+          leave_end_date: string
+          reason: string
+          notes: null | null
+          status: string
+          created_by: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          panelista_id?: number
+          cliente_id?: number
+          leave_start_date?: string
+          leave_end_date?: string
+          reason?: string
+          notes?: null | null
+          status?: string
+          created_by?: number
+          created_at?: string
+          updated_at?: string
+        }
       }
     }
     Views: {
-      carriers_public_view: {
-        Row: {
-          carrier_code: string | null
-          cliente_id: number | null
-          commercial_name: string | null
-          created_at: string | null
-          id: number | null
-          legal_name: string | null
-          operator_type: Database["public"]["Enums"]["operator_type"] | null
-          status: string | null
-        }
-        Insert: {
-          carrier_code?: string | null
-          cliente_id?: number | null
-          commercial_name?: string | null
-          created_at?: string | null
-          id?: number | null
-          legal_name?: string | null
-          operator_type?: Database["public"]["Enums"]["operator_type"] | null
-          status?: string | null
-        }
-        Update: {
-          carrier_code?: string | null
-          cliente_id?: number | null
-          commercial_name?: string | null
-          created_at?: string | null
-          id?: number | null
-          legal_name?: string | null
-          operator_type?: Database["public"]["Enums"]["operator_type"] | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "carriers_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      panelistas_basic_view: {
-        Row: {
-          ciudad_id: number | null
-          cliente_id: number | null
-          estado: string | null
-          fecha_alta: string | null
-          id: number | null
-          idioma: string | null
-          nodo_asignado: string | null
-          nombre_completo: string | null
-          plataforma_preferida: string | null
-        }
-        Insert: {
-          ciudad_id?: number | null
-          cliente_id?: number | null
-          estado?: string | null
-          fecha_alta?: string | null
-          id?: number | null
-          idioma?: string | null
-          nodo_asignado?: string | null
-          nombre_completo?: string | null
-          plataforma_preferida?: string | null
-        }
-        Update: {
-          ciudad_id?: number | null
-          cliente_id?: number | null
-          estado?: string | null
-          fecha_alta?: string | null
-          id?: number | null
-          idioma?: string | null
-          nodo_asignado?: string | null
-          nombre_completo?: string | null
-          plataforma_preferida?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_panelistas_ciudad"
-            columns: ["ciudad_id"]
-            isOneToOne: false
-            referencedRelation: "ciudades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "panelistas_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "clientes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "panelistas_nodo_asignado_fkey"
-            columns: ["nodo_asignado"]
-            isOneToOne: false
-            referencedRelation: "nodos"
-            referencedColumns: ["codigo"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
-      analyze_issues:
-        | {
-            Args: {
-              p_cliente_id: number
-              p_end_date: string
-              p_start_date: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_carrier_id?: number
-              p_cliente_id: number
-              p_end_date: string
-              p_producto_id?: number
-              p_start_date: string
-            }
-            Returns: Json
-          }
-      calculate_network_health:
-        | {
-            Args: {
-              p_cliente_id: number
-              p_end_date: string
-              p_start_date: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_carrier_id?: number
-              p_cliente_id: number
-              p_end_date: string
-              p_producto_id?: number
-              p_start_date: string
-            }
-            Returns: Json
-          }
-      calculate_sla_compliance:
-        | {
-            Args: {
-              p_cliente_id: number
-              p_end_date: string
-              p_start_date: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_carrier_id?: number
-              p_cliente_id: number
-              p_end_date: string
-              p_producto_id?: number
-              p_start_date: string
-            }
-            Returns: Json
-          }
-      generate_next_material_code: {
-        Args: { p_cliente_id: number }
-        Returns: string
-      }
-      generate_next_nodo_code: {
-        Args: { p_ciudad_id: number; p_region_id: number }
-        Returns: string
-      }
-      generate_next_product_code: {
-        Args: { p_cliente_id: number }
-        Returns: string
-      }
-      get_current_user_id: { Args: never; Returns: number }
-      get_performance_trends:
-        | {
-            Args: {
-              p_cliente_id: number
-              p_days_back?: number
-              p_granularity?: string
-            }
-            Returns: {
-              avg_transit_time: number
-              issue_count: number
-              on_time_rate: number
-              period_date: string
-              total_events: number
-            }[]
-          }
-        | {
-            Args: {
-              p_carrier_id?: number
-              p_cliente_id: number
-              p_days_back?: number
-              p_granularity?: string
-              p_producto_id?: number
-            }
-            Returns: {
-              avg_transit_time: number
-              issue_count: number
-              on_time_rate: number
-              period_date: string
-              total_events: number
-            }[]
-          }
-      get_route_performance:
-        | {
-            Args: {
-              p_cliente_id: number
-              p_end_date: string
-              p_start_date: string
-            }
-            Returns: {
-              avg_transit_time: number
-              ciudad_destino: string
-              ciudad_origen: string
-              clasificacion_destino: string
-              clasificacion_origen: string
-              nodo_destino: string
-              nodo_origen: string
-              on_time_events: number
-              on_time_rate: number
-              route_score: number
-              total_events: number
-            }[]
-          }
-        | {
-            Args: {
-              p_carrier_id?: number
-              p_cliente_id: number
-              p_end_date: string
-              p_producto_id?: number
-              p_start_date: string
-            }
-            Returns: {
-              avg_transit_time: number
-              ciudad_destino: string
-              ciudad_origen: string
-              clasificacion_destino: string
-              clasificacion_origen: string
-              nodo_destino: string
-              nodo_origen: string
-              on_time_events: number
-              on_time_rate: number
-              route_score: number
-              total_events: number
-            }[]
-          }
-      get_transit_time_distribution: {
-        Args: {
-          p_carrier_id?: number
-          p_ciudad_origen: string
-          p_cliente_id: number
-          p_end_date?: string
-          p_producto_id?: number
-          p_start_date?: string
-        }
-        Returns: {
-          ciudad_destino: string
-          clasificacion_destino: string
-          cumulative_count: number
-          cumulative_percentage: number
-          event_count: number
-          standard_days: number
-          total_events_route: number
-          transit_days: number
-        }[]
-      }
-      get_user_cliente_id: { Args: never; Returns: number }
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: number
-        }
-        Returns: boolean
-      }
-      user_has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: number
-        }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
-      app_role: "superadmin" | "admin" | "coordinator" | "manager"
-      dias_comunicacion: "dias_laborables" | "fines_semana" | "ambos"
-      estado_envio: "PENDING" | "NOTIFIED" | "SENT" | "RECEIVED" | "CANCELLED"
-      estado_general: "activo" | "inactivo" | "suspendido"
-      estado_incidencia: "abierta" | "en_proceso" | "resuelta" | "cerrada"
-      geographic_scope: "local" | "regional" | "national" | "international"
-      operator_type:
-        | "designated_usp"
-        | "licensed_postal"
-        | "express_courier"
-        | "ecommerce_parcel"
-        | "exempt"
-        | "others"
-      origen_incidencia: "agente" | "gestor" | "sistema"
-      prioridad_incidencia: "baja" | "media" | "alta" | "critica"
-      regulatory_status: "authorized" | "suspended" | "sanctioned" | "revoked"
-      report_format: "xml" | "json" | "csv"
-      tipo_incidencia:
-        | "cambio_direccion"
-        | "no_disponible"
-        | "muestra_dañada"
-        | "extravio"
-        | "problema_generico"
-    }
-    CompositeTypes: {
       [_ in never]: never
     }
   }
 }
-
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
-
-export type Tables<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
-
-export const Constants = {
-  public: {
-    Enums: {
-      app_role: ["superadmin", "admin", "coordinator", "manager"],
-      dias_comunicacion: ["dias_laborables", "fines_semana", "ambos"],
-      estado_envio: ["PENDING", "NOTIFIED", "SENT", "RECEIVED", "CANCELLED"],
-      estado_general: ["activo", "inactivo", "suspendido"],
-      estado_incidencia: ["abierta", "en_proceso", "resuelta", "cerrada"],
-      geographic_scope: ["local", "regional", "national", "international"],
-      operator_type: [
-        "designated_usp",
-        "licensed_postal",
-        "express_courier",
-        "ecommerce_parcel",
-        "exempt",
-        "others",
-      ],
-      origen_incidencia: ["agente", "gestor", "sistema"],
-      prioridad_incidencia: ["baja", "media", "alta", "critica"],
-      regulatory_status: ["authorized", "suspended", "sanctioned", "revoked"],
-      report_format: ["xml", "json", "csv"],
-      tipo_incidencia: [
-        "cambio_direccion",
-        "no_disponible",
-        "muestra_dañada",
-        "extravio",
-        "problema_generico",
-      ],
-    },
-  },
-} as const
