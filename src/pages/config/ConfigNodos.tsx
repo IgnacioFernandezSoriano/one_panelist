@@ -52,10 +52,12 @@ export default function ConfigNodos() {
     setIsLoading(true);
     const { data: nodos, error } = await supabase
       .from("nodos")
-      .select("*")
-      .order("codigo", { ascending: true });
+      .select("*");
+    
+    console.log('[ConfigNodos] Query result:', { nodos, error });
 
     if (error) {
+      console.error('[ConfigNodos] Error:', error);
       toast({
         title: t('toast.error_loading_nodes'),
         description: error.message,
@@ -78,8 +80,15 @@ export default function ConfigNodos() {
           panelista_nombre
         };
       }));
-      setData(formattedData);
-      setFilteredData(formattedData);
+      
+      // Sort in frontend
+      const sortedData = formattedData.sort((a, b) => 
+        a.codigo.localeCompare(b.codigo)
+      );
+      
+      console.log('[ConfigNodos] Loaded:', sortedData.length, 'nodes');
+      setData(sortedData);
+      setFilteredData(sortedData);
     }
     setIsLoading(false);
   };

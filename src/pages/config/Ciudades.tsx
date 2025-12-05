@@ -32,27 +32,26 @@ export default function Ciudades() {
     setIsLoading(true);
     const { data: ciudades, error } = await supabase
       .from("ciudades")
-      .select(`
-        *,
-        clientes:cliente_id (nombre),
-        regiones:region_id (nombre)
-      `)
-      .order("nombre", { ascending: true });
+      .select("*");
+    
+    console.log('[Ciudades] Query result:', { ciudades, error });
 
     if (error) {
+      console.error('[Ciudades] Error:', error);
       toast({
         title: "Error loading cities",
         description: error.message,
         variant: "destructive",
       });
     } else {
-      const formattedData = ciudades?.map(c => ({
-        ...c,
-        cliente_nombre: c.clientes?.nombre,
-        region_nombre: c.regiones?.nombre
-      })) || [];
-      setData(formattedData);
-      setFilteredData(formattedData);
+      // Sort in frontend
+      const sortedData = ciudades?.sort((a, b) => 
+        a.nombre.localeCompare(b.nombre)
+      ) || [];
+      
+      console.log('[Ciudades] Loaded:', sortedData.length, 'cities');
+      setData(sortedData);
+      setFilteredData(sortedData);
     }
     setIsLoading(false);
   };
