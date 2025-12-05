@@ -36,18 +36,26 @@ export default function Idiomas() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: languages = [], isLoading } = useQuery({
+  const { data: languages = [], isLoading, error: queryError } = useQuery({
     queryKey: ['all-languages'],
     queryFn: async () => {
+      console.log('[DEBUG Idiomas] Fetching languages...');
       const { data, error } = await supabase
         .from('idiomas_disponibles')
         .select('*')
         .order('es_default', { ascending: false });
       
-      if (error) throw error;
+      console.log('[DEBUG Idiomas] Response:', { data, error });
+      
+      if (error) {
+        console.error('[ERROR Idiomas] Failed to fetch:', error);
+        throw error;
+      }
       return data as Language[];
     },
   });
+
+  console.log('[RENDER Idiomas]', { languages, isLoading, queryError });
 
   const addLanguageMutation = useMutation({
     mutationFn: async (data: typeof newLanguage) => {
