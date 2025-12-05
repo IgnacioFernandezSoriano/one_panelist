@@ -42,8 +42,14 @@ export default function Idiomas() {
       console.log('[DEBUG Idiomas] Fetching languages...');
       const { data, error } = await supabase
         .from('idiomas_disponibles')
-        .select('*')
-        .order('es_default', { ascending: false });
+        .select('*');
+      
+      // Sort by es_default in frontend to avoid schema cache issues
+      const sortedData = data?.sort((a, b) => {
+        if (a.es_default && !b.es_default) return -1;
+        if (!a.es_default && b.es_default) return 1;
+        return 0;
+      });
       
       console.log('[DEBUG Idiomas] Response:', { data, error });
       
@@ -51,7 +57,7 @@ export default function Idiomas() {
         console.error('[ERROR Idiomas] Failed to fetch:', error);
         throw error;
       }
-      return data as Language[];
+      return sortedData as Language[];
     },
   });
 
