@@ -177,7 +177,7 @@ export interface Database {
           codigo: string
           nombre: string
           pais: string
-          descripcion: string
+          descripcion: string | null
           estado: string
           fecha_creacion: string
           fecha_modificacion: string
@@ -188,7 +188,7 @@ export interface Database {
           codigo: string
           nombre: string
           pais: string
-          descripcion: string
+          descripcion: string | null
           estado: string
           fecha_creacion?: string
           fecha_modificacion?: string
@@ -199,7 +199,7 @@ export interface Database {
           codigo?: string
           nombre?: string
           pais?: string
-          descripcion?: string
+          descripcion?: string | null
           estado?: string
           fecha_creacion?: string
           fecha_modificacion?: string

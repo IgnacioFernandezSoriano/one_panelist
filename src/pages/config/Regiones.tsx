@@ -25,24 +25,25 @@ export default function Regiones() {
     setIsLoading(true);
     const { data: regiones, error } = await supabase
       .from("regiones")
-      .select(`
-        *,
-        clientes:cliente_id (nombre)
-      `)
-      .order("nombre", { ascending: true });
+      .select("*");
 
+    console.log('[Regiones] Query result:', { regiones, error });
+    
     if (error) {
+      console.error('[Regiones] Error:', error);
       toast({
         title: "Error loading regions",
         description: error.message,
         variant: "destructive",
       });
     } else {
-      const formattedData = regiones?.map(r => ({
-        ...r,
-        cliente_nombre: r.clientes?.nombre
-      })) || [];
-      setData(formattedData);
+      // Sort in frontend to avoid schema cache issues
+      const sortedData = regiones?.sort((a, b) => 
+        a.nombre.localeCompare(b.nombre)
+      ) || [];
+      
+      console.log('[Regiones] Loaded:', sortedData.length, 'regions');
+      setData(sortedData);
     }
     setIsLoading(false);
   };
@@ -68,8 +69,8 @@ export default function Regiones() {
   const columns = [
     { key: "codigo", label: "Code" },
     { key: "nombre", label: "Name" },
-    { key: "cliente_nombre", label: "Account" },
     { key: "pais", label: "Country" },
+    { key: "descripcion", label: "Description" },
     { 
       key: "estado", 
       label: "Status",
