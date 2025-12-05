@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Language {
   id: number;
@@ -36,37 +37,75 @@ export default function Idiomas() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: languages = [], isLoading, error: queryError } = useQuery({
+  // Fetch languages with detailed error handling
+  const { data: languages = [], isLoading, error: queryError, refetch } = useQuery({
     queryKey: ['all-languages'],
     queryFn: async () => {
-      console.log('[DEBUG Idiomas] Fetching languages...');
+      console.log('[Idiomas] Fetching languages...');
+      
+      // Check if user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('[Idiomas] Session error:', sessionError);
+        throw new Error(`Session error: ${sessionError.message}`);
+      }
+      
+      if (!session) {
+        console.error('[Idiomas] No active session');
+        throw new Error('No active session. Please log in again.');
+      }
+      
+      console.log('[Idiomas] Session active:', session.user.email);
+      
+      // Fetch languages
       const { data, error } = await supabase
         .from('idiomas_disponibles')
         .select('*')
         .order('es_default', { ascending: false });
       
-      console.log('[DEBUG Idiomas] Response:', { data, error });
+      console.log('[Idiomas] Query result:', { data, error });
       
       if (error) {
-        console.error('[ERROR Idiomas] Failed to fetch:', error);
-        throw error;
+        console.error('[Idiomas] Database error:', error);
+        throw new Error(`Database error: ${error.message}`);
       }
+      
+      if (!data) {
+        console.warn('[Idiomas] No data returned');
+        return [];
+      }
+      
+      console.log(`[Idiomas] Successfully fetched ${data.length} languages`);
       return data as Language[];
     },
+    retry: 1,
+    staleTime: 30000, // 30 seconds
   });
 
-  console.log('[RENDER Idiomas]', { languages, isLoading, queryError });
+  // Log render state
+  useEffect(() => {
+    console.log('[Idiomas] Render state:', { 
+      languagesCount: languages?.length || 0, 
+      isLoading, 
+      hasError: !!queryError 
+    });
+  }, [languages, isLoading, queryError]);
 
   const addLanguageMutation = useMutation({
     mutationFn: async (data: typeof newLanguage) => {
+      console.log('[Idiomas] Adding language:', data);
       const { error } = await supabase
         .from('idiomas_disponibles')
         .insert([data]);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[Idiomas] Insert error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
-      toast({ title: 'Idioma agregado exitosamente' });
+      toast({ title: 'Language added successfully' });
       queryClient.invalidateQueries({ queryKey: ['all-languages'] });
       queryClient.invalidateQueries({ queryKey: ['languages'] });
       setIsAddDialogOpen(false);
@@ -79,8 +118,13 @@ export default function Idiomas() {
         activo: true
       });
     },
-    onError: () => {
-      toast({ title: 'Error al agregar idioma', variant: 'destructive' });
+    onError: (error: any) => {
+      console.error('[Idiomas] Add mutation error:', error);
+      toast({ 
+        title: 'Error adding language', 
+        description: error.message,
+        variant: 'destructive' 
+      });
     }
   });
 
@@ -116,7 +160,7 @@ export default function Idiomas() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: 'Idioma predeterminado actualizado' });
+      toast({ title: 'Default language updated' });
       queryClient.invalidateQueries({ queryKey: ['all-languages'] });
       queryClient.invalidateQueries({ queryKey: ['languages'] });
     }
@@ -132,12 +176,16 @@ export default function Idiomas() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: 'Idioma eliminado exitosamente' });
+      toast({ title: 'Language deleted successfully' });
       queryClient.invalidateQueries({ queryKey: ['all-languages'] });
       queryClient.invalidateQueries({ queryKey: ['languages'] });
     },
-    onError: () => {
-      toast({ title: 'Error al eliminar idioma', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ 
+        title: 'Error deleting language', 
+        description: error.message,
+        variant: 'destructive' 
+      });
     }
   });
 
@@ -145,9 +193,26 @@ export default function Idiomas() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Idiomas</h1>
-          <p className="text-muted-foreground">Gestiona los idiomas disponibles en la aplicación</p>
+          <h1 className="text-3xl font-bold">Languages</h1>
+          <p className="text-muted-foreground">Manage available languages in the application</p>
         </div>
+
+        {queryError && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Error loading languages: {(queryError as Error).message}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="ml-4"
+                onClick={() => refetch()}
+              >
+                Retry
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Card className="p-4">
           <div className="flex justify-end">
@@ -155,45 +220,45 @@ export default function Idiomas() {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Idioma
+                  New Language
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Nuevo Idioma</DialogTitle>
+                  <DialogTitle>New Language</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label>Código ISO</Label>
+                    <Label>ISO Code</Label>
                     <Input
                       value={newLanguage.codigo}
                       onChange={(e) => setNewLanguage({ ...newLanguage, codigo: e.target.value })}
-                      placeholder="ej: es, en, pt"
+                      placeholder="e.g.: es, en, pt"
                       maxLength={10}
                     />
                   </div>
                   <div>
-                    <Label>Nombre Nativo</Label>
+                    <Label>Native Name</Label>
                     <Input
                       value={newLanguage.nombre_nativo}
                       onChange={(e) => setNewLanguage({ ...newLanguage, nombre_nativo: e.target.value })}
-                      placeholder="ej: Español"
+                      placeholder="e.g.: Español"
                     />
                   </div>
                   <div>
-                    <Label>Nombre en Inglés</Label>
+                    <Label>English Name</Label>
                     <Input
                       value={newLanguage.nombre_ingles}
                       onChange={(e) => setNewLanguage({ ...newLanguage, nombre_ingles: e.target.value })}
-                      placeholder="ej: Spanish"
+                      placeholder="e.g.: Spanish"
                     />
                   </div>
                   <div>
-                    <Label>Emoji de Bandera</Label>
+                    <Label>Flag Emoji</Label>
                     <Input
                       value={newLanguage.bandera_emoji}
                       onChange={(e) => setNewLanguage({ ...newLanguage, bandera_emoji: e.target.value })}
-                      placeholder="ej: 🇪🇸"
+                      placeholder="e.g.: 🇪🇸"
                       maxLength={10}
                     />
                   </div>
@@ -202,13 +267,13 @@ export default function Idiomas() {
                       checked={newLanguage.es_default}
                       onCheckedChange={(checked) => setNewLanguage({ ...newLanguage, es_default: checked })}
                     />
-                    <Label>Idioma predeterminado</Label>
+                    <Label>Default language</Label>
                   </div>
                   <Button 
                     onClick={() => addLanguageMutation.mutate(newLanguage)}
                     disabled={!newLanguage.codigo || !newLanguage.nombre_nativo || addLanguageMutation.isPending}
                   >
-                    Agregar
+                    {addLanguageMutation.isPending ? 'Adding...' : 'Add'}
                   </Button>
                 </div>
               </DialogContent>
@@ -220,26 +285,35 @@ export default function Idiomas() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Código</TableHead>
-                <TableHead>Bandera</TableHead>
-                <TableHead>Nombre Nativo</TableHead>
-                <TableHead>Nombre en Inglés</TableHead>
-                <TableHead>Activo</TableHead>
-                <TableHead>Predeterminado</TableHead>
-                <TableHead>Acciones</TableHead>
+                <TableHead>Code</TableHead>
+                <TableHead>Flag</TableHead>
+                <TableHead>Native Name</TableHead>
+                <TableHead>English Name</TableHead>
+                <TableHead>Active</TableHead>
+                <TableHead>Default</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center">
-                    Cargando...
+                    Loading...
                   </TableCell>
                 </TableRow>
               ) : languages.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center">
-                    No hay idiomas configurados
+                    No languages configured
+                    {!queryError && (
+                      <Button 
+                        variant="link" 
+                        onClick={() => refetch()}
+                        className="ml-2"
+                      >
+                        Refresh
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -259,14 +333,14 @@ export default function Idiomas() {
                     </TableCell>
                     <TableCell>
                       {lang.es_default ? (
-                        <span className="text-primary font-semibold">✓ Predeterminado</span>
+                        <span className="text-primary font-semibold">✓ Default</span>
                       ) : (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setDefaultMutation.mutate(lang.id)}
                         >
-                          Establecer
+                          Set as default
                         </Button>
                       )}
                     </TableCell>
